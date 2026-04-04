@@ -22,6 +22,14 @@ import {
   BeVietnamPro_500Medium,
 } from '@expo-google-fonts/be-vietnam-pro';
 import Svg, { Circle, G } from 'react-native-svg';
+import Animated, {
+  FadeIn,
+  FadeInDown,
+  FadeInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
 
@@ -124,12 +132,25 @@ export default function WelcomeScreen() {
   // Helper to conditionally apply font family
   const font = (name: string) => (fontsLoaded ? { fontFamily: name } : {});
 
+  // ── Button press scale animations ──
+  const primaryScale = useSharedValue(1);
+  const secondaryScale = useSharedValue(1);
+
+  const primaryAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: primaryScale.value }],
+  }));
+  const secondaryAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: secondaryScale.value }],
+  }));
+
+  const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+
   return (
     <View style={styles.root}>
       {/* ════════════════════════════════════════════
           TOP 35% — Hero Illustration Section (353px)
           ════════════════════════════════════════════ */}
-      <View style={styles.hero}>
+      <Animated.View style={styles.hero} entering={FadeIn.duration(700)}>
         {/* Sky gradient: #FFF8F0 → #FFE8CC */}
         <LinearGradient
           colors={[COLORS.heroTop, COLORS.heroBottom]}
@@ -142,15 +163,17 @@ export default function WelcomeScreen() {
         <ZelligeDotPattern w={width} h={353} />
 
         {/* Hero image: Ben Ali family — object-cover, anchored bottom */}
-        <Image
-          source={require('../assets/images/welcome-hero.jpg')}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
+        <Animated.View style={StyleSheet.absoluteFillObject} entering={FadeInUp.duration(900).delay(100).springify().damping(18)}>
+          <Image
+            source={require('../assets/images/welcome-hero.jpg')}
+            style={styles.heroImage}
+            resizeMode="cover"
+          />
+        </Animated.View>
 
         {/* Decorative arch: rounded top + background colour = seamless transition */}
         <View style={styles.heroArch} />
-      </View>
+      </Animated.View>
 
       {/* ════════════════════════════════════════════
           MIDDLE — Content Block (flex-grow)
@@ -160,7 +183,10 @@ export default function WelcomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Title group */}
-        <View style={styles.titleGroup}>
+        <Animated.View
+          style={styles.titleGroup}
+          entering={FadeInDown.duration(500).delay(300).springify().damping(16)}
+        >
           {/* H1 — font-headline text-3xl font-extrabold text-on-surface */}
           <Text style={[styles.h1, font('PlusJakartaSans-ExtraBold')]}>
             Bienvenue dans le Voyage !
@@ -170,45 +196,58 @@ export default function WelcomeScreen() {
           <Text style={[styles.arabicTitle, font('PlusJakartaSans-SemiBold')]}>
             {'!أهلاً بك في رحلة المهارات'}
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Short divider — w-10 h-1 bg-secondary-container */}
-        <View style={styles.divider} />
+        <Animated.View
+          style={styles.divider}
+          entering={FadeInDown.duration(400).delay(500)}
+        />
 
         {/* Body text — text-on-surface-variant max-w-[280px] font-medium */}
-        <Text style={[styles.body, font('BeVietnamPro-Medium')]}>
+        <Animated.Text
+          style={[styles.body, font('BeVietnamPro-Medium')]}
+          entering={FadeInDown.duration(400).delay(650)}
+        >
           Suis la famille Ben Ali à travers le Maroc et développe tes compétences
           professionnelles en t'amusant.
-        </Text>
+        </Animated.Text>
       </ScrollView>
 
       {/* ════════════════════════════════════════════
           BOTTOM — Action Buttons (px-8 pb-12)
           ════════════════════════════════════════════ */}
-      <View style={styles.buttons}>
+      <Animated.View
+        style={styles.buttons}
+        entering={FadeInUp.duration(500).delay(750).springify().damping(18)}
+      >
         {/* Primary CTA — bg-primary text-on-primary h-[56px] rounded-xl */}
-        <TouchableOpacity
-          style={styles.primaryBtn}
-          activeOpacity={0.95}
-          onPress={() => router.push('/(tabs)')}
+        <AnimatedTouchable
+          style={[styles.primaryBtn, primaryAnimStyle]}
+          activeOpacity={1}
+          onPressIn={() => { primaryScale.value = withSpring(0.96, { damping: 12 }); }}
+          onPressOut={() => { primaryScale.value = withSpring(1, { damping: 10 }); }}
+          onPress={() => router.push('/create-profile')}
         >
           <Text style={[styles.primaryBtnText, font('PlusJakartaSans-Bold')]}>
             Commencer le voyage / ابدأ الرحلة
           </Text>
           <MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.onPrimary} />
-        </TouchableOpacity>
+        </AnimatedTouchable>
 
         {/* Secondary — border-2 border-primary text-primary h-[52px] rounded-xl */}
-        <TouchableOpacity
-          style={styles.secondaryBtn}
-          activeOpacity={0.9}
+        <AnimatedTouchable
+          style={[styles.secondaryBtn, secondaryAnimStyle]}
+          activeOpacity={1}
+          onPressIn={() => { secondaryScale.value = withSpring(0.97, { damping: 12 }); }}
+          onPressOut={() => { secondaryScale.value = withSpring(1, { damping: 10 }); }}
           onPress={() => {/* TODO: sign in flow */}}
         >
           <Text style={[styles.secondaryBtnText, font('PlusJakartaSans-Bold')]}>
             J'ai déjà un compte
           </Text>
-        </TouchableOpacity>
-      </View>
+        </AnimatedTouchable>
+      </Animated.View>
 
       {/* ════════════════════════════════════════════
           FOOTER — Zellige border strip

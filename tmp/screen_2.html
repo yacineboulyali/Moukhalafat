@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Le Voyage des Compétences - Décision</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-high": "#ebe8e2",
+              "on-secondary-fixed-variant": "#6f3800",
+              "on-tertiary-fixed-variant": "#574500",
+              "on-secondary-fixed": "#2f1400",
+              "on-secondary": "#ffffff",
+              "tertiary-fixed": "#ffe088",
+              "inverse-on-surface": "#f4f0ea",
+              "secondary-fixed-dim": "#ffb780",
+              "on-background": "#1c1c18",
+              "secondary-fixed": "#ffdcc4",
+              "surface-container": "#f1ede7",
+              "on-tertiary": "#ffffff",
+              "primary": "#2c4e3e",
+              "on-primary-container": "#bce3cd",
+              "primary-container": "#436655",
+              "on-primary-fixed-variant": "#2b4e3e",
+              "on-error": "#ffffff",
+              "surface-container-lowest": "#ffffff",
+              "surface-variant": "#e6e2dc",
+              "surface-container-low": "#f7f3ed",
+              "on-surface": "#1c1c18",
+              "tertiary": "#735c00",
+              "error": "#ba1a1a",
+              "surface-container-highest": "#e6e2dc",
+              "on-error-container": "#93000a",
+              "inverse-surface": "#31302d",
+              "background": "#fdf9f3",
+              "surface-tint": "#426655",
+              "on-primary": "#ffffff",
+              "on-primary-fixed": "#002114",
+              "tertiary-fixed-dim": "#e9c349",
+              "surface": "#fdf9f3",
+              "on-tertiary-fixed": "#241a00",
+              "secondary": "#8e4e14",
+              "primary-fixed-dim": "#a9cfba",
+              "primary-fixed": "#c4ebd6",
+              "on-surface-variant": "#404943",
+              "secondary-container": "#ffab69",
+              "surface-dim": "#dddad4",
+              "outline-variant": "#bfc9c1",
+              "on-tertiary-container": "#4e3d00",
+              "inverse-primary": "#a9cfba",
+              "error-container": "#ffdad6",
+              "outline": "#707973",
+              "on-secondary-container": "#783d01",
+              "tertiary-container": "#cca72f",
+              "surface-bright": "#fdf9f3"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .zellige-pattern {
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15L30 0zm0 60l15-15-15-15-15 15 15 15zM0 30l15 15 15-15-15-15L0 30zm60 0l-15 15-15-15 15-15 15 15z' fill='%232c4e3e' fill-opacity='0.06' fill-rule='evenodd'/%3E%3C/svg%3E");
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-[#FFF8F0] font-body text-on-surface antialiased min-h-screen flex flex-col relative overflow-x-hidden">
+<!-- Subtle warm orange tint overlay -->
+<div class="fixed inset-0 bg-[#F4A261]/[0.04] pointer-events-none"></div>
+<!-- Zellige Decoration top-right -->
+<div class="fixed -top-10 -right-10 w-48 h-48 zellige-pattern opacity-60 rounded-full"></div>
+<!-- TopAppBar (Shared Component Logic) -->
+<header class="flex justify-between items-center px-6 py-4 w-full sticky top-0 z-50 bg-[#fdf9f3] dark:bg-stone-900 tonal-shift">
+<div class="flex items-center gap-4">
+<button class="hover:opacity-80 transition-opacity active:scale-95 duration-100 text-[#2d6a4f] dark:text-[#a9cfba]">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline font-bold tracking-tight text-[#2d6a4f] dark:text-[#a9cfba]">Décision 2 / 2</h1>
+</div>
+<div class="flex items-center gap-2 px-3 py-1.5 bg-[#FEE2E2] rounded-full">
+<span class="material-symbols-outlined text-[#EF4444] text-sm" data-icon="timer">timer</span>
+<span class="text-[#EF4444] font-bold text-sm tracking-tight">01:20</span>
+</div>
+</header>
+<main class="flex-1 px-5 pt-4 pb-32 flex flex-col gap-6 relative z-10">
+<!-- Consequence Banner -->
+<section class="bg-[#FFF7ED] border-l-4 border-[#C1440E] rounded-[12px] p-4 flex gap-3 items-start animate-in fade-in slide-in-from-top-2 duration-500">
+<span class="text-xl">💬</span>
+<p class="text-sm text-[#783D01] font-medium leading-tight">
+                Votre choix précédent : <span class="font-bold text-[#C1440E]">Vous avez décidé d'intervenir calmement</span>
+</p>
+</section>
+<!-- New Situation Card -->
+<section class="bg-surface-container-lowest rounded-lg p-5 shadow-[0_8px_32px_rgba(28,28,24,0.04)] border-l-4 border-[#E76F51] flex flex-col gap-4">
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-3">
+<img alt="Fatima Avatar" class="w-10 h-10 rounded-full object-cover border-2 border-surface-container" data-alt="Professional Moroccan woman with a warm, concerned expression, wearing a stylish modern hijab, cinematic lighting, shallow depth of field" src="https://lh3.googleusercontent.com/aida-public/AB6AXuChu2LkBa0ONhmD5VlLA3NIiVKmvqgikWcjCb_P5tPS5PqE9bVmDtVM-5yz3iEOaQ1ctxH3_s43zjHOEDmo_PxdWGveXGAjtpD8cXOCiHqqz9EDP605kZAro4k5_pQYmCX4qdTjenSsIll3M1912_empPnvU6iGR5Hx155hsQGSOj1amxMjImVv7nnE-9S9uZscrNGfgujMZ1LlCHQu4L0iHmxG8C_bnwi79NV0Ez7ACsd-0vW-Afo9YzV8VH2WX3SaKNi3R8_H2LQ"/>
+<div>
+<p class="text-xs font-bold text-outline uppercase tracking-wider">Fatima</p>
+<p class="text-xs text-on-surface-variant">Mentor du Projet</p>
+</div>
+</div>
+<div class="px-2.5 py-1 bg-[#FEE2E2] rounded-full flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-[#EF4444] animate-pulse"></span>
+<span class="text-[10px] font-bold text-[#EF4444] uppercase tracking-tight">Situation critique</span>
+</div>
+</div>
+<div class="space-y-2">
+<p class="font-headline font-semibold text-[#1c1c18] leading-snug">
+                    Marco quitte la salle en colère. Yuki reste mais semble blessée. Fatima vous regarde, attendant une décision rapide.
+                </p>
+<p class="text-right text-on-surface-variant font-medium text-sm leading-relaxed" dir="rtl">
+                    ماركو يغادر الغرفة غاضباً. يوكي لا تزال هنا ولكنها تبدو متأثرة. فاطمة تنظر إليك منتظرة قراراً سريعاً.
+                </p>
+</div>
+</section>
+<!-- Answer Choices -->
+<section class="flex flex-col gap-3">
+<!-- Card A -->
+<button class="group flex items-center gap-4 p-4 bg-surface-container-lowest border-2 border-[#E5E7EB] hover:border-[#2D6A4F]/30 active:scale-[0.98] transition-all rounded-[14px] text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline font-extrabold text-[#2D6A4F] shrink-0">A</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-on-surface group-hover:text-primary transition-colors">Je vais chercher Marco et m'excuse au nom de l'équipe</p>
+<p class="text-xs text-on-surface-variant/70 mt-0.5" dir="rtl">سأبحث عن ماركو وأعتذر نيابة عن الفريق</p>
+</div>
+<div class="w-2.5 h-2.5 rounded-full bg-green-500 shrink-0 shadow-sm" title="Risque faible"></div>
+</button>
+<!-- Card B -->
+<button class="group flex items-center gap-4 p-4 bg-surface-container-lowest border-2 border-[#2D6A4F] bg-[#c4ebd6]/10 active:scale-[0.98] transition-all rounded-[14px] text-left ring-2 ring-[#2D6A4F]/10">
+<div class="w-10 h-10 rounded-full bg-primary text-on-primary flex items-center justify-center font-headline font-extrabold shrink-0">B</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-primary">Je m'occupe d'abord de Yuki pour réparer la relation</p>
+<p class="text-xs text-on-surface-variant/70 mt-0.5" dir="rtl">سأهتم بيوكي أولاً لإصلاح العلاقة</p>
+</div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-500 shrink-0 shadow-sm" title="Risque modéré"></div>
+</button>
+<!-- Card C -->
+<button class="group flex items-center gap-4 p-4 bg-surface-container-lowest border-2 border-[#E5E7EB] hover:border-[#2D6A4F]/30 active:scale-[0.98] transition-all rounded-[14px] text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline font-extrabold text-[#2D6A4F] shrink-0">C</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-on-surface">Je propose de reprendre la réunion à un autre moment</p>
+<p class="text-xs text-on-surface-variant/70 mt-0.5" dir="rtl">أقترح استئناف الاجتماع في وقت آخر</p>
+</div>
+<div class="w-2.5 h-2.5 rounded-full bg-yellow-500 shrink-0 shadow-sm" title="Risque modéré"></div>
+</button>
+<!-- Card D -->
+<button class="group flex items-center gap-4 p-4 bg-surface-container-lowest border-2 border-[#E5E7EB] hover:border-[#2D6A4F]/30 active:scale-[0.98] transition-all rounded-[14px] text-left">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center font-headline font-extrabold text-[#2D6A4F] shrink-0">D</div>
+<div class="flex-1 min-w-0">
+<p class="text-sm font-semibold text-on-surface">Je laisse Fatima gérer — ce n'est pas mon rôle de stagiaire</p>
+<p class="text-xs text-on-surface-variant/70 mt-0.5" dir="rtl">سأترك فاطمة تتولى الأمر — ليس هذا دوري كمتدرب</p>
+</div>
+<div class="w-2.5 h-2.5 rounded-full bg-red-500 shrink-0 shadow-sm" title="Risque élevé"></div>
+</button>
+</section>
+</main>
+<!-- Bottom Action Area -->
+<footer class="fixed bottom-0 left-0 w-full px-6 pt-6 pb-8 bg-gradient-to-t from-[#FFF8F0] via-[#FFF8F0] to-transparent z-50">
+<div class="max-w-md mx-auto flex flex-col items-center gap-4">
+<p class="text-[11px] font-medium italic text-error flex items-center gap-1.5">
+<span class="material-symbols-outlined text-xs" data-icon="warning" style="font-variation-settings: 'FILL' 1;">warning</span>
+                Décision finale — il n'y aura pas de retour en arrière
+            </p>
+<button class="w-full bg-[#2D6A4F] text-white py-4 px-8 rounded-full font-headline font-extrabold text-lg flex items-center justify-center gap-3 shadow-xl shadow-[#2D6A4F]/20 active:scale-95 transition-transform">
+                Confirmer ma décision
+                <span class="material-symbols-outlined" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</footer>
+<!-- BottomNavBar (Hidden on Decision Focus as per Shell Suppression rule) -->
+<!-- Suppressed to prioritize the decision canvas and maintain immersion -->
+</body></html>

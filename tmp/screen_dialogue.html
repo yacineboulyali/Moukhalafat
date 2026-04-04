@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html dir="ltr" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .arabic-text {
+            direction: rtl;
+            font-family: sans-serif; /* Fallback for system Arabic font */
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary-fixed": "#c4ebd6",
+                "tertiary": "#735c00",
+                "tertiary-container": "#cca72f",
+                "on-tertiary-container": "#4e3d00",
+                "background": "#fdf9f3",
+                "secondary-container": "#ffab69",
+                "primary-fixed-dim": "#a9cfba",
+                "on-tertiary-fixed-variant": "#574500",
+                "tertiary-fixed-dim": "#e9c349",
+                "tertiary-fixed": "#ffe088",
+                "outline-variant": "#bfc9c1",
+                "surface-container-highest": "#e6e2dc",
+                "on-background": "#1c1c18",
+                "on-surface-variant": "#404943",
+                "surface-container-high": "#ebe8e2",
+                "surface-tint": "#426655",
+                "on-error": "#ffffff",
+                "on-surface": "#1c1c18",
+                "surface-variant": "#e6e2dc",
+                "on-tertiary": "#ffffff",
+                "surface": "#fdf9f3",
+                "on-secondary-fixed": "#2f1400",
+                "surface-container": "#f1ede7",
+                "inverse-surface": "#31302d",
+                "outline": "#707973",
+                "on-primary-container": "#bce3cd",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary-fixed-variant": "#6f3800",
+                "on-secondary-container": "#783d01",
+                "error-container": "#ffdad6",
+                "secondary-fixed-dim": "#ffb780",
+                "primary": "#2c4e3e",
+                "on-primary-fixed-variant": "#2b4e3e",
+                "surface-dim": "#dddad4",
+                "surface-bright": "#fdf9f3",
+                "secondary": "#8e4e14",
+                "on-primary": "#ffffff",
+                "inverse-on-surface": "#f4f0ea",
+                "surface-container-low": "#f7f3ed",
+                "inverse-primary": "#a9cfba",
+                "secondary-fixed": "#ffdcc4",
+                "on-secondary": "#ffffff",
+                "on-error-container": "#93000a",
+                "primary-container": "#436655",
+                "on-tertiary-fixed": "#241a00",
+                "on-primary-fixed": "#002114",
+                "error": "#ba1a1a"
+              },
+              fontFamily: {
+                "headline": ["Plus Jakarta Sans"],
+                "body": ["Be Vietnam Pro"],
+                "label": ["Plus Jakarta Sans"]
+              },
+              borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body min-h-screen flex flex-col overflow-x-hidden">
+<!-- Top Navigation Anchor (from JSON) -->
+<header class="flex justify-between items-center px-6 h-16 w-full z-50 bg-[#fdf9f3] dark:bg-[#1c1c18]">
+<button class="text-[#2c4e3e] hover:opacity-80 transition-opacity scale-95 transition-transform">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h1 class="font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-[#2c4e3e] dark:text-[#fdf9f3] text-xl">Le Voyage</h1>
+<button class="text-[#2c4e3e] hover:opacity-80 transition-opacity scale-95 transition-transform">
+<span class="material-symbols-outlined">more_horiz</span>
+</button>
+</header>
+<main class="flex-grow flex flex-col relative">
+<!-- Background Hero Section (Marrakech Rooftop Dusk) -->
+<div class="absolute inset-0 z-0 h-[55%]">
+<div class="w-full h-full bg-cover bg-center relative" data-alt="illustrated marrakech rooftop at dusk with purple and orange sky, glowing lanterns, palm silhouettes, and distant minaret skyline in flat art style" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCED2bx3AL8xGpiOLm021RGknu6o0B7aetYJYPboMVVU_VJ2zNp_ma7e2orxW9Oz-MAxUAOHWiB_nk3C3ual_Jq6Ei0BvxdJBEmToyGZzN3-ylCUX27qcbfEUBaJbPEbRNnA0ea25mSNeNyFNUJVkqWp5N8mLWO6OFs0CwVitGLk0ogMEp4c3QnINlrxxNtoBqqgwufZGYs1_HdkMVqTefrnix2lyucGzrZg_XcAWv-ZsBqEfjdC6EJXxSFPwWdf3rZYIrU9RU8Kok')">
+<div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-surface"></div>
+</div>
+</div>
+<!-- Content Canvas -->
+<div class="relative z-10 flex flex-col items-center pt-4 px-6 w-full max-w-md mx-auto">
+<!-- Header Titles -->
+<div class="text-center mb-6 w-full">
+<div class="inline-flex items-center gap-2 bg-surface-container-lowest/90 backdrop-blur-sm px-4 py-1 rounded-full mb-3 shadow-sm">
+<span class="text-xs font-bold text-primary tracking-wide">Marrakech ✓</span>
+</div>
+<h2 class="font-headline font-extrabold text-2xl text-on-surface flex flex-col gap-1">
+<span>🏆 Défi terminé !</span>
+<span class="arabic-text text-xl">!انتهى التحدي 🏆</span>
+</h2>
+</div>
+<!-- Family Illustration Placeholder (Middle-Top 42%) -->
+<div class="w-full h-[282px] flex items-end justify-center mb-8">
+<img alt="Family illustration" class="max-h-full object-contain rounded-xl" data-alt="Flat vector illustration of a Moroccan family of three sitting together on floor cushions in a relaxed, celebratory pose with soft dusk lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzillPjq9Vc6sUomMqNlLv2cxf2ElCxxGDLx2aju6n8QKsueSBijQWRVm8aEQRVm-rqGaPdNgbsLa-xRppDQqxQhJlWC0fGIHGqi-HndPrvWOrIJ4obsislvCErGpscAu9IqFDhvLlfNDK3FY0j32Xc6AoMW9tzq10q610tHCWvtSw2ungyDnpoDQ45d9pH_zTO7L0Twk3j-y-ntHB-fm8axCfRCCky8_wacHmx6mgkJG7lFq32bg7MHRny4RWyH44MfvvPSFl9eg"/>
+</div>
+<!-- Speech Bubbles (Sequential) -->
+<div class="space-y-4 w-full mb-12">
+<!-- Papa Ben Ali -->
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">face</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl rounded-tl-none shadow-sm flex flex-col gap-2 max-w-[85%]">
+<p class="text-sm font-medium text-on-surface leading-snug">
+                            "Tu as su garder ton calme dans une situation difficile. C'est ça, la vraie communication."
+                        </p>
+<p class="text-sm arabic-text text-primary leading-tight">
+                            "حافظت على هدوئك في موقف صعب."
+                        </p>
+</div>
+</div>
+<!-- Maman Ben Ali -->
+<div class="flex items-start gap-3 flex-row-reverse">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary">face_3</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl rounded-tr-none shadow-sm flex flex-col gap-2 max-w-[85%]">
+<p class="text-sm font-medium text-on-surface leading-snug text-right">
+                            "Comprendre les autres cultures, c'est un cadeau précieux pour ta carrière."
+                        </p>
+<p class="text-sm arabic-text text-secondary leading-tight">
+                            "فهم الثقافات الأخرى هدية قيّمة لمسيرتك المهنية."
+                        </p>
+</div>
+</div>
+<!-- Mehdi -->
+<div class="flex items-start gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex-shrink-0 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">mood</span>
+</div>
+<div class="bg-surface-container-lowest p-4 rounded-2xl rounded-tl-none shadow-sm flex flex-col gap-2 max-w-[85%]">
+<p class="text-sm font-medium text-on-surface leading-snug">
+                            "Grâce à toi, la réunion s'est bien terminée ! On est fiers de toi 🎉"
+                        </p>
+<p class="text-sm arabic-text text-tertiary leading-tight">
+                            "!بفضلك، انتهى الاجتماع بشكل جيد! نحن فخورون بك 🎉"
+                        </p>
+</div>
+</div>
+</div>
+<!-- Bottom Lesson Panel (52% height approximately relative to viewport) -->
+<section class="w-full bg-surface-container-lowest rounded-t-[3rem] shadow-[0_-12px_40px_rgba(28,28,24,0.06)] overflow-hidden pb-12">
+<!-- Top Gradient Band -->
+<div class="h-2 w-full bg-gradient-to-r from-[#C1440E] to-[#F4A261]"></div>
+<div class="p-8">
+<!-- Lesson Header -->
+<div class="mb-6">
+<h3 class="font-headline font-bold text-lg text-secondary mb-1">
+                            La communication interculturelle
+                        </h3>
+<p class="arabic-text font-bold text-lg text-secondary opacity-80">
+                            التواصل بين الثقافات
+                        </p>
+</div>
+<!-- Lesson Body -->
+<p class="text-on-surface-variant leading-relaxed text-sm mb-8">
+                        Dans un contexte professionnel multiculturel, écouter activement et reformuler les idées de chacun permet de désamorcer les tensions et de construire des relations de confiance durables.
+                    </p>
+<!-- Skill Unlocked Card -->
+<div class="bg-[#D1FAE5] rounded-xl p-4 flex items-center gap-4 mb-6">
+<div class="w-12 h-12 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<div>
+<p class="text-xs font-bold text-primary tracking-tight uppercase">Communication interculturelle</p>
+<p class="text-sm font-semibold text-primary">Débloquée ✨</p>
+</div>
+</div>
+<!-- XP Teaser -->
+<div class="flex items-center justify-center gap-2 mb-8">
+<span class="material-symbols-outlined text-tertiary-container">stars</span>
+<span class="text-sm font-bold text-on-surface">Tu vas gagner environ +240 XP</span>
+</div>
+<!-- CTA Button -->
+<button class="w-full py-4 rounded-full bg-gradient-to-r from-[#C1440E] to-[#2D6A4F] text-white font-headline font-bold text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95 transition-transform">
+                        Voir mes résultats → 🏆
+                    </button>
+</div>
+</section>
+</div>
+</main>
+<!-- Bottom Navigation Shell (from JSON) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pt-3 pb-8 bg-[#fdf9f3]/90 dark:bg-[#1c1c18]/90 backdrop-blur-md rounded-t-[3rem] shadow-[0_-8px_32px_rgba(28,28,24,0.04)]">
+<a class="flex flex-col items-center justify-center bg-[#2c4e3e] text-white rounded-full px-5 py-2 hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium">Journey</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#426655] opacity-60 hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium">Explore</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#426655] opacity-60 hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined">military_tech</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium">Achievements</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#426655] opacity-60 hover:scale-105 transition-transform" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium">Profile</span>
+</a>
+</nav>
+</body></html>

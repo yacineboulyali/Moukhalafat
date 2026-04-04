@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+
+<html dir="ltr" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container-low": "#f7f3ed",
+              "tertiary-container": "#cca72f",
+              "error": "#ba1a1a",
+              "tertiary": "#735c00",
+              "secondary-container": "#ffab69",
+              "outline": "#707973",
+              "on-tertiary": "#ffffff",
+              "primary-fixed-dim": "#a9cfba",
+              "inverse-on-surface": "#f4f0ea",
+              "on-primary": "#ffffff",
+              "surface": "#fdf9f3",
+              "on-surface-variant": "#404943",
+              "on-tertiary-fixed-variant": "#574500",
+              "secondary-fixed": "#ffdcc4",
+              "primary": "#2c4e3e",
+              "surface-tint": "#426655",
+              "surface-container-highest": "#e6e2dc",
+              "surface-container-high": "#ebe8e2",
+              "on-error-container": "#93000a",
+              "tertiary-fixed": "#ffe088",
+              "background": "#fdf9f3",
+              "primary-container": "#436655",
+              "outline-variant": "#bfc9c1",
+              "secondary": "#8e4e14",
+              "on-error": "#ffffff",
+              "on-tertiary-fixed": "#241a00",
+              "inverse-primary": "#a9cfba",
+              "on-primary-fixed-variant": "#2b4e3e",
+              "surface-container": "#f1ede7",
+              "surface-variant": "#e6e2dc",
+              "inverse-surface": "#31302d",
+              "on-primary-container": "#bce3cd",
+              "on-primary-fixed": "#002114",
+              "surface-dim": "#dddad4",
+              "surface-container-lowest": "#ffffff",
+              "secondary-fixed-dim": "#ffb780",
+              "surface-bright": "#fdf9f3",
+              "on-tertiary-container": "#4e3d00",
+              "error-container": "#ffdad6",
+              "on-secondary": "#ffffff",
+              "on-surface": "#1c1c18",
+              "on-secondary-fixed-variant": "#6f3800",
+              "primary-fixed": "#c4ebd6",
+              "on-background": "#1c1c18",
+              "on-secondary-fixed": "#2f1400",
+              "on-secondary-container": "#783d01",
+              "tertiary-fixed-dim": "#e9c349"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Be Vietnam Pro"],
+              "label": ["Plus Jakarta Sans"]
+            },
+            borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Be Vietnam Pro', sans-serif; background-color: #fdf9f3; }
+        h1, h2, h3 { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .zellige-pattern {
+            background-image: radial-gradient(#cca72f 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.1;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface min-h-screen flex flex-col relative overflow-x-hidden">
+<!-- Zellige Background Accent -->
+<div class="fixed top-0 right-0 w-64 h-64 zellige-pattern -mr-12 -mt-12 pointer-events-none"></div>
+<!-- TopAppBar -->
+<header class="bg-[#fdf9f3] dark:bg-stone-950 flex justify-between items-center px-6 py-4 w-full sticky top-0 z-40">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#2d6a4f] dark:text-[#a9cfba]">location_city</span>
+<div class="flex flex-col">
+<h1 class="text-[#2d6a4f] dark:text-[#a9cfba] font-['Plus_Jakarta_Sans'] font-bold tracking-tight text-base leading-tight">Résultats intermédiaires</h1>
+<span class="text-xs font-bold text-stone-400 leading-tight" dir="rtl">النتائج الأولية</span>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<div class="bg-[#C1440E] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-wider uppercase">Marrakech</div>
+<span class="material-symbols-outlined text-stone-500 hover:bg-[#f1ede7] transition-colors p-1 rounded-full cursor-pointer">close</span>
+</div>
+</header>
+<main class="flex-1 px-6 pt-4 pb-32 max-w-2xl mx-auto w-full">
+<!-- 1. Consequence Illustration Card -->
+<section class="relative rounded-xl overflow-hidden mb-8 shadow-sm">
+<div class="relative aspect-video w-full overflow-hidden">
+<img alt="Collaborative meeting scene" class="w-full h-full object-cover" data-alt="Modern high-end meeting room with warm sunset light streaming through windows, diverse people in business casual leaning in with friendly, open body language" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqBf5YT_nSJrsW8_npyfdcx0cbbKbLMUZs0cCGx1vhM5dWbjSTZ8kAAshf4_stb0xyPYzfSlfimtBrEiEHrgUuXmZJMhDZ-IYdi8OvebOxA05HAsC4cUM7k4rHnIBSEpeN0dJ95gKlEKqreKIhYKt_JaFhsjJC5maA8_gPDHRrEILBxVxRgProbrnXUe3XtsNWmGJLHFvaQsGoH0Bu_1TboZwhroBOxWrE0VqW_FMj0ZXDKfA1qJ9bSmobyRgM3EeKJsoe2Xeulcw"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+<div class="absolute top-4 left-4">
+<span class="bg-[#D1FAE5] text-[#065F46] text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px]">sentiment_satisfied</span>
+                        Ambiance améliorée
+                    </span>
+</div>
+<div class="absolute bottom-4 left-4">
+<p class="text-white font-extrabold text-[15px] tracking-wide">La réunion continue...</p>
+</div>
+</div>
+</section>
+<!-- 2. Decision Recap Cards -->
+<section class="space-y-4 mb-8">
+<!-- Decision 1 -->
+<div class="bg-surface-container-lowest border-l-4 border-[#52B788] rounded-r-lg p-5 flex flex-col gap-3 shadow-[0_4px_12px_rgba(28,28,24,0.03)]">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold text-[#52B788] bg-[#52B788]/10 px-2 py-0.5 rounded tracking-wide uppercase">✅ Excellent choix</span>
+<span class="material-symbols-outlined text-stone-300 text-sm">more_vert</span>
+</div>
+<div class="space-y-1">
+<p class="text-xs text-stone-500 font-medium">Votre action :</p>
+<p class="text-[13px] font-semibold text-on-surface leading-snug">"J'interviens calmement pour recentrer la discussion"</p>
+</div>
+<p class="text-xs italic text-stone-400">Fatima approuve votre initiative.</p>
+</div>
+<!-- Decision 2 -->
+<div class="bg-surface-container-lowest border-l-4 border-[#F4A261] rounded-r-lg p-5 flex flex-col gap-3 shadow-[0_4px_12px_rgba(28,28,24,0.03)]">
+<div class="flex justify-between items-start">
+<span class="text-[10px] font-bold text-[#F4A261] bg-[#F4A261]/10 px-2 py-0.5 rounded tracking-wide uppercase">⚡ Choix acceptable</span>
+<span class="material-symbols-outlined text-stone-300 text-sm">more_vert</span>
+</div>
+<div class="space-y-1">
+<p class="text-xs text-stone-500 font-medium">Votre action :</p>
+<p class="text-[13px] font-semibold text-on-surface leading-snug">"Je propose de reformuler les points de désaccord"</p>
+</div>
+<p class="text-xs italic text-stone-400">Fatima reste prudente face à votre réaction.</p>
+</div>
+</section>
+<!-- 3. Consequence Summary Card -->
+<section class="bg-surface-container-lowest rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(28,28,24,0.04)] mb-12">
+<div class="h-1.5 w-full bg-[#C1440E]"></div>
+<div class="p-6">
+<div class="flex items-center gap-3 mb-4">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
+<span class="material-symbols-outlined text-[#C1440E]">handshake</span>
+</div>
+<h3 class="text-sm font-bold text-on-surface tracking-tight">Conséquence de vos décisions</h3>
+</div>
+<p class="text-sm text-stone-600 leading-relaxed mb-6">
+                    L'ambiance de la réunion s'est légèrement améliorée, mais la situation reste délicate. Marco semble plus attentif à vos interventions.
+                </p>
+<div class="bg-tertiary-fixed/30 p-3 rounded-lg flex items-center justify-center gap-2 border border-tertiary-fixed/50">
+<span class="text-[#735c00] font-semibold text-xs flex items-center gap-1.5">
+                        Tu gagneras environ <span class="text-tertiary font-bold">⭐ +180 XP</span> à la fin du défi
+                    </span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar & Action Shell -->
+<footer class="fixed bottom-0 w-full z-50 flex flex-col justify-center items-center pb-safe">
+<p class="text-[11px] text-[#9CA3AF] italic mb-3">Le défi n'est pas terminé — une dernière épreuve t'attend !</p>
+<div class="bg-[#fdf9f3]/80 dark:bg-stone-950/80 backdrop-blur-md w-full flex justify-center items-center shadow-[0_-8px_32px_rgba(28,28,24,0.04)] rounded-t-[3rem] pt-6">
+<button class="flex flex-row items-center justify-center gap-3 bg-[#C1440E] text-white rounded-full px-8 py-4 w-[calc(100%-3rem)] mx-6 mb-8 hover:bg-[#a1390c] transition-all transform hover:scale-[1.02] active:scale-95 duration-200">
+<span class="font-['Plus_Jakarta_Sans'] font-bold uppercase tracking-widest text-sm">Continuer le défi</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</footer>
+</body></html>
