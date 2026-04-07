@@ -1,880 +1,605 @@
-import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-  Animated,
-  Dimensions,
-  Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withRepeat, 
+  withTiming, 
+  withSequence,
+  withDelay,
+  Easing 
+} from 'react-native-reanimated';
+import { MaterialIcons } from '@expo/vector-icons';
+import Svg, { Path, Ellipse, Rect } from 'react-native-svg';
+
 import { useRouter } from 'expo-router';
-import { useFonts } from 'expo-font';
-import {
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-  PlusJakartaSans_600SemiBold,
-} from '@expo-google-fonts/plus-jakarta-sans';
-import { BeVietnamPro_500Medium, BeVietnamPro_700Bold } from '@expo-google-fonts/be-vietnam-pro';
-import Svg, { Path, Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// ── Design system tokens ────────────────────────────────────────────
-const C = {
-  bg: '#fdf9f3',
-  bgWarm: '#faf6ef',
-  primary: '#2c4e3e',
-  primaryLight: '#436655',
-  primaryFixed: '#c4ebd6',
-  onPrimary: '#ffffff',
-  onSurface: '#1c1c18',
-  onSurfaceVariant: '#404943',
-  outline: '#707973',
-  outlineVariant: '#bfc9c1',
-  secondaryContainer: '#ffab69',
-  secondaryFixed: '#ffdcc4',
-  onSecondaryFixed: '#2f1400',
-  tertiaryFixed: '#ffe088',
-  onTertiaryFixed: '#241a00',
+const COLORS = {
+  background: '#FFF8F0',
+  goldAccent: '#D4A843',
+  deepText: '#1A1A2E',
+  surface: '#ffffff',
   tertiary: '#735c00',
-  surfaceContainer: '#f1ede7',
-  surfaceContainerHigh: '#ebe8e2',
-  surfaceContainerHighest: '#e6e2dc',
-  surfaceContainerLow: '#f7f3ed',
-  surfaceContainerLowest: '#ffffff',
-  surfaceDim: '#dddad4',
-  red: '#C1440E',
-  //  Map specific
-  waterBlue: '#dce9f4',
-  parchment: '#f6e9cf',
-  parchmentDark: '#e8d5ac',
-  pathOrange: '#e07b30',
-  cityDone: '#2d6a4f',
-  cityActive: '#C1440E',
+  lockedPath: 'rgba(212, 168, 67, 0.15)',
 };
 
-// ── City data ───────────────────────────────────────────────────────
-// Positions are percentages of map image
-const CITIES = [
-  {
-    name: 'Casablanca',
-    nameAr: 'الدار البيضاء',
-    top: 0.61,
-    left: 0.43,
-    state: 'done',
-    xp: '+120 XP',
-    skill: 'Leadership',
-  },
-  {
-    name: 'Marrakech',
-    nameAr: 'مراكش',
-    top: 0.745,
-    left: 0.345,
-    state: 'current',
-    xp: '+120 XP',
-    skill: 'Communication',
-  },
-  {
-    name: 'Tanger', nameAr: 'طنجة', top: 0.27, left: 0.52, state: 'locked', xp: '+150 XP', skill: 'Négociation',
-  },
-  {
-    name: 'Rabat', nameAr: 'الرباط', top: 0.505, left: 0.46, state: 'locked', xp: '+100 XP', skill: 'Collaboration',
-  },
-  {
-    name: 'Fès', nameAr: 'فاس', top: 0.535, left: 0.615, state: 'locked', xp: '+140 XP', skill: 'Créativité',
-  },
-  {
-    name: 'Agadir', nameAr: 'أكادير', top: 0.84, left: 0.23, state: 'locked', xp: '+130 XP', skill: 'Agilité',
-  },
-];
-
-// ── Map geometry ─────────────────────────────────────────────────
-const MAP_W = width - 32;
-const MAP_H = MAP_W * 1.2;
-
-// ── City pin component ──────────────────────────────────────────────
-function CityPin({ city, mapW, mapH, onPress, f }: any) {
-  const pulse1 = useRef(new Animated.Value(0)).current;
-  const pulse2 = useRef(new Animated.Value(0)).current;
+// Simple animated lantern component
+const Lantern = ({ delay, style }: { delay: number, style: any }) => {
+  const opacity = useSharedValue(0.4);
+  const translateY = useSharedValue(0);
 
   useEffect(() => {
-    if (city.state === 'current') {
-      const loop = (anim: Animated.Value, delay: number) =>
-        Animated.loop(
-          Animated.sequence([
-            Animated.delay(delay),
-            Animated.parallel([
-              Animated.timing(anim, { toValue: 1, duration: 1200, useNativeDriver: true }),
-            ]),
-            Animated.timing(anim, { toValue: 0, duration: 0, useNativeDriver: true }),
-          ])
-        ).start();
-      loop(pulse1, 0);
-      loop(pulse2, 600);
-    }
+    opacity.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 3000 }),
+        withTiming(0.4, { duration: 3000 })
+      ), -1, true
+    ));
+    translateY.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(-20, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })
+      ), -1, true
+    ));
   }, []);
 
-  const posX = city.left * mapW - 22;
-  const posY = city.top * mapH - 22;
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
 
-  // ── DONE (Casablanca) ──
-  if (city.state === 'done') {
-    return (
-      <View style={[pinStyles.wrap, { left: posX, top: posY }]}>
-        <View style={pinStyles.doneRing}>
-          <View style={pinStyles.doneDot}>
-            <MaterialCommunityIcons name="check-bold" size={13} color="#fff" />
-          </View>
-        </View>
-        <View style={pinStyles.doneLabel}>
-          <Text style={[pinStyles.doneLabelText, f('PlusJakartaSans-Bold')]}>{city.name}</Text>
-        </View>
-      </View>
-    );
-  }
+  return <Animated.View style={[styles.lantern, style, animatedStyle]} />;
+};
 
-  // ── CURRENT (Marrakech) ──
-  if (city.state === 'current') {
-    const pulseStyle = (anim: Animated.Value) => ({
-      opacity: anim.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.5, 0.5, 0] }),
-      transform: [{ scale: anim.interpolate({ inputRange: [0, 1], outputRange: [1, 2.6] }) }],
-    });
-    return (
-      <TouchableOpacity
-        style={[pinStyles.wrap, { left: posX, top: posY }]}
-        onPress={onPress}
-        activeOpacity={0.85}
-      >
-        {/* Ripple rings */}
-        <Animated.View style={[pinStyles.pulseRing, pulseStyle(pulse1)]} />
-        <Animated.View style={[pinStyles.pulseRing, pulseStyle(pulse2)]} />
-        {/* Main pin */}
-        <View style={pinStyles.activeOuter}>
-          <View style={pinStyles.activeDot}>
-            <MaterialCommunityIcons name="map-marker" size={18} color="#fff" />
-          </View>
-        </View>
-        {/* Label */}
-        <View style={pinStyles.activeLabel}>
-          <Text style={[pinStyles.activeLabelText, f('PlusJakartaSans-Bold')]}>{city.name}</Text>
-        </View>
-        {/* "En cours!" chip */}
-        <View style={pinStyles.activeChip}>
-          <Text style={[pinStyles.activeChipText, f('PlusJakartaSans-Bold')]}>🏆 En cours</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  }
-
-  // ── LOCKED ──
-  return (
-    <View style={[pinStyles.wrap, { left: posX, top: posY, opacity: 0.45 }]}>
-      <View style={pinStyles.lockedDot}>
-        <MaterialCommunityIcons name="lock" size={12} color={C.outline} />
-      </View>
-      <Text style={[pinStyles.lockedText, f('BeVietnamPro-500Medium')]}>{city.name}</Text>
-    </View>
-  );
-}
-
-const pinStyles = StyleSheet.create({
-  wrap: { position: 'absolute', alignItems: 'center', gap: 3 },
-  // Done
-  doneRing: {
-    width: 32, height: 32, borderRadius: 16,
-    backgroundColor: 'rgba(45,106,79,0.2)',
-    borderWidth: 2, borderColor: C.cityDone,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  doneDot: {
-    width: 22, height: 22, borderRadius: 11,
-    backgroundColor: C.cityDone,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  doneLabel: {
-    backgroundColor: 'rgba(196,235,214,0.92)',
-    paddingHorizontal: 7, paddingVertical: 2,
-    borderRadius: 99, borderWidth: 1, borderColor: 'rgba(44,78,62,0.3)',
-  },
-  doneLabelText: { fontSize: 9, fontWeight: '700', color: C.primary },
-  // Current
-  pulseRing: {
-    position: 'absolute',
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.red,
-  },
-  activeOuter: {
-    width: 44, height: 44, borderRadius: 22,
-    backgroundColor: C.red, opacity: 1,
-    borderWidth: 3, borderColor: '#fff',
-    alignItems: 'center', justifyContent: 'center',
-    elevation: 8,
-    shadowColor: C.red,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 8,
-  },
-  activeDot: {
-    width: 34, height: 34, borderRadius: 17,
-    backgroundColor: C.red,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  activeLabel: {
-    backgroundColor: '#fff2ed',
-    paddingHorizontal: 10, paddingVertical: 3,
-    borderRadius: 99, borderWidth: 2, borderColor: C.red,
-    marginTop: 2,
-  },
-  activeLabelText: { fontSize: 11, fontWeight: '800', color: C.red },
-  activeChip: {
-    backgroundColor: C.red,
-    paddingHorizontal: 8, paddingVertical: 2,
-    borderRadius: 99, marginTop: 2,
-  },
-  activeChipText: { fontSize: 8, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
-  // Locked
-  lockedDot: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: C.surfaceContainerHighest,
-    borderWidth: 1, borderColor: C.outlineVariant,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  lockedText: { fontSize: 8, fontWeight: '500', color: C.outline },
-});
-
-// ── Main Screen ─────────────────────────────────────────────────────
 export default function MapScreen() {
   const router = useRouter();
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.2);
 
-  const [fontsLoaded] = useFonts({
-    'PlusJakartaSans-ExtraBold': PlusJakartaSans_800ExtraBold,
-    'PlusJakartaSans-Bold': PlusJakartaSans_700Bold,
-    'PlusJakartaSans-SemiBold': PlusJakartaSans_600SemiBold,
-    'BeVietnamPro-Medium': BeVietnamPro_500Medium,
-    'BeVietnamPro-Bold': BeVietnamPro_700Bold,
-  });
-  const f = (n: string) => (fontsLoaded ? { fontFamily: n } : {});
+  useEffect(() => {
+    pulseScale.value = withRepeat(
+      withTiming(1.3, { duration: 2000, easing: Easing.out(Easing.ease) }),
+      -1,
+      false
+    );
+    pulseOpacity.value = withRepeat(
+      withTiming(0, { duration: 2000, easing: Easing.out(Easing.ease) }),
+      -1,
+      false
+    );
+  }, []);
 
-  const XP = 340;
-  const XP_MAX = 500;
-  const XP_PCT = (XP / XP_MAX) * 100;
-
-  const BOTTOM_NAV = [
-    { icon: 'compass', label: 'Explorer', active: true, route: null },
-    { icon: 'trophy-outline', label: 'Quêtes', active: false, route: null },
-    { icon: 'pencil-ruler', label: 'Atelier', active: false, route: null },
-    { icon: 'account-circle-outline', label: 'Profil', active: false, route: '/dashboard' },
-    { icon: 'cog-outline', label: 'Réglages', active: false, route: null },
-  ];
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
+    opacity: pulseOpacity.value,
+  }));
 
   return (
-    <View style={styles.root}>
-      {/* ── Subtle zellige background pattern ── */}
-      <Svg style={StyleSheet.absoluteFillObject as any} width={width} height={height}>
-        <Defs>
-          <Pattern id="zellige" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-            <Path
-              d="M20 0 L40 20 L20 40 L0 20 Z"
-              fill="none"
-              stroke="#bfc9c1"
-              strokeWidth="0.4"
-              opacity="0.4"
-            />
-          </Pattern>
-        </Defs>
-        <Rect width={width} height={height} fill="url(#zellige)" />
-      </Svg>
-
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
-        {/* ══════════════════════════════════════
-            HEADER – Player Stats
-        ══════════════════════════════════════ */}
-        <View style={styles.header}>
-          {/* Left: Avatar + info */}
-          <View style={styles.headerLeft}>
-            <View style={styles.avatarWrap}>
-              <Image
-                source={require('../assets/images/avatar-map-user.jpg')}
-                style={styles.avatarImg}
-                resizeMode="cover"
-              />
-              <View style={styles.levelBadge}>
-                <Text style={[styles.levelText, f('PlusJakartaSans-Bold')]}>3</Text>
-              </View>
-            </View>
-            <View>
-              <Text style={[styles.userName, f('PlusJakartaSans-Bold')]}>Yassine</Text>
-              <View style={styles.profileBadge}>
-                <MaterialCommunityIcons name="lightning-bolt" size={10} color={C.tertiary} />
-                <Text style={[styles.profileBadgeText, f('PlusJakartaSans-Bold')]}>Le Stratège</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Right: XP + streak */}
-          <View style={styles.headerRight}>
-            <View style={styles.streakBadge}>
-              <Text style={styles.streakEmoji}>🔥</Text>
-              <Text style={[styles.streakText, f('PlusJakartaSans-Bold')]}>5 j.</Text>
-            </View>
-            <TouchableOpacity style={styles.settingsBtn}>
-              <MaterialCommunityIcons name="cog-outline" size={22} color={C.onSurfaceVariant} />
-            </TouchableOpacity>
+    <View style={styles.container}>
+      {/* Top App Bar */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Image 
+            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB8D95WG-SPbVPIMyamvVstP4YMybfNRX6OlULKVNypv_OOJGggXwfvtfaelw4Px97PWOIc5ggIDZRSB11nG605TTqbSuMURj91DIBeoTl9S7fro6P53N5jOVwx9g5YFbPvcZF1An31fg_gFpopiG1s5yaUN_daW8DpPAiLbFf-Ms1_TP8p5TdI6PQgaZ3eSf1bKQqPDJuyUuuHkXBZCAQi7KARNVlxkgaLaEN1FNUE0rwJo0erllFFujCQsNmgwbkgFUhl90raYA0' }} 
+            style={styles.avatar} 
+          />
+          <View>
+            <Text style={styles.headerTitle}>Le Voyage</Text>
+            <Text style={styles.headerSubtitle}>الرحلة</Text>
           </View>
         </View>
 
-        {/* XP Progress bar */}
-        <View style={styles.xpSection}>
-          <View style={styles.xpLabelRow}>
-            <Text style={[styles.xpLabel, f('PlusJakartaSans-Bold')]}>⭐ {XP} XP</Text>
-            <Text style={[styles.xpLevelText, f('BeVietnamPro-Medium')]}>Niv. 3 → 4</Text>
-            <Text style={[styles.xpLabel, f('PlusJakartaSans-Bold')]}>{XP_MAX} XP</Text>
-          </View>
-          <View style={styles.xpBarBg}>
-            <View style={[styles.xpBarFill, { width: `${XP_PCT}%` }]}>
-              <LinearGradient
-                colors={[C.primary, C.cityDone]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={StyleSheet.absoluteFillObject}
-              />
-            </View>
+        <View style={styles.progressHeader}>
+          <View style={styles.progressTrack}>
+            <View style={styles.progressFill} />
           </View>
         </View>
 
-        {/* Title */}
-        <View style={styles.titleSection}>
-          <Text style={[styles.title, f('PlusJakartaSans-ExtraBold')]}>Le Voyage</Text>
-          <Text style={[styles.titleAr, f('BeVietnamPro-Medium')]}>{'رحلة المهارات'}</Text>
+        <TouchableOpacity style={styles.menuBtn}>
+          <MaterialIcons name="menu" size={24} color={COLORS.deepText} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Floating Lanterns */}
+        <Lantern delay={0} style={{ top: 200, left: 60 }} />
+        <Lantern delay={1000} style={{ top: 400, right: 80 }} />
+        <Lantern delay={2000} style={{ top: 600, left: 100 }} />
+        <Lantern delay={500} style={{ top: 800, right: 60 }} />
+
+        {/* Path connector layer */}
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <Svg width={width} height={1200}>
+            {/* Rabat -> Chef */}
+            <Path d={`M ${width/2} 1050 Q ${width/2 + 60} 950 ${width/2} 850`} fill="none" stroke={COLORS.goldAccent} strokeWidth="8" strokeLinecap="round" />
+            {/* Chef -> Fès */}
+            <Path d={`M ${width/2} 850 Q ${width/2 - 60} 750 ${width/2} 650`} fill="none" stroke={COLORS.goldAccent} strokeWidth="8" strokeLinecap="round" />
+            {/* Fès -> Marrakech (Dashed Active) */}
+            <Path d={`M ${width/2} 650 Q ${width/2 + 60} 550 ${width/2} 450`} fill="none" stroke={COLORS.goldAccent} strokeWidth="6" strokeDasharray="12 12" opacity={0.6} strokeLinecap="round" />
+            {/* Marrakech -> Laayoune (Locked) */}
+            <Path d={`M ${width/2} 450 Q ${width/2 - 60} 350 ${width/2} 250`} fill="none" stroke={COLORS.lockedPath} strokeWidth="4" strokeLinecap="round" />
+            {/* Laayoune -> Dakhla (Locked) */}
+            <Path d={`M ${width/2} 250 Q ${width/2 + 60} 150 ${width/2} 50`} fill="none" stroke={COLORS.lockedPath} strokeWidth="4" strokeLinecap="round" />
+          </Svg>
         </View>
 
-        {/* ══════════════════════════════════════
-            MAP CANVAS
-        ══════════════════════════════════════ */}
-        <View style={styles.mapContainer}>
-          {/* Water bg */}
-          <View style={[styles.waterBg, { width: MAP_W, height: MAP_H }]}>
-            {/* Parchment overlay gradient */}
-            <LinearGradient
-              colors={['#f6e9cf', '#eeddb3']}
-              style={[StyleSheet.absoluteFillObject, { borderRadius: 32 }]}
-            />
-            {/* Morocco map image */}
-            <Image
-              source={require('../assets/images/map-morocco.jpg')}
-              style={styles.mapImg}
-              resizeMode="contain"
-            />
-
-            {/* ── SVG: journey path + city circles ── */}
-            <Svg
-              style={StyleSheet.absoluteFillObject}
-              width={MAP_W}
-              height={MAP_H}
-              viewBox={`0 0 ${MAP_W} ${MAP_H}`}
-            >
-              {/* Completed path: Casa → Marrakech (solid, green) */}
-              <Path
-                d={`M${MAP_W * 0.43},${MAP_H * 0.61}
-                   C${MAP_W * 0.41},${MAP_H * 0.65} ${MAP_W * 0.37},${MAP_H * 0.70}
-                   ${MAP_W * 0.345},${MAP_H * 0.745}`}
-                fill="none"
-                stroke={C.cityDone}
-                strokeWidth="3.5"
-                strokeLinecap="round"
-              />
-              {/* Forward path: Marrakech → next locked (dashed, faded) */}
-              <Path
-                d={`M${MAP_W * 0.345},${MAP_H * 0.745}
-                   C${MAP_W * 0.30},${MAP_H * 0.72} ${MAP_W * 0.25},${MAP_H * 0.78}
-                   ${MAP_W * 0.23},${MAP_H * 0.84}`}
-                fill="none"
-                stroke={C.outlineVariant}
-                strokeWidth="2.5"
-                strokeDasharray="7 6"
-                strokeLinecap="round"
-                opacity={0.5}
-              />
-              {/* Glow dot on completed path midpoint */}
-              <Circle
-                cx={MAP_W * 0.385}
-                cy={MAP_H * 0.675}
-                r="5"
-                fill={C.cityDone}
-                opacity={0.4}
-              />
+        {/* Nodes - listed bottom to top for ScrollView natural flow */}
+        
+        {/* Dakhla (Locked) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 40 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'dakhla' } })} activeOpacity={0.8}>
+          <View style={[styles.nodeBase, styles.nodeLocked]}>
+            <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
+              <Ellipse cx="32" cy="56" rx="20" ry="2.5" fill="#2D6A4F" opacity="0.1" />
+              <Rect x="20" y="44" width="3" height="12" rx="1.5" fill="#8B4513" opacity="0.6" />
+              <Rect x="27" y="44" width="3" height="12" rx="1.5" fill="#8B4513" opacity="0.6" />
+              <Rect x="37" y="44" width="3" height="12" rx="1.5" fill="#8B4513" opacity="0.6" />
+              <Rect x="44" y="44" width="3" height="12" rx="1.5" fill="#8B4513" opacity="0.6" />
+              <Path d="M14 44C14 36 20 32 32 32C44 32 50 36 50 44H14Z" fill="#D4A843" />
+              <Path d="M24 32C24 24 28 20 32 20C36 20 40 24 40 32" fill="#B8860B" />
+              <Path d="M48 40L55 26" stroke="#D4A843" strokeWidth="6" strokeLinecap="round" />
+              <Path d="M53 26C53 22 57 20 61 21C63 22 63 25 63 27L58 30H53Z" fill="#B8860B" />
+              <Path d="M26 32H38V38C38 41 35 43 32 43C29 43 26 41 26 38V32Z" fill="#8B4513" opacity="0.2" />
+              <Path d="M28 34H36M28 37H36M28 40H36" stroke="#FDF9F3" strokeWidth="0.5" opacity="0.3" fill="none" />
             </Svg>
-
-            {/* City pins */}
-            {CITIES.map((city) => (
-              <CityPin
-                key={city.name}
-                city={city}
-                mapW={MAP_W}
-                mapH={MAP_H}
-                onPress={() => router.push('/marrakech')}
-                f={f}
-              />
-            ))}
-
-            {/* Compass rose decoration (bottom-right) */}
-            <View style={styles.compass} pointerEvents="none">
-              <MaterialCommunityIcons name="compass-rose" size={48} color="rgba(44,78,62,0.12)" />
-            </View>
           </View>
-        </View>
-
-        {/* ══════════════════════════════════════
-            ACTIVE CHALLENGE CARD
-        ══════════════════════════════════════ */}
-        <TouchableOpacity
-          style={styles.challengeCard}
-          activeOpacity={0.92}
-          onPress={() => router.push('/marrakech')}
-        >
-          {/* Red top accent */}
-          <View style={styles.challengeAccent} />
-
-          <View style={styles.challengeBody}>
-            {/* Thumbnail */}
-            <View style={styles.challengeThumb}>
-              <Image
-                source={require('../assets/images/marrakech-thumbnail.jpg')}
-                style={styles.challengeThumbImg}
-                resizeMode="cover"
-              />
-              <View style={styles.challengeThumbBadge}>
-                <Text style={[styles.challengeThumbBadgeText, f('PlusJakartaSans-Bold')]}>
-                  🎯 Défi actif
-                </Text>
-              </View>
-            </View>
-
-            {/* Info */}
-            <View style={styles.challengeInfo}>
-              <View style={styles.challengeTitleRow}>
-                <Text style={[styles.challengeCity, f('PlusJakartaSans-ExtraBold')]}>
-                  Marrakech
-                </Text>
-                <Text style={[styles.challengeCityAr, f('BeVietnamPro-Medium')]}>
-                  {'مراكش'}
-                </Text>
-              </View>
-
-              <Text style={[styles.challengeScenario, f('BeVietnamPro-Medium')]}>
-                La réunion qui tourne mal
-              </Text>
-
-              {/* Progress: 1/4 missions */}
-              <View style={styles.challengeProgress}>
-                <View style={styles.challengeProgressBar}>
-                  <View style={[styles.challengeProgressFill, { width: '25%' }]} />
-                </View>
-                <Text style={[styles.challengeProgressText, f('PlusJakartaSans-Bold')]}>
-                  1/4
-                </Text>
-              </View>
-
-              {/* Skills chips */}
-              <View style={styles.skillChips}>
-                <View style={[styles.skillChip, { backgroundColor: C.primaryFixed }]}>
-                  <Text style={[styles.skillChipText, { color: C.primary }, f('PlusJakartaSans-Bold')]}>
-                    💬 Communication
-                  </Text>
-                </View>
-                <View style={[styles.skillChip, { backgroundColor: C.secondaryFixed }]}>
-                  <Text style={[styles.skillChipText, { color: '#6f3800' }, f('PlusJakartaSans-Bold')]}>
-                    🌍 Interculturel
-                  </Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* CTA */}
-          <View style={styles.challengeFooter}>
-            <LinearGradient
-              colors={[C.red, '#9e3000']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.challengeCta}
-            >
-              <Text style={[styles.challengeCtaText, f('PlusJakartaSans-ExtraBold')]}>
-                Continuer le défi
-              </Text>
-              <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
-            </LinearGradient>
+          <View style={styles.nodeTextContainer}>
+            <Text style={styles.nodeTitleLocked}>Dakhla</Text>
+            <Text style={styles.nodeSubtitleLocked}>الداخلة</Text>
           </View>
         </TouchableOpacity>
 
-        {/* ══════════════════════════════════════
-            JOURNEY OVERVIEW — horizontal scroll
-        ══════════════════════════════════════ */}
-        <View style={styles.journeySection}>
-          <View style={styles.journeyHeader}>
-            <Text style={[styles.journeyTitle, f('PlusJakartaSans-ExtraBold')]}>
-              Mes étapes
-            </Text>
-            <Text style={[styles.journeyAr, f('BeVietnamPro-Medium')]}>{'محطاتي'}</Text>
+        {/* Laâyoune (Locked) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'laayoune' } })} activeOpacity={0.8}>
+          <View style={[styles.nodeBase, styles.nodeLocked]}>
+            <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
+              <Path d="M8 48L32 20L56 48" fill="#D4A843" opacity="0.2" />
+              <Path d="M4 52L32 24L60 52H4Z" fill="#B8860B" />
+              <Path d="M32 24L48 52H16L32 24Z" fill="#8B4513" opacity="0.1" />
+              <Rect x="31" y="24" width="2" height="28" fill="#5D4037" />
+              <Path d="M16 40L24 33M40 33L48 40" stroke="#FDF9F3" strokeWidth="1" opacity="0.4" fill="none" />
+              <Path d="M10 46L20 38M44 38L54 46" stroke="#FDF9F3" strokeWidth="1" opacity="0.3" fill="none" />
+              <Rect x="6" y="50" width="52" height="2" fill="#2D6A4F" opacity="0.4" />
+            </Svg>
           </View>
+          <View style={styles.nodeTextContainer}>
+            <Text style={styles.nodeTitleLocked}>Laâyoune</Text>
+            <Text style={styles.nodeSubtitleLocked}>العيون</Text>
+          </View>
+        </TouchableOpacity>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.journeyScroll}
-          >
-            {CITIES.map((city) => {
-              const isDone = city.state === 'done';
-              const isCurrent = city.state === 'current';
-              const isLocked = city.state === 'locked';
-              return (
-                <TouchableOpacity
-                  key={city.name}
-                  style={[
-                    styles.journeyCard,
-                    isDone && styles.journeyCardDone,
-                    isCurrent && styles.journeyCardCurrent,
-                    isLocked && styles.journeyCardLocked,
-                  ]}
-                  disabled={isLocked}
-                  onPress={() => isCurrent && router.push('/marrakech')}
-                  activeOpacity={isCurrent ? 0.85 : 1}
-                >
-                  {/* State icon */}
-                  <View style={[
-                    styles.journeyCardIcon,
-                    isDone && { backgroundColor: C.cityDone },
-                    isCurrent && { backgroundColor: C.red },
-                    isLocked && { backgroundColor: C.surfaceContainerHighest },
-                  ]}>
-                    <MaterialCommunityIcons
-                      name={isDone ? 'check-bold' : isCurrent ? 'map-marker' : 'lock'}
-                      size={16}
-                      color={isLocked ? C.outline : '#fff'}
-                    />
-                  </View>
-                  <Text style={[
-                    styles.journeyCardName,
-                    f('PlusJakartaSans-Bold'),
-                    isCurrent && { color: C.red },
-                    isLocked && { color: C.outline },
-                  ]}>
-                    {city.name}
-                  </Text>
-                  <Text style={[styles.journeyCardNameAr, f('BeVietnamPro-Medium')]}>
-                    {city.nameAr}
-                  </Text>
-                  {/* XP reward */}
-                  <View style={[
-                    styles.journeyXpBadge,
-                    isDone && { backgroundColor: 'rgba(45,106,79,0.1)' },
-                    isCurrent && { backgroundColor: 'rgba(193,68,14,0.1)' },
-                  ]}>
-                    <Text style={[
-                      styles.journeyXpText,
-                      f('PlusJakartaSans-Bold'),
-                      isDone && { color: C.cityDone },
-                      isCurrent && { color: C.red },
-                    ]}>
-                      {isDone ? '✓ Terminé' : isCurrent ? '▶ En cours' : '🔒 Verrouillé'}
-                    </Text>
-                  </View>
-                  <Text style={[styles.journeySkill, f('BeVietnamPro-Medium')]}>{city.skill}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
+        {/* Marrakech (Locked) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'marrakech' } })} activeOpacity={0.8}>
+          <View style={[styles.nodeBase, styles.nodeLocked]}>
+            <MaterialIcons name="temple-hindu" size={40} color="rgba(0,0,0,0.2)" />
+          </View>
+          <View style={styles.nodeTextContainer}>
+            <Text style={styles.nodeTitleLocked}>Marrakech</Text>
+            <Text style={styles.nodeSubtitleLocked}>مراكش</Text>
+          </View>
+        </TouchableOpacity>
 
-        <View style={{ height: 100 }} />
+        {/* Fès (Active) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'fes' } })} activeOpacity={0.8}>
+          <Animated.View style={[styles.pulseRing, pulseStyle]} />
+          <View style={[styles.nodeBase, styles.nodeActive]}>
+            <MaterialIcons name="door-front" size={40} color={COLORS.goldAccent} />
+            <View style={styles.activePill}>
+              <Text style={styles.activePillText}>ACTUEL</Text>
+            </View>
+          </View>
+          <View style={styles.nodeTextContainer}>
+            <Text style={[styles.nodeTitle, { color: COLORS.deepText }]}>Fès</Text>
+            <Text style={[styles.nodeSubtitle, { color: COLORS.goldAccent }]}>فاس</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Chefchaouen (Completed) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'chefchaouen' } })} activeOpacity={0.8}>
+          <View style={[styles.nodeBase, styles.nodeCompletedA]}>
+            <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
+              <Path d="M16 52V28L32 16L48 28V52H16Z" fill="#E3F2FD" />
+              <Path d="M16 52V36H48V52H16Z" fill="#90CAF9" />
+              <Path d="M28 52V42C28 39.7909 29.7909 38 32 38C34.2091 38 36 39.7909 36 42V52H28Z" fill="#1976D2" />
+              <Rect x="38" y="28" width="6" height="6" rx="1" fill="#1976D2" opacity="0.6" />
+              <Rect x="20" y="28" width="6" height="6" rx="1" fill="#1976D2" opacity="0.6" />
+              <Path d="M14 30L32 16.5L50 30" stroke="#1565C0" strokeWidth="2" strokeLinecap="round" fill="none" />
+              <Rect x="16" y="50" width="32" height="2" fill="#1565C0" opacity="0.3" />
+            </Svg>
+            <View style={styles.checkBadge}>
+              <MaterialIcons name="check" size={16} color="#3b82f6" style={{ fontWeight: 'bold' }} />
+            </View>
+          </View>
+          <View style={styles.nodeTextContainer}>
+            <Text style={styles.nodeTitleCompleted}>Chefchaouen</Text>
+            <Text style={[styles.nodeSubtitleCompleted, { color: '#3b82f6' }]}>شفشاون</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* Rabat (Completed) */}
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80, marginBottom: 120 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'rabat' } })} activeOpacity={0.8}>
+          <View style={[styles.nodeBase, styles.nodeCompletedB]}>
+            <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
+              <Rect x="22" y="10" width="20" height="44" fill="#D16B4B" />
+              <Rect x="20" y="54" width="24" height="4" fill="#A8553D" />
+              <Rect x="20" y="8" width="24" height="2" fill="#A8553D" />
+              <Rect x="24" y="6" width="16" height="2" fill="#D16B4B" />
+              <Rect x="28" y="16" width="8" height="12" rx="1" fill="#5C2D1F" opacity="0.2" />
+              <Rect x="28" y="32" width="8" height="12" rx="1" fill="#5C2D1F" opacity="0.2" />
+              <Path d="M 22 14 L 42 14 M 22 18 L 42 18" stroke="#A8553D" strokeWidth="0.5" fill="none" />
+              <Path d="M 24 20 L 40 20 M 24 24 L 40 24 M 24 28 L 40 28" stroke="#FDF9F3" strokeWidth="0.3" opacity="0.3" fill="none" />
+            </Svg>
+            <View style={styles.checkBadge}>
+              <MaterialIcons name="check" size={16} color="#10b981" style={{ fontWeight: 'bold' }} />
+            </View>
+          </View>
+          <View style={styles.nodeTextContainer}>
+            <Text style={styles.nodeTitleCompleted}>Rabat</Text>
+            <Text style={[styles.nodeSubtitleCompleted, { color: '#10b981' }]}>الرباط</Text>
+          </View>
+        </TouchableOpacity>
+
       </ScrollView>
 
-      {/* ══════════════════════════════════════
-          BOTTOM NAVIGATION BAR
-      ══════════════════════════════════════ */}
+      {/* Bottom info card for Active Node (Fès) */}
+      <View style={styles.bottomCard}>
+        <View style={styles.cardHeader}>
+          <View>
+            <View style={styles.cardTag}>
+              <Text style={styles.cardTagText}>ÉTAPE 3 • المرحلة ٣</Text>
+            </View>
+            <Text style={styles.cardTitle}>La Médina de Fès</Text>
+            <Text style={styles.cardSubtitle}>فاس البالي</Text>
+          </View>
+          <View style={styles.pointsBadge}>
+            <Text style={styles.pointsLabel}>Points</Text>
+            <Text style={styles.pointsValue}>450</Text>
+          </View>
+        </View>
+        <Text style={styles.cardDesc}>
+          Explorez le labyrinthe spirituel du Maroc. Maîtrisez le vocabulaire de l'artisanat traditionnel et des souks millénaires...
+        </Text>
+        <TouchableOpacity style={styles.primaryButton}>
+          <Text style={styles.btnText}>COMMENCER LE VOYAGE</Text>
+          <MaterialIcons name="arrow-forward" size={20} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.bottomNav}>
-        {BOTTOM_NAV.map((item) => (
-          <TouchableOpacity
-            key={item.label}
-            style={[styles.navItem, item.active && styles.navItemActive]}
-            onPress={() => item.route && router.push(item.route as any)}
-            activeOpacity={0.7}
-          >
-            <MaterialCommunityIcons
-              name={item.icon as any}
-              size={22}
-              color={item.active ? C.primary : C.onSurfaceVariant}
-            />
-            <Text style={[
-              styles.navLabel,
-              f('BeVietnamPro-Medium'),
-              item.active && styles.navLabelActive,
-            ]}>
-              {item.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+        <TouchableOpacity style={styles.navItem}>
+          <MaterialIcons name="leaderboard" size={24} color="rgba(26,26,46,0.3)" />
+          <Text style={styles.navText}>Ligue</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItemActive}>
+          <MaterialIcons name="map" size={24} color="#fff" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem}>
+          <MaterialIcons name="person" size={24} color="rgba(26,26,46,0.3)" />
+          <Text style={styles.navText}>Profil</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
-// ── Styles ──────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: C.bg },
-
-  scrollContent: {
-    paddingTop: Platform.OS === 'ios' ? 52 : 20,
-    paddingHorizontal: 16,
-    paddingBottom: 20,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-
-  // ── Header ──
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 60,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(255,248,240,0.85)',
+    borderBottomWidth: 1,
+    borderColor: 'rgba(212,168,67,0.1)',
+    zIndex: 10,
   },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-
-  avatarWrap: { position: 'relative', width: 44, height: 44 },
-  avatarImg: {
-    width: 44, height: 44, borderRadius: 22,
-    borderWidth: 2, borderColor: C.primaryFixed,
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  levelBadge: {
-    position: 'absolute', bottom: -2, right: -4,
-    width: 18, height: 18, borderRadius: 9,
-    backgroundColor: C.tertiary,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: C.bg,
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: 'rgba(212,168,67,0.3)',
   },
-  levelText: { fontSize: 8, fontWeight: '800', color: '#fff' },
-
-  userName: { fontSize: 15, fontWeight: '700', color: C.primary },
-  profileBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 3,
-    backgroundColor: 'rgba(115,92,0,0.1)',
-    paddingHorizontal: 6, paddingVertical: 2,
-    borderRadius: 99, marginTop: 2,
+  headerTitle: {
+    fontFamily: 'Plus Jakarta Sans',
+    fontWeight: 'bold',
+    fontSize: 18,
+    color: '#1A1A2E',
   },
-  profileBadgeText: { fontSize: 9, fontWeight: '700', color: C.tertiary, textTransform: 'uppercase', letterSpacing: 0.5 },
-
-  streakBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 2,
-    backgroundColor: 'rgba(255,172,105,0.15)',
-    paddingHorizontal: 8, paddingVertical: 4,
-    borderRadius: 99, borderWidth: 1, borderColor: 'rgba(255,172,105,0.3)',
+  headerSubtitle: {
+    fontFamily: 'Noto Sans Arabic',
+    fontWeight: 'bold',
+    fontSize: 12,
+    color: COLORS.goldAccent,
   },
-  streakEmoji: { fontSize: 12 },
-  streakText: { fontSize: 11, fontWeight: '700', color: '#9a4700' },
-  settingsBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-
-  // ── XP progress ──
-  xpSection: { marginBottom: 16, gap: 6 },
-  xpLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  xpLabel: { fontSize: 11, fontWeight: '700', color: C.tertiary },
-  xpLevelText: { fontSize: 10, fontWeight: '500', color: C.onSurfaceVariant },
-  xpBarBg: {
-    height: 8, backgroundColor: C.surfaceContainerHighest,
-    borderRadius: 99, overflow: 'hidden',
+  progressHeader: {
+    flex: 1,
+    marginHorizontal: 16,
+    maxWidth: 120,
   },
-  xpBarFill: { height: '100%', borderRadius: 99, overflow: 'hidden' },
-
-  // ── Title ──
-  titleSection: { flexDirection: 'row', alignItems: 'baseline', gap: 10, marginBottom: 16 },
-  title: { fontSize: 26, fontWeight: '800', color: C.primary, letterSpacing: -0.5 },
-  titleAr: { fontSize: 14, fontWeight: '500', color: 'rgba(44,78,62,0.45)' },
-
-  // ── Map ──
-  mapContainer: {
-    width: MAP_W,
-    alignSelf: 'center',
-    borderRadius: 32,
+  progressTrack: {
+    height: 10,
+    backgroundColor: 'rgba(212,168,67,0.1)',
+    borderRadius: 5,
     overflow: 'hidden',
-    marginBottom: 20,
-    elevation: 8,
-    shadowColor: '#1c1c18',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 24,
-    borderWidth: 5,
-    borderColor: C.parchmentDark,
   },
-  waterBg: {
-    backgroundColor: C.waterBlue,
+  progressFill: {
+    width: '55%',
+    height: '100%',
+    backgroundColor: COLORS.goldAccent,
+  },
+  menuBtn: {
+    padding: 8,
+  },
+  scrollContent: {
+    alignItems: 'center',
+    paddingTop: 40,
+    paddingBottom: 240,
+  },
+  lantern: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    backgroundColor: COLORS.goldAccent,
+    borderRadius: 3,
+    shadowColor: COLORS.goldAccent,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  nodeContainer: {
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  nodeBase: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
+    borderWidth: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  mapImg: {
-    width: '88%',
-    height: '88%',
-    opacity: 0.82,
-    tintColor: '#5a3a00',
-  } as any,
-
-  compass: {
+  nodeLocked: {
+    backgroundColor: '#fff',
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  nodeActive: {
+    backgroundColor: '#fff',
+    borderColor: COLORS.goldAccent,
+    shadowColor: COLORS.goldAccent,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  nodeCompletedA: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#fff',
+  },
+  nodeCompletedB: {
+    backgroundColor: '#10b981',
+    borderColor: '#fff',
+  },
+  pulseRing: {
     position: 'absolute',
-    bottom: 16,
-    right: 20,
-    opacity: 0.5,
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    backgroundColor: 'rgba(212,168,67,0.2)',
+    top: -16,
   },
-
-  // ── Challenge card ──
-  challengeCard: {
-    backgroundColor: C.surfaceContainerLowest,
-    borderRadius: 20,
-    marginBottom: 20,
-    overflow: 'hidden',
-    elevation: 6,
-    shadowColor: '#1c1c18',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.07,
-    shadowRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(193,68,14,0.1)',
+  activePill: {
+    position: 'absolute',
+    top: 4,
+    backgroundColor: COLORS.goldAccent,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
   },
-  challengeAccent: { height: 4, backgroundColor: C.red },
-  challengeBody: { flexDirection: 'row', padding: 16, gap: 14 },
-  challengeThumb: {
-    width: 80, height: 80, borderRadius: 12, overflow: 'hidden',
-    flexShrink: 0, position: 'relative',
+  activePillText: {
+    color: '#fff',
+    fontSize: 8,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
-  challengeThumbImg: { width: '100%', height: '100%' },
-  challengeThumbBadge: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    backgroundColor: 'rgba(193,68,14,0.85)',
-    paddingVertical: 2, alignItems: 'center',
+  checkBadge: {
+    position: 'absolute',
+    bottom: 4,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 2,
   },
-  challengeThumbBadgeText: { fontSize: 8, fontWeight: '700', color: '#fff' },
-
-  challengeInfo: { flex: 1, gap: 6 },
-  challengeTitleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
-  challengeCity: { fontSize: 20, fontWeight: '800', color: C.onSurface },
-  challengeCityAr: { fontSize: 13, fontWeight: '500', color: 'rgba(44,78,62,0.5)' },
-  challengeScenario: { fontSize: 12, fontWeight: '500', color: C.onSurfaceVariant, lineHeight: 18 },
-
-  challengeProgress: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  challengeProgressBar: {
-    flex: 1, height: 5, backgroundColor: C.surfaceContainerHighest,
-    borderRadius: 99, overflow: 'hidden',
-  },
-  challengeProgressFill: {
-    height: '100%', backgroundColor: C.red, borderRadius: 99,
-  },
-  challengeProgressText: { fontSize: 10, fontWeight: '700', color: C.red },
-
-  skillChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  skillChip: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 99 },
-  skillChipText: { fontSize: 9, fontWeight: '700' },
-
-  challengeFooter: { paddingHorizontal: 16, paddingBottom: 16 },
-  challengeCta: {
-    borderRadius: 14, height: 48,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8,
-  },
-  challengeCtaText: { fontSize: 16, fontWeight: '800', color: '#fff' },
-
-  // ── Journey section ──
-  journeySection: { gap: 12, marginBottom: 8 },
-  journeyHeader: { flexDirection: 'row', alignItems: 'baseline', gap: 10 },
-  journeyTitle: { fontSize: 18, fontWeight: '800', color: C.primary },
-  journeyAr: { fontSize: 12, fontWeight: '500', color: 'rgba(44,78,62,0.4)' },
-  journeyScroll: { gap: 12, paddingRight: 8 },
-
-  journeyCard: {
-    width: 110,
-    backgroundColor: C.surfaceContainerLowest,
-    borderRadius: 16,
-    padding: 12,
+  nodeTextContainer: {
+    marginTop: 12,
     alignItems: 'center',
-    gap: 6,
-    borderWidth: 1.5,
-    borderColor: C.outlineVariant,
-    flexShrink: 0,
-    elevation: 2,
+  },
+  nodeTitleLocked: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: COLORS.deepText,
+    opacity: 0.3,
+  },
+  nodeSubtitleLocked: {
+    fontFamily: 'Noto Sans Arabic',
+    fontSize: 12,
+    color: COLORS.deepText,
+    opacity: 0.3,
+  },
+  nodeTitle: {
+    fontWeight: '900',
+    fontSize: 18,
+  },
+  nodeSubtitle: {
+    fontFamily: 'Noto Sans Arabic',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  nodeTitleCompleted: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: 'rgba(26,26,46,0.8)',
+  },
+  nodeSubtitleCompleted: {
+    fontFamily: 'Noto Sans Arabic',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  bottomCard: {
+    position: 'absolute',
+    bottom: 100,
+    left: 16,
+    right: 16,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderRadius: 24,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(212,168,67,0.2)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 20,
+    zIndex: 40,
   },
-  journeyCardDone: {
-    borderColor: 'rgba(45,106,79,0.4)',
-    backgroundColor: 'rgba(196,235,214,0.2)',
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
-  journeyCardCurrent: {
-    borderColor: C.red,
-    borderWidth: 2,
-    backgroundColor: '#fff5f2',
-    elevation: 4,
-    shadowColor: C.red,
-    shadowOpacity: 0.15,
+  cardTag: {
+    backgroundColor: 'rgba(212,168,67,0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(212,168,67,0.2)',
+    alignSelf: 'flex-start',
+    marginBottom: 8,
   },
-  journeyCardLocked: { opacity: 0.5 },
-
-  journeyCardIcon: {
-    width: 36, height: 36, borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 2,
+  cardTagText: {
+    color: COLORS.goldAccent,
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
-  journeyCardName: { fontSize: 11, fontWeight: '700', color: C.onSurface, textAlign: 'center' },
-  journeyCardNameAr: { fontSize: 9, fontWeight: '500', color: C.onSurfaceVariant, textAlign: 'center' },
-  journeyXpBadge: {
-    paddingHorizontal: 6, paddingVertical: 2,
-    backgroundColor: C.surfaceContainer,
-    borderRadius: 99,
+  cardTitle: {
+    fontFamily: 'Plus Jakarta Sans',
+    fontSize: 22,
+    fontWeight: '900',
+    color: COLORS.deepText,
   },
-  journeyXpText: { fontSize: 8, fontWeight: '700', color: C.onSurfaceVariant, letterSpacing: 0.3 },
-  journeySkill: { fontSize: 8, fontWeight: '500', color: C.onSurfaceVariant, textAlign: 'center', lineHeight: 12 },
-
-  // ── Bottom Navigation ──
+  cardSubtitle: {
+    fontFamily: 'Noto Sans Arabic',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: COLORS.goldAccent,
+  },
+  pointsBadge: {
+    backgroundColor: 'rgba(212,168,67,0.05)',
+    padding: 8,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212,168,67,0.1)',
+    minWidth: 64,
+  },
+  pointsLabel: {
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: 'rgba(26,26,46,0.4)',
+    textTransform: 'uppercase',
+  },
+  pointsValue: {
+    color: COLORS.goldAccent,
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  cardDesc: {
+    fontFamily: 'Be Vietnam Pro',
+    fontSize: 13,
+    color: 'rgba(26,26,46,0.7)',
+    lineHeight: 18,
+    marginBottom: 20,
+    fontWeight: '500',
+  },
+  primaryButton: {
+    backgroundColor: COLORS.goldAccent,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 12,
+    shadowColor: COLORS.goldAccent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  btnText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   bottomNav: {
     position: 'absolute',
-    bottom: 0, left: 0, right: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 80,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    borderTopWidth: 1,
+    borderColor: 'rgba(212,168,67,0.1)',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'flex-end',
-    paddingBottom: Platform.OS === 'ios' ? 28 : 12,
-    paddingTop: 10,
-    paddingHorizontal: 4,
-    backgroundColor: 'rgba(253,249,243,0.92)',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(191,201,193,0.2)',
-    elevation: 16,
-    shadowColor: '#1c1c18',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 16,
+    paddingBottom: 24,
+    zIndex: 50,
   },
   navItem: {
-    flex: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 3,
-    paddingVertical: 6,
-    borderRadius: 12,
+    padding: 8,
   },
   navItemActive: {
-    backgroundColor: 'rgba(196,235,214,0.7)',
+    backgroundColor: COLORS.goldAccent,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+    shadowColor: COLORS.goldAccent,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+    borderWidth: 6,
+    borderColor: '#fff',
   },
-  navLabel: {
-    fontSize: 9,
-    fontWeight: '500',
-    color: C.onSurfaceVariant,
+  navText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginTop: 4,
+    color: 'rgba(26,26,46,0.3)',
     textTransform: 'uppercase',
-    letterSpacing: 0.4,
   },
-  navLabelActive: { color: C.primary, fontWeight: '700' },
 });

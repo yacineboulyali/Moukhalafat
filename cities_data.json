@@ -1,0 +1,44 @@
+{
+  "rabat": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuB3tWI1NXPM_WKeJ5E_bcdQLpIF-3s34YJxzfrBkGqMm_gcDWsQmSi0FcyLWuqREZrqD6a4Ck8N0hDbHyPyBJHBjkooY2JsyNCPDoCkSiG8VkqF_t8w5-sQwTMSnFhQRUOCzTS-tsiWYylbbMgCbadEm5hMNpAzG1jBDM3lVtPFORlGKf85-Ss35rxpJL1TqtTs3-zV_6sup0u4tEI-pWExdeJu79tlf8V6xixi8W7NLENt2LUmZ3q1HCmOKkcmdlaGBVmD9yqhdKU",
+    "cityTitle": "Rabat | الرباط",
+    "headline": "Le Cœur Institutionnel du Royaume",
+    "desc": "Depuis la Kasbah des Oudayas, la famille Ben Ali contemple l'avenir. Sous le regard de la Tour Mohammed VI, découvrez comment Rabat concilie héritage et leadership moderne.",
+    "focus": "Gouvernance &amp; Patrimoine"
+  },
+  "chefchaouen": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDweOhzNui_6YLrqo-bO0jsnpz0r0vGT_8hDBJblWPy7NwHMaZYO2G_RSwZFkogPXigbBoxH-Z_iojYSblvEeCHT0cAKoBp83ZynjbewafML84nsCdMgflJ7zdwV5QvLbcp2CnzY3EEA-PgAZvIGuvnD_MNCeky6Jgirk4Xe-t8ey1mHkp6xTGLaMTvE8XW28GYk7rmJ8KmlWe9Jne33FTHGAHl-WKb8Ook68QpSTmgk6KGznyu2CC0nyD02Nk7xMCxp5alsOSDbyY",
+    "cityTitle": "",
+    "headline": "La Cité Bleue | المدينة الزرقاء",
+    "desc": "La famille Ben Ali arrive au cœur de la médina. Pourront-ils s'orienter dans ce labyrinthe azuré en communiquant avec les habitants ?",
+    "focus": ""
+  },
+  "fes": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuBxa5gIFvHnzNsfPn807w_ILftZAoG4nxMRqLsk2MEIhc7e7EapJbhs7n08MHs8SlJ-hmXKvHcWLeKT3ZPUYqebAYclG6b0xJsq4E_iiBMVkZn_PjCXzQG0Rt2gD55hio6_Qf03Ycfy2KmFm_YmKO6sDoeiiJJBFEetNiEohRhsacsVWf6s-dg7gvX3RS-YlUklqoRS70ISdadtfwm1Il6j4y3IakWLP45w_hYxRMj3PmZ7sqgHQhpzxCrXRx83LVEuTfslJcewa0s",
+    "cityTitle": "Laâyoune | العيون",
+    "headline": "Le Cœur Historique du Royaume",
+    "desc": "Au seuil de Bab Boujloud, la famille Ben Ali s'imprègne de douze siècles d'histoire. Explorez les ruelles labyrinthiques de la plus grande médina du monde, où chaque pierre conte le savoir ancestral de Fès.",
+    "focus": "Artisanat &amp; Spiritualité"
+  },
+  "marrakech": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuB_E0nJ_m3Y_eXwXf9_kHqN_z_v5n-Lq6V5m8Xz9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m",
+    "cityTitle": "Marrakech | مراكش",
+    "headline": "Le Cœur Battant du Sud | قلب الجنوب النابض",
+    "desc": "Au milieu de l'effervescence de Jemaa el-Fna, la famille Ben Ali s'apprête à relever un défi de taille. Apprenez à naviguer dans la complexité des échanges commerciaux au cœur de la ville ocre.",
+    "focus": "Commerce &amp; Négociation"
+  },
+  "laayoune": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuAHmQOyCmmbQMbfMKOExbONDt6PVX2R4vuVRGkZ10ZbfLwPcKa47yxLHG5ukDv2UluXruhOK4FoLncsVm9Uui4T07MiX3Ons0ZxhrwpzAaJ1JWtBa-pEUQabmL_wA3hkzji3mBV_XUahmUDVmtF0jkiEj7f5rbO_3rKA3TG_QiefTcLDWlGCXFiP4vrr--43P899zSqNkbOvTPQVQ7qC_T83qdmFjksp6OPzpiYE-a0Kx2mN8qDbCLUDy5doqttN_mt_e4yuKlhOWw",
+    "cityTitle": "Laâyoune | العيون",
+    "headline": "Le Désert de l'Innovation",
+    "desc": "Au cœur du Sahara, la famille Ben Ali découvre les opportunités d'un territoire en pleine transformation. Apprenez à cultiver la créativité et l'esprit d'initiative dans ce paysage grandiose.",
+    "focus": ""
+  },
+  "dakhla": {
+    "imgUrl": "https://lh3.googleusercontent.com/aida-public/AB6AXuDFgB_VZNiO3D5Q4Jm81TI_wUNsVWO6aqbnYiQGwnvL5__Tjx-BtYloBCzNrYQ5BWCHHbq7XwBedL7uhOepfo2Wz6rqxcD_W_9D6NbXTL09jdYwxPiz0lecDoLlTIg41CElcwIzayfVdJ7GeEnbp27Lf2bifZCOcrbyHTZsHsteaSjZYKCmpVfDohIeTJ5Xc565bY54vBMqJMZ3Neu7Hm35RGJgUnj_vRrjBsejpoAw3xMVyDHOJwc55D1XYCRHgGaCxKeXz90t2Mo",
+    "cityTitle": "",
+    "headline": "Le Défilé des Falaises",
+    "desc": "",
+    "focus": ""
+  }
+}

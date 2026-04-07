@@ -1,271 +1,440 @@
-import React, { useEffect, useRef } from 'react';
-import {
-  View, Text, StyleSheet, Image, TouchableOpacity,
-  Dimensions, Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useFonts } from 'expo-font';
-import {
-  PlusJakartaSans_700Bold,
-  PlusJakartaSans_800ExtraBold,
-  PlusJakartaSans_600SemiBold,
-} from '@expo-google-fonts/plus-jakarta-sans';
-import {
-  BeVietnamPro_400Regular,
-  BeVietnamPro_500Medium,
-  BeVietnamPro_400Regular_Italic,
-} from '@expo-google-fonts/be-vietnam-pro';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import Animated, { 
+  FadeIn, 
+  FadeInUp, 
+  SlideInDown,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS
+} from 'react-native-reanimated';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 
 const { width, height } = Dimensions.get('window');
 
+const CITIES_DATA: Record<string, any> = {
+  rabat: {
+    img: require('../assets/images/intro-rabat.png'),
+    cityTitle: 'Rabat | الرباط',
+    headline: 'Le Cœur Institutionnel du Royaume',
+    desc: "Depuis la Kasbah des Oudayas, la famille Ben Ali contemple l'avenir. Sous le regard de la Tour Mohammed VI, découvrez comment Rabat concilie héritage et leadership moderne.",
+    focus: 'Gouvernance & Patrimoine',
+    stepTitle: 'ÉTAPE 1 / 4',
+    progress: 0.25,
+    color: '#735c00'
+  },
+  chefchaouen: {
+    img: require('../assets/images/intro-chefchaouen.png'),
+    cityTitle: 'Chefchaouen | شفشاون',
+    headline: 'La Cité Bleue | المدينة الزرقاء',
+    desc: "La famille Ben Ali arrive au cœur de la médina. Pourront-ils s'orienter dans ce labyrinthe azuré en communiquant avec les habitants ?",
+    focus: 'Communication & Orientation',
+    stepTitle: 'DÉFI 1 — CHEFCHAOUEN',
+    progress: 0.25,
+    color: '#4A90D9'
+  },
+  fes: {
+    img: require('../assets/images/intro-fes.png'),
+    cityTitle: 'Fès | فاس',
+    headline: 'Le Cœur Historique du Royaume',
+    desc: "Au seuil de Bab Boujloud, la famille Ben Ali s'imprègne de douze siècles d'histoire. Explorez les ruelles labyrinthiques de la plus grande médina du monde, où chaque pierre conte le savoir ancestral de Fès.",
+    focus: 'Artisanat & Spiritualité',
+    stepTitle: 'DÉFI 2 — FÈS',
+    progress: 0.5,
+    color: '#d4a843'
+  },
+  marrakech: {
+    img: require('../assets/images/marrakech-intro-bg.jpg'),
+    cityTitle: 'Marrakech | مراكش',
+    headline: 'Le Cœur Battant du Sud | قلب الجنوب النابض',
+    desc: "Au milieu de l'effervescence de Jemaa el-Fna, la famille Ben Ali s'apprête à relever un défi de taille. Apprenez à naviguer dans la complexité des échanges commerciaux au cœur de la ville ocre.",
+    focus: 'Commerce & Négociation',
+    stepTitle: 'DÉFI 3 — MARRAKECH',
+    progress: 0.75,
+    color: '#e2711d' 
+  },
+  laayoune: {
+    img: require('../assets/images/intro-laayoune.png'),
+    cityTitle: 'Laâyoune | العيون',
+    headline: "Le Désert de l'Innovation",
+    desc: "Au cœur du Sahara, la famille Ben Ali découvre les opportunités d'un territoire en pleine transformation. Apprenez à cultiver la créativité et l'esprit d'initiative dans ce paysage grandiose.",
+    focus: "Innovation & Développement",
+    stepTitle: 'DÉFI 4 — LAÂYOUNE',
+    progress: 0.9,
+    color: '#f4a261'
+  },
+  dakhla: {
+    img: require('../assets/images/intro-dakhla.png'),
+    cityTitle: 'Dakhla | الداخلة',
+    headline: 'Le Défilé des Falaises',
+    desc: "Fin du voyage. Le vent, la mer et le désert se rencontrent ici. Préparez-vous pour l'ultime défi d'endurance et de sagesse.",
+    focus: 'Endurance & Sagesse',
+    stepTitle: 'DÉFI FINAL — DAKHLA',
+    progress: 1.0,
+    color: '#2a9d8f'
+  }
+};
+
 export default function IntroDefiScreen() {
   const router = useRouter();
+  const { city } = useLocalSearchParams();
+  
+  const cityName = (city as string) || 'rabat';
+  const data = CITIES_DATA[cityName] || CITIES_DATA.rabat;
 
-  const [fontsLoaded] = useFonts({
-    'PlusJakartaSans-ExtraBold': PlusJakartaSans_800ExtraBold,
-    'PlusJakartaSans-Bold': PlusJakartaSans_700Bold,
-    'PlusJakartaSans-SemiBold': PlusJakartaSans_600SemiBold,
-    'BeVietnamPro-Regular': BeVietnamPro_400Regular,
-    'BeVietnamPro-Medium': BeVietnamPro_500Medium,
-    'BeVietnamPro-Italic': BeVietnamPro_400Regular_Italic,
+  const translateY = useSharedValue(height); // Start hidden for entry animation
+  const context = useSharedValue({ y: 0 });
+  const isExpanded = useSharedValue(true);
+
+  // Define collapsed and expanded positions
+  // Collapsed will hide most of the text but leave the drag handle and title
+  const expandedY = 0;
+  const collapsedY = height * 0.4; 
+
+  // Entry animation
+  useEffect(() => {
+    translateY.value = withSpring(expandedY, { damping: 15, mass: 1, stiffness: 100 });
+  }, []);
+
+  const toggleSheet = () => {
+    if (isExpanded.value) {
+      translateY.value = withSpring(collapsedY, { damping: 15 });
+      isExpanded.value = false;
+    } else {
+      translateY.value = withSpring(expandedY, { damping: 15 });
+      isExpanded.value = true;
+    }
+  };
+
+  const gesture = Gesture.Pan()
+    .onStart(() => {
+      context.value = { y: translateY.value };
+    })
+    .onUpdate((event) => {
+      // Allow dragging but don't pull too far up above 0 (add resistance)
+      let currentTranslationY = event.translationY + context.value.y;
+      if (currentTranslationY < 0) {
+        currentTranslationY = currentTranslationY / 3; // Resistance feeling
+      }
+      translateY.value = currentTranslationY;
+    })
+    .onEnd((event) => {
+      // Snap logic based on velocity or distance
+      if (event.translationY > 50 || event.velocityY > 300) {
+        // Going down -> Snap to collapsed
+        translateY.value = withSpring(collapsedY, { damping: 15 });
+        isExpanded.value = false;
+      } else if (event.translationY < -50 || event.velocityY < -300) {
+        // Going up -> Snap to expanded
+        translateY.value = withSpring(expandedY, { damping: 15 });
+        isExpanded.value = true;
+      } else {
+        // Snap back to nearest state
+        if (isExpanded.value) {
+          translateY.value = withSpring(expandedY, { damping: 15 });
+        } else {
+          translateY.value = withSpring(collapsedY, { damping: 15 });
+        }
+      }
+    });
+
+  const rBottomSheetStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateY: translateY.value }],
+    };
   });
-  const f = (n: string) => (fontsLoaded ? { fontFamily: n } : {});
 
   return (
-    <View style={styles.root}>
-      {/* ── Full screen background illustration ── */}
-      <Image
-        source={require('../assets/images/marrakech-intro-bg.jpg')}
-        style={styles.bg}
+    <View style={styles.container}>
+      {/* Background Hero Image */}
+      <Animated.Image 
+        entering={FadeIn.duration(800)}
+        source={data.img} 
+        style={[StyleSheet.absoluteFillObject, styles.bgImage]} 
         resizeMode="cover"
       />
-      {/* ── Dark gradient overlay from bottom ── */}
-      <LinearGradient
-        colors={['transparent', 'rgba(18,8,5,0.7)', '#120805']}
-        locations={[0.1, 0.45, 0.85]}
-        style={StyleSheet.absoluteFillObject}
-      />
+      
+      {/* Dark overlay for readability */}
+      <View style={styles.overlay} />
+      
+      {/* Zellige Pattern overlay */}
+      <View style={styles.zelligeOverlay} />
 
-      {/* ── Top: Close button ── */}
-      <View style={styles.topBar}>
-        <View style={{ flex: 1 }} />
-        <TouchableOpacity style={styles.glassBtn} onPress={() => router.push('/map')}>
-          <MaterialCommunityIcons name="close" size={20} color="#fff" />
+      {/* Top App Bar */}
+      <Animated.View entering={FadeInUp.delay(300).duration(500)} style={styles.topBar}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+          <MaterialIcons name="close" size={24} color="#fff" />
         </TouchableOpacity>
-      </View>
-
-      {/* ── Bottom Narrative Panel (55% of screen) ── */}
-      <View style={styles.panel}>
-        {/* Badge */}
-        <View style={styles.badge}>
-          <MaterialCommunityIcons name="map-marker" size={14} color="#e9c349" />
-          <Text style={[styles.badgeText, f('PlusJakartaSans-Bold')]}>
-            Marrakech | مراكش
-          </Text>
-        </View>
-
-        {/* Title */}
-        <View style={styles.titleBlock}>
-          <Text style={[styles.h1, f('PlusJakartaSans-ExtraBold')]}>
-            La famille Ben Ali arrive à Marrakech !
-          </Text>
-          <Text style={[styles.h1Ar, f('BeVietnamPro-Medium')]} >
-            {'عائلة بن علي تصل إلى مراكش!'}
-          </Text>
-        </View>
-
-        {/* Description */}
-        <Text style={[styles.desc, f('BeVietnamPro-Regular')]}>
-          Le père de famille a trouvé une opportunité professionnelle dans une entreprise
-          internationale de la Ville Rouge...
-        </Text>
-
-        {/* Dialogue frosted glass bubble */}
-        <View style={styles.bubble}>
-          <View style={styles.bubbleAvatar}>
-            <Image
-              source={require('../assets/images/avatar-mehdi.jpg')}
-              style={styles.bubbleAvatarImg}
-              resizeMode="cover"
-            />
+        
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${data.progress * 100}%`, backgroundColor: data.color }]} />
           </View>
-          <View style={styles.bubbleContent}>
-            <Text style={[styles.bubbleName, f('PlusJakartaSans-Bold')]}>Mehdi Ben Ali</Text>
-            <Text style={[styles.bubbleText, f('BeVietnamPro-Italic')]}>
-              « C'est à toi de jouer ! Aide-moi à bien communiquer ici... »
-            </Text>
-          </View>
+          <Text style={styles.stepTitle}>{data.stepTitle}</Text>
         </View>
 
-        {/* Step dots + CTA */}
-        <View style={styles.ctaBlock}>
-          {/* Step dots */}
-          <View style={styles.dots}>
-            <View style={[styles.dot, styles.dotActive]} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
-            <View style={styles.dot} />
-          </View>
+        <TouchableOpacity style={styles.iconBtn}>
+          <MaterialIcons name="more-vert" size={24} color="#fff" />
+        </TouchableOpacity>
+      </Animated.View>
 
-          {/* CTA button */}
-          <TouchableOpacity
-            style={styles.ctaBtn}
-            activeOpacity={0.9}
-            onPress={() => router.push('/fatima')}
-          >
-            <Text style={[styles.ctaText, f('PlusJakartaSans-Bold')]}>Découvrir le défi</Text>
-            <MaterialCommunityIcons name="arrow-right" size={22} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
+      {/* Main Bottom Sheet wrapped in GestureDetector */}
+      <GestureDetector gesture={gesture}>
+        <Animated.View style={[styles.bottomSheet, rBottomSheetStyle]}>
+          <BlurView intensity={80} tint="light" style={styles.blurContainer}>
+            
+            {/* Drag Handle to indicate swipeability */}
+            <TouchableOpacity onPress={toggleSheet} style={styles.dragHandleContainer} activeOpacity={0.8}>
+              <View style={styles.dragHandle} />
+            </TouchableOpacity>
+            
+            <Animated.View entering={FadeInUp.delay(700)} style={styles.badgeContainer}>
+              <View style={[styles.cityBadge, { backgroundColor: `${data.color}15`, borderColor: `${data.color}30` }]}>
+                <MaterialIcons name="location-on" size={18} color={data.color} />
+                <Text style={[styles.cityBadgeText, { color: data.color }]}>{data.cityTitle}</Text>
+              </View>
+            </Animated.View>
+
+            <Animated.Text entering={FadeInUp.delay(800)} style={styles.title}>
+              {data.headline}
+            </Animated.Text>
+            
+            <Animated.Text entering={FadeInUp.delay(900)} style={styles.description}>
+              {data.desc}
+            </Animated.Text>
+
+            {/* Action Button */}
+            <Animated.View entering={FadeInUp.delay(1000)} style={{ width: '100%', marginTop: 24 }}>
+              <TouchableOpacity 
+                style={[styles.primaryBtn, { backgroundColor: data.color }]}
+                onPress={() => {
+                  if (cityName === 'marrakech') {
+                    router.push('/marrakech' as any);
+                  } else {
+                    router.back();
+                  }
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.primaryBtnText}>Découvrir le défi</Text>
+                <MaterialIcons name="arrow-forward" size={20} color="#fff" />
+              </TouchableOpacity>
+
+              <View style={styles.socialProof}>
+                <View style={styles.avatarsRow}>
+                  <Image source={{uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m'}} style={styles.avatarMini} />
+                  <Image source={{uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m'}} style={[styles.avatarMini, { marginLeft: -10 }]} />
+                  <View style={[styles.avatarMiniNum, { marginLeft: -10, backgroundColor: `${data.color}20` }]}>
+                    <Text style={[styles.avatarNumText, { color: data.color }]}>+12</Text>
+                  </View>
+                </View>
+                <Text style={styles.socialText}>12 autres voyageurs</Text>
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeIn.delay(1200)} style={styles.focusChip}>
+              <MaterialIcons name="menu-book" size={14} color="rgba(26,26,46,0.6)" />
+              <Text style={styles.focusText}>Focus: {data.focus}</Text>
+            </Animated.View>
+
+          </BlurView>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#120805' },
-
-  bg: {
-    ...StyleSheet.absoluteFillObject,
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
   },
-
+  bgImage: {
+    width,
+    height,
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  zelligeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.1,
+  },
   topBar: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 50,
     left: 0,
-    zIndex: 20,
+    right: 0,
     flexDirection: 'row',
-    paddingTop: Platform.OS === 'ios' ? 56 : 16,
-    paddingRight: 16,
-    paddingBottom: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    zIndex: 50,
   },
-  glassBtn: {
+  iconBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    // backdrop-filter not native, use just the tinted bg
   },
-
-  panel: {
+  progressContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+  },
+  progressBarBg: {
+    width: '100%',
+    height: 8,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 6,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  stepTitle: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    letterSpacing: 2,
+    fontFamily: 'Plus Jakarta Sans',
+  },
+  bottomSheet: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 20,
-    paddingHorizontal: 24,
-    paddingBottom: Platform.OS === 'ios' ? 44 : 32,
-    paddingTop: 16,
-    gap: 20,
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    overflow: 'hidden',
   },
-
-  badge: {
+  dragHandleContainer: {
+    width: '100%',
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: 0,
+    zIndex: 10,
+  },
+  dragHandle: {
+    width: 50,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: 'rgba(0,0,0,0.2)',
+  },
+  blurContainer: {
+    padding: 32,
+    paddingTop: 36,
+    paddingBottom: 48,
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.85)',
+  },
+  badgeContainer: {
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  cityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 99,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(233,195,73,0.4)',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    gap: 8,
   },
-  badgeText: { fontSize: 12, fontWeight: '700', color: '#ffe088', letterSpacing: 1 },
-
-  titleBlock: { gap: 4 },
-  h1: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#fff',
-    lineHeight: 36,
-  },
-  h1Ar: {
-    fontSize: 20,
-    color: 'rgba(255,255,255,0.9)',
-    writingDirection: 'rtl',
-    marginTop: 4,
-  },
-
-  desc: {
+  cityBadgeText: {
+    fontFamily: 'Plus Jakarta Sans',
+    fontWeight: 'bold',
     fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    lineHeight: 22,
-    maxWidth: '90%',
   },
-
-  bubble: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 16,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+  title: {
+    fontFamily: 'Plus Jakarta Sans',
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#1A1A2E',
+    textAlign: 'center',
+    lineHeight: 32,
+    marginBottom: 16,
   },
-  bubbleAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#ffab69',
-    flexShrink: 0,
+  description: {
+    fontFamily: 'Be Vietnam Pro',
+    fontSize: 15,
+    color: '#404943',
+    textAlign: 'center',
+    lineHeight: 24,
   },
-  bubbleAvatarImg: { width: '100%', height: '100%' },
-  bubbleContent: { flex: 1, gap: 4 },
-  bubbleName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#ffab69',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  bubbleText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    color: '#fff',
-    lineHeight: 20,
-  },
-
-  ctaBlock: { gap: 24, marginTop: 8 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  dot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-  },
-  dotActive: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#ffab69',
-    shadowColor: 'rgba(255,171,105,0.6)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  ctaBtn: {
-    backgroundColor: '#C1440E',
-    borderRadius: 16,
-    height: 60,
+  primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 18,
+    borderRadius: 16,
     gap: 12,
-    shadowColor: '#C1440E',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 8,
   },
-  ctaText: { fontSize: 18, fontWeight: '700', color: '#fff' },
+  primaryBtnText: {
+    color: '#fff',
+    fontFamily: 'Plus Jakarta Sans',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  socialProof: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    gap: 12,
+  },
+  avatarsRow: {
+    flexDirection: 'row',
+  },
+  avatarMini: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#fff',
+    backgroundColor: '#ccc',
+  },
+  avatarMiniNum: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarNumText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  socialText: {
+    fontSize: 12,
+    color: 'rgba(26,26,46,0.5)',
+    fontWeight: '600',
+  },
+  focusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 24,
+    gap: 6,
+  },
+  focusText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: 'rgba(26,26,46,0.6)',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  }
 });
