@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html dir="ltr" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Le Voyage des Compétences - Profil</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Be+Vietnam+Pro:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface-variant": "#404943",
+                        "surface": "#fdf9f3",
+                        "on-primary-fixed": "#002114",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "primary-fixed": "#c4ebd6",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "outline": "#707973",
+                        "secondary": "#8e4e14",
+                        "inverse-primary": "#a9cfba",
+                        "secondary-fixed": "#ffdcc4",
+                        "surface-bright": "#fdf9f3",
+                        "secondary-container": "#ffab69",
+                        "tertiary-fixed": "#ffe088",
+                        "surface-variant": "#e6e2dc",
+                        "surface-container-highest": "#e6e2dc",
+                        "on-secondary-container": "#783d01",
+                        "on-tertiary-container": "#4e3d00",
+                        "on-error": "#ffffff",
+                        "inverse-on-surface": "#f4f0ea",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-high": "#ebe8e2",
+                        "primary-container": "#436655",
+                        "tertiary": "#735c00",
+                        "surface-tint": "#426655",
+                        "surface-dim": "#dddad4",
+                        "on-primary-container": "#bce3cd",
+                        "error-container": "#ffdad6",
+                        "surface-container": "#f1ede7",
+                        "primary": "#2c4e3e",
+                        "outline-variant": "#bfc9c1",
+                        "surface-container-lowest": "#ffffff",
+                        "background": "#fdf9f3",
+                        "inverse-surface": "#31302d",
+                        "on-secondary-fixed": "#2f1400",
+                        "on-surface": "#1c1c18",
+                        "tertiary-fixed-dim": "#e9c349",
+                        "error": "#ba1a1a",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#241a00",
+                        "primary-fixed-dim": "#a9cfba",
+                        "secondary-fixed-dim": "#ffb780",
+                        "on-background": "#1c1c18",
+                        "on-secondary": "#ffffff",
+                        "tertiary-container": "#cca72f",
+                        "surface-container-low": "#f7f3ed",
+                        "on-primary-fixed-variant": "#2b4e3e"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .zellige-pattern {
+            background-image: radial-gradient(#2d6a4f 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+            opacity: 0.05;
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface min-h-screen pb-24 overflow-x-hidden">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-6 h-16 w-full fixed top-0 z-50 bg-[#fdf9f3] dark:bg-stone-950 font-['Plus_Jakarta_Sans'] font-bold tracking-tight">
+<div class="flex items-center gap-4">
+<button class="text-[#2d6a4f] dark:text-[#40916c] hover:bg-[#f1ede7] transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="text-xl font-bold text-[#2d6a4f] dark:text-[#40916c]">Al-Musafer Profile</h1>
+</div>
+<button class="text-[#2d6a4f] dark:text-[#40916c] hover:bg-[#f1ede7] transition-colors p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</header>
+<main class="mt-20 px-4 space-y-6 max-w-md mx-auto relative">
+<!-- Subtle Zellige Overlay -->
+<div class="fixed inset-0 zellige-pattern pointer-events-none"></div>
+<!-- Section Headline -->
+<div class="flex flex-col items-center mb-2">
+<h2 class="font-headline font-extrabold text-2xl text-primary tracking-tight">Profil de Voyageur</h2>
+<span class="text-tertiary font-bold text-sm tracking-widest uppercase">ملف المسافر</span>
+</div>
+<!-- User Info Card -->
+<section class="relative bg-surface-container-lowest rounded-xl p-6 shadow-[0_8px_32px_rgba(28,28,24,0.04)] overflow-hidden">
+<div class="absolute -top-4 -right-4 w-24 h-24 bg-primary-fixed opacity-20 rounded-full blur-2xl"></div>
+<div class="flex flex-col items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-[88px] h-[88px] rounded-full p-1 bg-gradient-to-tr from-primary to-tertiary">
+<img alt="User Avatar" class="w-full h-full rounded-full object-cover border-2 border-white" data-alt="Close-up portrait of a cheerful young Moroccan student with warm eyes and a friendly smile, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK3e2NaB_KKEiHhZEoV-0Ewf1pwlp4Lo5MK33KvXQmCd8eT3Z9iYTB2INl6oaB124y-mIfUK54uW8MPBZFpbPTLY-EP8NU1lkRwikZcI4FOxpeYoUx08e9QFnO7Sv9xkKK6TFhfhf6r8qkqUWxctG7jkdjwUuk8gOR73_2O8STDPKXnpwuHcys-MnnA42_BE_yl8Hv8IachVY_DrEcEPM03woiv-RkNnXd1aF5hN4CNtPy_GJ5g4CTWm4C1dl0PXaSpW8AKEs5d-4"/>
+</div>
+<div class="absolute -bottom-1 -right-1 bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-bold border-2 border-white">
+                        Niv. 4
+                    </div>
+</div>
+<div class="text-center">
+<h3 class="font-headline font-bold text-2xl text-on-surface">Yassine</h3>
+<p class="text-on-surface-variant font-medium">L'Explorateur des Savoirs</p>
+</div>
+</div>
+</section>
+<!-- XP Progress Section -->
+<section class="bg-surface-container-low rounded-xl p-6 space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<p class="text-xs font-bold uppercase tracking-widest text-primary/70">Progression XP</p>
+<p class="text-on-surface font-semibold">⭐ 1,450 / 2,000 XP</p>
+</div>
+<p class="text-xs font-bold text-tertiary">Prochain Niveau: 5</p>
+</div>
+<div class="w-full h-4 bg-surface-container-highest rounded-full overflow-hidden p-0.5">
+<div class="h-full rounded-full bg-gradient-to-r from-primary to-tertiary-container" style="width: 72.5%"></div>
+</div>
+</section>
+<!-- Skills Advancement Grid -->
+<section class="space-y-4">
+<div class="flex justify-between items-center px-2">
+<h4 class="font-headline font-bold text-lg text-primary">Compétences <span class="text-tertiary text-sm ml-2">المهارات</span></h4>
+<button class="text-primary font-bold text-sm">Voir tout</button>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<!-- Communication -->
+<div class="bg-surface-container-lowest p-5 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center space-y-3">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-primary progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="25" stroke-width="3"></circle>
+</svg>
+<span class="material-symbols-outlined text-primary text-2xl" data-icon="forum">forum</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Communication</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">التواصل</p>
+</div>
+<span class="bg-primary-fixed text-on-primary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold">Niv. 2</span>
+</div>
+<!-- Decision Making -->
+<div class="bg-surface-container-lowest p-5 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center space-y-3">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-secondary progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="60" stroke-width="3"></circle>
+</svg>
+<span class="material-symbols-outlined text-secondary text-2xl" data-icon="alt_route">alt_route</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Décision</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">القرار</p>
+</div>
+<span class="bg-secondary-fixed text-on-secondary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold">Niv. 1</span>
+</div>
+<!-- Teamwork -->
+<div class="bg-surface-container-lowest p-5 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center space-y-3">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-tertiary progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="15" stroke-width="3"></circle>
+</svg>
+<span class="material-symbols-outlined text-tertiary text-2xl" data-icon="groups">groups</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Travail d'équipe</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">العمل الجماعي</p>
+</div>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed-variant px-2 py-0.5 rounded-full text-[10px] font-bold">Niv. 3</span>
+</div>
+<!-- Stress Management -->
+<div class="bg-surface-container-lowest p-5 rounded-lg border border-outline-variant/10 flex flex-col items-center text-center space-y-3">
+<div class="relative w-16 h-16 flex items-center justify-center">
+<svg class="absolute inset-0 w-full h-full" viewbox="0 0 36 36">
+<circle class="stroke-surface-container-highest" cx="18" cy="18" fill="none" r="16" stroke-width="3"></circle>
+<circle class="stroke-error progress-ring-circle" cx="18" cy="18" fill="none" r="16" stroke-dasharray="100" stroke-dashoffset="80" stroke-width="3"></circle>
+</svg>
+<span class="material-symbols-outlined text-error text-2xl" data-icon="psychology_alt">psychology_alt</span>
+</div>
+<div>
+<p class="font-bold text-sm text-on-surface">Gestion Stress</p>
+<p class="text-[10px] font-bold text-on-surface-variant uppercase tracking-tighter">إدارة الضغط</p>
+</div>
+<span class="bg-error-container text-on-error-container px-2 py-0.5 rounded-full text-[10px] font-bold">Niv. 1</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-8 pb-6 pt-4 bg-white/80 dark:bg-stone-900/80 backdrop-blur-xl rounded-t-[3rem] shadow-[0_-8px_32px_rgba(28,28,24,0.04)]">
+<a class="flex flex-col items-center justify-center text-stone-400 p-2 hover:text-[#2d6a4f]" href="#">
+<span class="material-symbols-outlined" data-icon="map">map</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-bold uppercase tracking-wider mt-1">Map</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#2d6a4f] text-white rounded-full px-6 py-2 transition-all scale-110 duration-300 ease-out" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-bold uppercase tracking-wider mt-0.5">Profile</span>
+</a>
+<a class="flex flex-col items-center justify-center text-stone-400 p-2 hover:text-[#2d6a4f]" href="#">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-['Be_Vietnam_Pro'] text-[11px] font-bold uppercase tracking-wider mt-1">Rankings</span>
+</a>
+</nav>
+</body></html>

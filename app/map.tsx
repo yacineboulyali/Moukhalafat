@@ -13,6 +13,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Path, Ellipse, Rect } from 'react-native-svg';
 
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -55,6 +56,7 @@ const Lantern = ({ delay, style }: { delay: number, style: any }) => {
 
 export default function MapScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.2);
 
@@ -79,12 +81,14 @@ export default function MapScreen() {
   return (
     <View style={styles.container}>
       {/* Top App Bar */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={styles.headerLeft}>
-          <Image 
-            source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB8D95WG-SPbVPIMyamvVstP4YMybfNRX6OlULKVNypv_OOJGggXwfvtfaelw4Px97PWOIc5ggIDZRSB11nG605TTqbSuMURj91DIBeoTl9S7fro6P53N5jOVwx9g5YFbPvcZF1An31fg_gFpopiG1s5yaUN_daW8DpPAiLbFf-Ms1_TP8p5TdI6PQgaZ3eSf1bKQqPDJuyUuuHkXBZCAQi7KARNVlxkgaLaEN1FNUE0rwJo0erllFFujCQsNmgwbkgFUhl90raYA0' }} 
-            style={styles.avatar} 
-          />
+          <TouchableOpacity onPress={() => router.push('/profil')}>
+            <Image
+              source={require('../assets/images/user-avatar.png')}
+              style={styles.avatar}
+            />
+          </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Le Voyage</Text>
             <Text style={styles.headerSubtitle}>الرحلة</Text>
@@ -97,8 +101,11 @@ export default function MapScreen() {
           </View>
         </View>
 
-        <TouchableOpacity style={styles.menuBtn}>
-          <MaterialIcons name="menu" size={24} color={COLORS.deepText} />
+        <TouchableOpacity 
+          style={styles.menuBtn}
+          onPress={() => router.push('/settings')}
+        >
+          <MaterialIcons name="settings" size={24} color={COLORS.deepText} />
         </TouchableOpacity>
       </View>
 
@@ -128,7 +135,7 @@ export default function MapScreen() {
         {/* Nodes - listed bottom to top for ScrollView natural flow */}
         
         {/* Dakhla (Locked) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 40 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'dakhla' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 40 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'dakhla' } })} activeOpacity={0.8}>
           <View style={[styles.nodeBase, styles.nodeLocked]}>
             <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
               <Ellipse cx="32" cy="56" rx="20" ry="2.5" fill="#2D6A4F" opacity="0.1" />
@@ -151,7 +158,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         {/* Laâyoune (Locked) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'laayoune' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'laayoune' } })} activeOpacity={0.8}>
           <View style={[styles.nodeBase, styles.nodeLocked]}>
             <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
               <Path d="M8 48L32 20L56 48" fill="#D4A843" opacity="0.2" />
@@ -170,7 +177,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         {/* Marrakech (Locked) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'marrakech' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'marrakech' } })} activeOpacity={0.8}>
           <View style={[styles.nodeBase, styles.nodeLocked]}>
             <MaterialIcons name="temple-hindu" size={40} color="rgba(0,0,0,0.2)" />
           </View>
@@ -181,7 +188,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         {/* Fès (Active) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'fes' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'fes' } })} activeOpacity={0.8}>
           <Animated.View style={[styles.pulseRing, pulseStyle]} />
           <View style={[styles.nodeBase, styles.nodeActive]}>
             <MaterialIcons name="door-front" size={40} color={COLORS.goldAccent} />
@@ -196,7 +203,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         {/* Chefchaouen (Completed) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'chefchaouen' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'chefchaouen' } })} activeOpacity={0.8}>
           <View style={[styles.nodeBase, styles.nodeCompletedA]}>
             <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
               <Path d="M16 52V28L32 16L48 28V52H16Z" fill="#E3F2FD" />
@@ -218,7 +225,7 @@ export default function MapScreen() {
         </TouchableOpacity>
 
         {/* Rabat (Completed) */}
-        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80, marginBottom: 120 }]} onPress={() => router.push({ pathname: '/intro-defi', params: { city: 'rabat' } })} activeOpacity={0.8}>
+        <TouchableOpacity style={[styles.nodeContainer, { marginTop: 80, marginBottom: 120 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'rabat' } })} activeOpacity={0.8}>
           <View style={[styles.nodeBase, styles.nodeCompletedB]}>
             <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
               <Rect x="22" y="10" width="20" height="44" fill="#D16B4B" />
@@ -266,7 +273,7 @@ export default function MapScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.bottomNav}>
+      <View style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 16), height: 64 + Math.max(insets.bottom, 16) }]}>
         <TouchableOpacity style={styles.navItem}>
           <MaterialIcons name="leaderboard" size={24} color="rgba(26,26,46,0.3)" />
           <Text style={styles.navText}>Ligue</Text>
@@ -274,7 +281,10 @@ export default function MapScreen() {
         <TouchableOpacity style={styles.navItemActive}>
           <MaterialIcons name="map" size={24} color="#fff" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
+        <TouchableOpacity 
+          style={styles.navItem}
+          onPress={() => router.push('/profil')}
+        >
           <MaterialIcons name="person" size={24} color="rgba(26,26,46,0.3)" />
           <Text style={styles.navText}>Profil</Text>
         </TouchableOpacity>

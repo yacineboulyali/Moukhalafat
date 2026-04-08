@@ -30,7 +30,7 @@ const COLORS = {
 
 export default function AccueilScreen() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Top 35%: Hero Illustration Section */}
       <View style={styles.heroSection}>
         <LinearGradient
@@ -80,7 +80,7 @@ export default function AccueilScreen() {
       <SafeAreaView style={styles.actionSection}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.push('/map')}
+          onPress={() => router.push('/map' as any)}
           activeOpacity={0.8}
         >
           <Text style={styles.primaryButtonText}>Créer un compte
@@ -91,6 +91,7 @@ export default function AccueilScreen() {
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.7}
+          onPress={() => router.push('/profil' as any)}
         >
           <Text style={styles.secondaryButtonText}>J'ai déjà un compte</Text>
         </TouchableOpacity>
@@ -108,7 +109,7 @@ export default function AccueilScreen() {
         </View>
         <Text style={styles.footerText}>© 2024 Le Voyage des Compétences</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

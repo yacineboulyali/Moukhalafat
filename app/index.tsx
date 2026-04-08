@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
 
@@ -48,12 +49,24 @@ export default function SplashScreen() {
     // Progress bar fills over 2 seconds
     progressWidth.value = withTiming(100, { duration: 2000, easing: Easing.out(Easing.ease) });
 
-    // Continuous rotation for the outer ring
+    // continuous rotation for the outer ring
     ringRotation.value = withRepeat(
       withTiming(360, { duration: 15000, easing: Easing.linear }),
       -1,
       false
     );
+
+    // Initialize Database
+    const initDb = async () => {
+      try {
+        const { dbService } = require('../services/database');
+        await dbService.init();
+        console.log("SQLite Database initialized successfully");
+      } catch (err) {
+        console.error("Failed to initialize database:", err);
+      }
+    };
+    initDb();
 
     // Navigate to accueil after 3 seconds
     const timer = setTimeout(() => {
@@ -82,7 +95,7 @@ export default function SplashScreen() {
   }));
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       {/* Background Decor */}
       <View style={[styles.decorBand, { backgroundColor: COLORS.primaryContainer }]} />
       <View style={[styles.decorBandThin, { backgroundColor: COLORS.tertiary }]} />
@@ -139,7 +152,7 @@ export default function SplashScreen() {
         </View>
         <Text style={styles.progressText}>INITIALISATION DU VOYAGE...</Text>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 

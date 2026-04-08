@@ -59,7 +59,7 @@ const CITIES_DATA: Record<string, any> = {
     color: '#e2711d' 
   },
   laayoune: {
-    img: require('../assets/images/intro-laayoune.png'),
+    img: require('../assets/images/intro-laayoune-v2.png'),
     cityTitle: 'Laâyoune | العيون',
     headline: "Le Désert de l'Innovation",
     desc: "Au cœur du Sahara, la famille Ben Ali découvre les opportunités d'un territoire en pleine transformation. Apprenez à cultiver la créativité et l'esprit d'initiative dans ce paysage grandiose.",
@@ -214,7 +214,9 @@ export default function IntroDefiScreen() {
                 style={[styles.primaryBtn, { backgroundColor: data.color }]}
                 onPress={() => {
                   if (cityName === 'marrakech') {
-                    router.push('/marrakech' as any);
+                    router.push('/pedago' as any);
+                  } else if (cityName === 'fes') {
+                    router.push('/defi-resultat' as any);
                   } else {
                     router.back();
                   }
