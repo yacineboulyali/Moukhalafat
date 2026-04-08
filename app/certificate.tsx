@@ -146,6 +146,9 @@ export default function CertificateScreen() {
           </View>
         </Animated.View>
 
+        {/* Add Space below certificate */}
+        <View style={{ height: 40 }} />
+
         {/* Buttons Action */}
         <Animated.View entering={FadeInDown.delay(1800)} style={styles.actions}>
           <TouchableOpacity 
@@ -159,6 +162,18 @@ export default function CertificateScreen() {
               <MaterialIcons name="file-download" size={24} color={COLORS.white} />
               <Text style={styles.primaryBtnText}>Télécharger le PDF</Text>
             </LinearGradient>
+          </TouchableOpacity>
+
+          {/* LinkedIn Button */}
+          <TouchableOpacity 
+            style={[styles.linkedinBtn, { marginTop: 16 }]}
+            onPress={() => {
+              SoundService.getInstance().triggerHaptic('medium');
+              // Logic to add to LinkedIn would go here
+            }}
+          >
+            <Ionicons name="logo-linkedin" size={20} color={COLORS.white} />
+            <Text style={styles.linkedinBtnText}>Ajouter au profil LinkedIn</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.shareBtn} onPress={onShare}>
@@ -377,6 +392,25 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     fontSize: 15,
     fontWeight: '600',
+    marginLeft: 10,
+  },
+  linkedinBtn: {
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#0077B5', // LinkedIn Blue
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#0077B5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  linkedinBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
     marginLeft: 10,
   },
   confettiOverlay: {

@@ -22,6 +22,7 @@ import Animated, {
   withSpring,
   withDelay
 } from 'react-native-reanimated';
+import BadgeShowcase from '../components/BadgeShowcase';
 
 const { width } = Dimensions.get('window');
 
@@ -149,20 +150,8 @@ export default function PortfolioScreen() {
             <SkillBar label="Leadership & Équipe" progress={90} color={COLORS.accent} delay={900} />
           </View>
 
-          {/* Section: Badges */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeaderRow}>
-              <Text style={styles.sectionTitle}>Succès & Badges</Text>
-              <TouchableOpacity onPress={() => router.push('/badges' as any)}>
-                <Text style={styles.seeAllBtn}>Voir tout</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.badgesGrid}>
-              <BadgeItem icon="handshake" label="Négociateur" color="#D16B4B" delay={1000} />
-              <BadgeItem icon="lightbulb" label="Innovateur" color="#cca72f" delay={1100} />
-              <BadgeItem icon="shield-alt" label="Gardien" color="#2c4e3e" delay={1200} />
-              <BadgeItem icon="leaf" label="Éco-Leader" color="#10b981" delay={1300} />
-            </View>
+          <View style={{ marginLeft: -24, marginRight: -24 }}>
+            <BadgeShowcase />
           </View>
 
           {/* Action Button */}

@@ -5,9 +5,11 @@ interface GameState {
   currentCity: CityId;
   unlockedCities: CityId[];
   totalXP: number;
+  familyTrust: number; // 0 to 100
   skills: Skill[];
   setCity: (cityId: CityId) => void;
   addXP: (amount: number) => void;
+  updateFamilyTrust: (amount: number) => void;
   unlockCity: (cityId: CityId) => void;
   updateSkill: (skillId: string, xpGain: number) => void;
 }
@@ -16,9 +18,13 @@ export const useGameStore = create<GameState>((set) => ({
   currentCity: 'casablanca',
   unlockedCities: ['casablanca'],
   totalXP: 0,
+  familyTrust: 50, // Starts at neutral/medium
   skills: [],
   setCity: (cityId) => set({ currentCity: cityId }),
   addXP: (amount) => set((state) => ({ totalXP: state.totalXP + amount })),
+  updateFamilyTrust: (amount) => set((state) => ({ 
+    familyTrust: Math.max(0, Math.min(100, state.familyTrust + amount)) 
+  })),
   unlockCity: (cityId) => set((state) => ({
     unlockedCities: state.unlockedCities.includes(cityId) 
       ? state.unlockedCities 

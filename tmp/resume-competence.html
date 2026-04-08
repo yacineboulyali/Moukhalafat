@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+
+<html class="light" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dddad4",
+                        "error-container": "#ffdad6",
+                        "surface-variant": "#e6e2dc",
+                        "on-surface": "#1c1c18",
+                        "on-tertiary": "#ffffff",
+                        "surface-container": "#f1ede7",
+                        "outline": "#707973",
+                        "on-secondary-fixed": "#2f1400",
+                        "surface-container-low": "#f7f3ed",
+                        "secondary-fixed": "#ffdcc4",
+                        "error": "#ba1a1a",
+                        "on-secondary-container": "#783d01",
+                        "on-primary-container": "#bce3cd",
+                        "on-tertiary-fixed": "#241a00",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "surface-container-high": "#ebe8e2",
+                        "primary": "#2c4e3e",
+                        "primary-fixed": "#c4ebd6",
+                        "surface-bright": "#fdf9f3",
+                        "primary-container": "#436655",
+                        "on-primary-fixed": "#002114",
+                        "inverse-primary": "#a9cfba",
+                        "tertiary-fixed-dim": "#e9c349",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "on-surface-variant": "#404943",
+                        "on-primary-fixed-variant": "#2b4e3e",
+                        "primary-fixed-dim": "#a9cfba",
+                        "surface": "#fdf9f3",
+                        "on-secondary": "#ffffff",
+                        "inverse-on-surface": "#f4f0ea",
+                        "on-primary": "#ffffff",
+                        "inverse-surface": "#31302d",
+                        "on-background": "#1c1c18",
+                        "tertiary-container": "#cca72f",
+                        "secondary-container": "#ffab69",
+                        "tertiary-fixed": "#ffe088",
+                        "background": "#fdf9f3",
+                        "secondary": "#8e4e14",
+                        "secondary-fixed-dim": "#ffb780",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "tertiary": "#735c00",
+                        "outline-variant": "#bfc9c1",
+                        "surface-tint": "#426655",
+                        "on-error": "#ffffff",
+                        "surface-container-highest": "#e6e2dc",
+                        "on-tertiary-container": "#4e3d00"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .zellige-pattern {
+            background-color: #fdf9f3;
+            background-image: radial-gradient(#436655 0.5px, transparent 0.5px), radial-gradient(#436655 0.5px, #fdf9f3 0.5px);
+            background-size: 20px 20px;
+            background-position: 0 0, 10px 10px;
+            opacity: 0.05;
+        }
+        .rosette-mask {
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+        .majlis-shadow {
+            box-shadow: 0 10px 30px -5px rgba(44, 78, 62, 0.15);
+        }
+        .gold-glow {
+            filter: drop-shadow(0 0 8px rgba(204, 167, 47, 0.6));
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-surface font-body text-on-surface">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#fdf9f3] dark:bg-stone-950 flex justify-between items-center px-6 h-16 w-full max-w-md mx-auto">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-[#2d6a4f] dark:text-[#4ade80]">menu</span>
+<h1 class="text-xl font-black text-[#2d6a4f] dark:text-[#4ade80] font-['Plus_Jakarta_Sans'] tracking-tight">Le Voyage</h1>
+</div>
+<div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-container">
+<img alt="Profil de l'apprenant" data-alt="Portrait of a young learner with a warm smile, wearing modern Moroccan inspired apparel, soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0mmD39Sg5lCYaNtp1Kavi6u5OIU3yimMFnLLbeIofVGypGmrcmi1fAlIxKqBV2sh4o3hA0eUMq7oN91LgR9oLq-jNnWGwEWCjEKAikO5YQkIO1yATIhqTa3akSL-tb7gG7ht3dEv-jPxwqpM9bqGh5j_iKM2XTSQQ9kDB9hcUTlUD6Hg9yPVjc9QVWLjMYEr7AoxPcAmW1L-kBU4KIjiYmXfLTAcTbBF1EBJaeC04YGyglqP_tU3sfoVWOnJ-OCO3NPlLShzDJ-I"/>
+</div>
+</header>
+<main class="pt-20 pb-32 max-w-md mx-auto px-6">
+<!-- Profile Header Section -->
+<section class="relative mb-12 text-center">
+<div class="absolute inset-0 zellige-pattern rounded-xl"></div>
+<div class="relative z-10 pt-8">
+<div class="w-32 h-32 mx-auto mb-4 relative">
+<div class="absolute inset-0 bg-tertiary-fixed rounded-full opacity-20 blur-xl"></div>
+<div class="w-full h-full rounded-[3rem] overflow-hidden border-4 border-surface-container-lowest majlis-shadow">
+<img class="w-full h-full object-cover" data-alt="Stylized portrait of a user with Moroccan architectural motifs in background, emerald and gold color palette" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOdpPiu7IQ4mp40ZSH-fVrhiA2RB3PNjFVZRERClsogr4-WPbsk8UbbE8Ej41syqLJFcFXjsfYlN3nCYKnTL_KQG76AqieO1hpxOqovor84HHETtH165ttk6xiVul_UUdUGwc5SLOARluPfuoVUvrumKefavlfgpZZqkmO4Kr41KbeNg_G52cECXaaOR5F_QI4fi_xedZX7jmH0EvOFFQwQSkaKaPn4Mug6wgauAnfj6haLJtMvT4apkM78lJ0qzC2TAZxjwXza3c"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-tertiary rounded-full p-2 gold-glow">
+<span class="material-symbols-outlined text-white text-lg" style="font-variation-settings: 'FILL' 1;">verified</span>
+</div>
+</div>
+<h2 class="font-headline text-2xl font-extrabold tracking-tight">Amine Al-Moussafer</h2>
+<p class="text-on-surface-variant font-medium">Voyageur Émérite • Niveau 42</p>
+</div>
+</section>
+<!-- Skill Radar: Geometric Rosette -->
+<section class="bg-surface-container-low rounded-xl p-8 mb-8 relative overflow-hidden">
+<div class="absolute top-0 right-0 w-32 h-32 opacity-10">
+<span class="material-symbols-outlined text-9xl">architecture</span>
+</div>
+<h3 class="font-headline text-lg font-bold mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">interests</span>
+                Rosette des Compétences
+            </h3>
+<div class="flex justify-center items-center py-4">
+<div class="relative w-64 h-64 flex justify-center items-center">
+<!-- Geometric Rosette Pattern as Radar Background -->
+<div class="absolute inset-0 flex items-center justify-center opacity-20">
+<svg class="w-full h-full" viewbox="0 0 100 100">
+<path class="text-primary" d="M50 0 L61 35 L98 35 L68 57 L79 91 L50 70 L21 91 L32 57 L2 35 L39 35 Z" fill="none" stroke="currentColor" stroke-width="0.5"></path>
+<circle class="text-primary" cx="50" cy="50" fill="none" r="15" stroke="currentColor" stroke-width="0.5"></circle>
+<circle class="text-primary" cx="50" cy="50" fill="none" r="30" stroke="currentColor" stroke-width="0.5"></circle>
+<circle class="text-primary" cx="50" cy="50" fill="none" r="45" stroke="currentColor" stroke-width="0.5"></circle>
+</svg>
+</div>
+<!-- Mock Radar Data Points -->
+<div class="absolute inset-0 flex items-center justify-center">
+<svg class="w-full h-full drop-shadow-md" viewbox="0 0 100 100">
+<polygon fill="#436655" fill-opacity="0.4" points="50,15 80,40 70,75 30,75 20,40" stroke="#2c4e3e" stroke-width="2"></polygon>
+<circle cx="50" cy="15" fill="#2c4e3e" r="3"></circle>
+<circle cx="80" cy="40" fill="#2c4e3e" r="3"></circle>
+<circle cx="70" cy="75" fill="#2c4e3e" r="3"></circle>
+<circle cx="30" cy="75" fill="#2c4e3e" r="3"></circle>
+<circle cx="20" cy="40" fill="#2c4e3e" r="3"></circle>
+</svg>
+</div>
+<!-- Labels -->
+<span class="absolute top-0 text-[10px] font-bold uppercase tracking-wider text-primary">Langue</span>
+<span class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 text-[10px] font-bold uppercase tracking-wider text-secondary">Art</span>
+<span class="absolute bottom-0 text-[10px] font-bold uppercase tracking-wider text-tertiary">Logique</span>
+<span class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 text-[10px] font-bold uppercase tracking-wider text-primary-container">Histoire</span>
+</div>
+</div>
+</section>
+<!-- Certificates & Badges Grid -->
+<section class="mb-12">
+<div class="flex justify-between items-end mb-6">
+<h3 class="font-headline text-lg font-bold">Trésors de Savoir</h3>
+<span class="text-sm font-semibold text-primary underline">Voir tout</span>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-surface-container-lowest p-6 rounded-lg text-center majlis-shadow border-b-4 border-tertiary-fixed relative group">
+<div class="absolute inset-0 bg-[#ffe088]/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"></div>
+<div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-tertiary-fixed rounded-full gold-glow">
+<span class="material-symbols-outlined text-on-tertiary-fixed text-3xl" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+</div>
+<p class="font-headline text-xs font-bold leading-tight uppercase tracking-tight">Maître des Calligraphies</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-lg text-center majlis-shadow border-b-4 border-primary-fixed relative group">
+<div class="w-16 h-16 mx-auto mb-3 flex items-center justify-center bg-primary-fixed rounded-full">
+<span class="material-symbols-outlined text-on-primary-fixed text-3xl" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+<p class="font-headline text-xs font-bold leading-tight uppercase tracking-tight">Explorateur du Haut Atlas</p>
+</div>
+</div>
+</section>
+<!-- Majlis Ranking Section -->
+<section class="bg-primary rounded-xl p-8 text-on-primary relative overflow-hidden">
+<!-- Decorative Zellige BG -->
+<div class="absolute inset-0 opacity-10">
+<svg height="100%" width="100%">
+<pattern height="40" id="zellige-small" patternunits="userSpaceOnUse" width="40" x="0" y="0">
+<path d="M20 0 L40 20 L20 40 L0 20 Z" fill="none" stroke="white" stroke-width="0.5"></path>
+</pattern>
+<rect fill="url(#zellige-small)" height="100%" width="100%"></rect>
+</svg>
+</div>
+<div class="relative z-10">
+<h3 class="font-headline text-xl font-bold mb-8 text-center">Le Majlis du Savoir</h3>
+<div class="flex justify-between items-end gap-2 h-48 mb-8">
+<!-- Rank 2 -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full border-2 border-surface-dim mb-2 overflow-hidden">
+<img data-alt="Avatar icon for second place in leaderboard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvjhU7MzoCDNxm6iU7fwGAUcbXvsxm-Nt_l0b1_zWGvOnbpI7VpSd-qO0ILjdbgkp0nricFuycrXfdubUG_inZy8uSCeUjRNdkba8t6LbmbCSEU7kwtoeGrYP7p6XiMQxeY0_nMlYZ1wiOd0NwOilhEy1c7GfDF9D9tO5yD7hk2Y7HtnjbmUGG6Ks3FMF5rKEVGD9wpTPOKNitlFP50khrPQjabyPrwTaKB72tMm0ymymWFQgBrI-2m7SRt-hpPPctl2VihFQpcwY"/>
+</div>
+<div class="w-full bg-primary-container rounded-t-lg h-24 relative flex items-end justify-center pb-2">
+<span class="text-2xl font-bold opacity-50">2</span>
+</div>
+<div class="w-full h-4 bg-secondary-container rounded-full -mt-2 shadow-lg"></div> <!-- Styled Cushion -->
+</div>
+<!-- Rank 1 (The Majlis Centerpiece) -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-12 h-12 rounded-full border-4 border-tertiary-fixed mb-2 overflow-hidden gold-glow">
+<img data-alt="Profile avatar for rank one learner" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkSJEbd3HOWBpHdW-M0Pot3qyBaNRF_oFfQQtwW1lZrkIafOxFZxo5BCopf4Hamt-v7xAlnKECDLohvZmODt82qD4bcYAMSplMLayRUu8WxECXrphTl6wr-3ElXi4jWIHno3lmYs0gXiW46ZUYVMVqSd6miH5dbe_mcKfNWgCpnyzJjFmdNDyDfvygOGM6fjthO1HpFt0NZRBK5vB0cPead7xMs7UamNk1i8jVFr5BONIkiYN06X52zaLbfT26ey61ONwd5CXJ2Bg"/>
+</div>
+<div class="w-full bg-tertiary rounded-t-lg h-36 relative flex items-end justify-center pb-2 shadow-2xl">
+<span class="text-3xl font-black text-on-tertiary">1</span>
+<span class="absolute -top-4 material-symbols-outlined text-tertiary-fixed text-4xl gold-glow" style="font-variation-settings: 'FILL' 1;">crown</span>
+</div>
+<div class="w-full h-6 bg-[#ffab69] rounded-full -mt-3 shadow-2xl relative">
+<div class="absolute inset-0 bg-white/10 rounded-full"></div>
+</div> <!-- Premium Cushion -->
+</div>
+<!-- Rank 3 -->
+<div class="flex-1 flex flex-col items-center">
+<div class="w-10 h-10 rounded-full border-2 border-surface-dim mb-2 overflow-hidden">
+<img data-alt="Avatar icon for third place in leaderboard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjCetEkWj7lBhO-OWELShy9TavTz54TH7RpPtxPdEdYl6_-ScwArSBsSPJyvR2s_kwBogqlgGnvUJbt-kbE_N9gtRB2P5728_o1vZg7AlB2TpvAZ__kIm8-0oTzavGMvPeCIWVTTS2nPI6cpNYpwTthwoFFOSDTlt9asGWN9qvYOEax_62dnKLQos4AM0p-sdDKLbbQdcY3MjR0GuY-o3_KQLkYO3um1BBQRG3bncdrRphkQpVJW1T0CidbEIJdHxUZLx1kKsbk4I"/>
+</div>
+<div class="w-full bg-primary-container rounded-t-lg h-16 relative flex items-end justify-center pb-2">
+<span class="text-xl font-bold opacity-50">3</span>
+</div>
+<div class="w-full h-4 bg-secondary-container rounded-full -mt-2 shadow-lg"></div> <!-- Styled Cushion -->
+</div>
+</div>
+<div class="bg-surface-container/20 backdrop-blur-md rounded-lg p-4 flex justify-between items-center">
+<div class="flex items-center gap-3">
+<span class="font-headline font-bold">Votre rang actuel</span>
+<span class="bg-tertiary-fixed text-on-tertiary-fixed px-3 py-1 rounded-full text-xs font-black">#1</span>
+</div>
+<span class="material-symbols-outlined">trending_up</span>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 pb-6 pt-2 bg-[#fdf9f3]/80 dark:bg-stone-950/80 backdrop-blur-xl rounded-t-[3rem] border-t border-[#bfc9c1]/15 z-50 shadow-[0_-8px_32px_rgba(28,28,24,0.04)]">
+<div class="flex flex-col items-center justify-center text-stone-500 px-5 py-2 hover:scale-105 transition-transform active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="school">school</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium uppercase tracking-wider mt-1">Apprendre</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 px-5 py-2 hover:scale-105 transition-transform active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium uppercase tracking-wider mt-1">Boutique</span>
+</div>
+<div class="flex flex-col items-center justify-center bg-[#2d6a4f] text-white rounded-2xl px-5 py-2 hover:scale-105 transition-transform active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium uppercase tracking-wider mt-1">Profil</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 px-5 py-2 hover:scale-105 transition-transform active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="leaderboard">leaderboard</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium uppercase tracking-wider mt-1">Classement</span>
+</div>
+<div class="flex flex-col items-center justify-center text-stone-500 px-5 py-2 hover:scale-105 transition-transform active:scale-90 transition-all">
+<span class="material-symbols-outlined" data-icon="explore">explore</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-medium uppercase tracking-wider mt-1">Quêtes</span>
+</div>
+</nav>
+</body></html>

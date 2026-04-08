@@ -17,7 +17,16 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEME } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
+import { useGameStore } from '../../stores/gameStore';
+import { ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
+
+const TEST_ACCOUNTS = [
+  { name: 'Yassine', email: 'yassine.test@voyage-ista.ma' },
+  { name: 'Fatima', email: 'fatima.test@voyage-ista.ma' },
+  { name: 'Mehdi', email: 'mehdi.test@voyage-ista.ma' },
+  { name: 'Démo', email: 'demo@voyage-ista.ma' },
+];
 
 const { width } = Dimensions.get('window');
 
@@ -26,8 +35,14 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const setUser = useAuthStore((state) => state.setUser);
+  const { unlockCity, addXP } = useGameStore();
   
   const COLORS = THEME.light;
+
+  const quickLogin = (testEmail: string) => {
+    setEmail(testEmail);
+    setPassword('Test1234!');
+  };
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -48,14 +63,24 @@ export default function LoginScreen() {
         // En vrai ici on récupérerait le profil depuis la table "profiles"
         // Pour le MVP on mocke les données de jeu
         console.log('Login success:', data.user.id);
+        const isMehdi = data.user.email === 'mehdi.test@voyage-ista.ma';
+
         setUser({
           id: data.user.id,
           full_name: data.user.user_metadata?.full_name || 'Utilisateur',
-          xp: 0,
-          level: 1,
-          badges: [],
+          xp: isMehdi ? 5000 : 0,
+          level: isMehdi ? 10 : 1,
+          badges: isMehdi ? ['mniqqa', 'tabraat', 'khmissa', 'taj_skills', 'sarout'] : [],
           created_at: new Date().toISOString(),
         });
+
+        if (isMehdi) {
+          // Débloquer toutes les villes pour Mehdi
+          const allCities: any[] = ['casablanca', 'rabat', 'marrakech', 'fes', 'tanger', 'chefchaouen'];
+          allCities.forEach(city => unlockCity(city));
+          addXP(5000);
+        }
+
         router.replace('/map');
       }
     } catch (error: any) {
@@ -76,6 +101,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
+      <ScrollView showsVerticalScrollIndicator={false}>
         <TouchableOpacity 
           style={styles.backButton}
           onPress={() => router.back()}
@@ -89,6 +115,21 @@ export default function LoginScreen() {
           </View>
           <Text style={styles.title}>Me connecter</Text>
           <Text style={styles.subtitle}>Ravis de vous revoir parmi nous !</Text>
+        </View>
+
+        <View style={styles.testAccounts}>
+          <Text style={styles.testTitle}>COMPTES DE TEST (1-TAP)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.testList}>
+            {TEST_ACCOUNTS.map((acc) => (
+              <TouchableOpacity 
+                key={acc.email} 
+                style={styles.testBadge}
+                onPress={() => quickLogin(acc.email)}
+              >
+                <Text style={styles.testBadgeText}>{acc.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
 
         <View style={styles.form}>
@@ -145,8 +186,23 @@ export default function LoginScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </ScrollView>
+    </KeyboardAvoidingView>
+
+    {/* DevQuickNav: Only visible in dev for quick testing */}
+    {__DEV__ && (
+      <View style={styles.devNav}>
+        <Text style={styles.devNavTitle}>DEV NAV</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {['/map', '/welcome', '/revelation', '/settings', '/leaderboard'].map(route => (
+            <TouchableOpacity key={route} onPress={() => router.push(route as any)} style={styles.devNavItem}>
+              <Text style={styles.devNavText}>{route.replace('/', '')}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    )}
+  </SafeAreaView>
   );
 }
 
@@ -251,5 +307,60 @@ const styles = StyleSheet.create({
   registerLinkBold: {
     color: THEME.light.primary,
     fontWeight: '700',
+  },
+  testAccounts: {
+    marginBottom: 32,
+  },
+  testTitle: {
+    fontSize: 10,
+    fontWeight: '900',
+    color: THEME.light.onSurfaceVariant,
+    letterSpacing: 1.5,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  testList: {
+    gap: 8,
+    paddingRight: 20,
+  },
+  testBadge: {
+    backgroundColor: 'rgba(44, 78, 62, 0.05)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(44, 78, 62, 0.1)',
+  },
+  testBadgeText: {
+    color: THEME.light.primary,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  devNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    padding: 10,
+    flexDirection: 'column',
+    zIndex: 999,
+  },
+  devNavTitle: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  devNavItem: {
+    backgroundColor: '#333',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  devNavText: {
+    color: '#fff',
+    fontSize: 12,
   },
 });

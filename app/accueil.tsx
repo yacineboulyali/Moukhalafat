@@ -1,10 +1,10 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { ResizeMode, Video } from 'expo-av';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import {
   Dimensions,
-  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -25,7 +25,7 @@ export default function AccueilScreen() {
       {/* Top 35%: Hero Illustration Section */}
       <View style={styles.heroSection}>
         <LinearGradient
-          colors={['#FFF8F0', '#FFE8CC']}
+          colors={['#FFFFFF', '#FFFFFF']}
           style={StyleSheet.absoluteFillObject}
         />
 
@@ -42,10 +42,13 @@ export default function AccueilScreen() {
 
         {/* Main Hero Image: Ben Ali Family */}
         <View style={styles.imageContainer}>
-          <Image
-            source={require('../assets/images/ben-ali-family-transparent.png')}
+          <Video
+            source={require('../assets/videos/welcome video.mp4')}
             style={styles.heroImage}
-            resizeMode="contain"
+            resizeMode={ResizeMode.CONTAIN}
+            shouldPlay
+            isLooping
+            isMuted
           />
         </View>
 
@@ -130,6 +133,7 @@ const styles = StyleSheet.create({
   heroImage: {
     width: '100%',
     height: '90%',
+    transform: [{ scale: 1.05 }],
   },
   archOverlay: {
     position: 'absolute',

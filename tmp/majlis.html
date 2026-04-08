@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html dir="ltr" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Be+Vietnam+Pro:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "background": "#fdf9f3",
+                        "surface-container-highest": "#e6e2dc",
+                        "error": "#ba1a1a",
+                        "surface-container": "#f1ede7",
+                        "surface-dim": "#dddad4",
+                        "surface-container-low": "#f7f3ed",
+                        "on-secondary-container": "#783d01",
+                        "secondary-container": "#ffab69",
+                        "outline": "#707973",
+                        "surface": "#fdf9f3",
+                        "on-tertiary": "#ffffff",
+                        "outline-variant": "#bfc9c1",
+                        "on-surface-variant": "#404943",
+                        "error-container": "#ffdad6",
+                        "on-primary-fixed": "#002114",
+                        "secondary-fixed-dim": "#ffb780",
+                        "on-primary-container": "#bce3cd",
+                        "tertiary-container": "#cca72f",
+                        "inverse-on-surface": "#f4f0ea",
+                        "surface-variant": "#e6e2dc",
+                        "on-tertiary-container": "#4e3d00",
+                        "on-secondary-fixed-variant": "#6f3800",
+                        "on-secondary-fixed": "#2f1400",
+                        "on-secondary": "#ffffff",
+                        "tertiary-fixed-dim": "#e9c349",
+                        "tertiary": "#735c00",
+                        "surface-tint": "#426655",
+                        "surface-container-high": "#ebe8e2",
+                        "on-background": "#1c1c18",
+                        "secondary": "#8e4e14",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-fixed": "#c4ebd6",
+                        "primary": "#2c4e3e",
+                        "secondary-fixed": "#ffdcc4",
+                        "on-primary-fixed-variant": "#2b4e3e",
+                        "primary-fixed-dim": "#a9cfba",
+                        "on-surface": "#1c1c18",
+                        "tertiary-fixed": "#ffe088",
+                        "surface-bright": "#fdf9f3",
+                        "on-primary": "#ffffff",
+                        "on-tertiary-fixed": "#241a00",
+                        "inverse-surface": "#31302d",
+                        "on-tertiary-fixed-variant": "#574500",
+                        "inverse-primary": "#a9cfba",
+                        "primary-container": "#436655",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "1rem",
+                        "lg": "2rem",
+                        "xl": "3rem",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Plus Jakarta Sans"],
+                        "body": ["Be Vietnam Pro"],
+                        "label": ["Plus Jakarta Sans"]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .zellige-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l15 15-15 15-15-15zM0 30l15 15-15 15-15-15zM60 30l15 15-15 15-15-15zM30 60l15-15-15-15-15 15z' fill='%232c4e3e' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+        .radar-grid {
+            background-image: radial-gradient(circle at center, transparent 30%, #bfc9c122 31%, transparent 32%, transparent 60%, #bfc9c122 61%, transparent 62%);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed min-h-screen pb-32 zellige-pattern">
+<!-- TopAppBar -->
+<header class="flex justify-between items-center px-6 py-4 w-full bg-[#fdf9f3] dark:bg-stone-950 sticky top-0 z-40">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-t-full rounded-bl-full overflow-hidden bg-surface-container shadow-sm border-2 border-primary-fixed">
+<img alt="Traveler Zayd" class="w-full h-full object-cover" data-alt="Portrait of a young man with a warm smile, wearing modern casual attire against a blurred architectural background of a Moroccan courtyard" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCpJ6hkr8MHB7gUaCBApAUHILjdXqfb10OirfDMHQ9YLp_qVnZNXPCvxQzyYayxVoG4IoBrePqUxKQEg_EMjDv5mWgnwxpheoHvsIcI9tQDjhL1m_z1Dl9q3usBdpDICvPOfQacIIGNoVKgvR0iMXA0Y_hjXF-4y2WzwHMhqS-5dpIkW1Wg2zSekaREdX1JlpEkSMYC3W_fZ40wlgoU1tMZtm3QdXkI7OF0FjXVqP541DXkFL1hqrghC1-u18rYtypO-E9PGXOY-P8"/>
+</div>
+<div>
+<h1 class="font-headline font-black text-xl tracking-tight text-primary leading-tight">Traveler Zayd <span class="text-xs font-normal opacity-70 ml-1">Lv. 12</span></h1>
+<div class="flex items-center gap-1 opacity-70">
+<span class="material-symbols-outlined text-[14px]">location_on</span>
+<span class="text-[11px] font-medium uppercase tracking-wider">Casablanca</span>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container text-primary hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined">settings</span>
+</button>
+</header>
+<main class="max-w-md mx-auto px-6 pt-4 space-y-10">
+<!-- Section 1: Competency Radar -->
+<section class="space-y-4">
+<div class="flex justify-between items-end">
+<div>
+<h2 class="font-headline font-bold text-2xl text-primary">Competency Radar</h2>
+<p class="text-sm opacity-60">Visualisez votre évolution</p>
+</div>
+<div class="bg-primary-fixed text-on-primary-fixed-variant px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]" style="font-variation-settings: 'wght' 700;">trending_up</span>
+                    +5% THIS WEEK
+                </div>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-6 relative overflow-hidden aspect-square flex items-center justify-center border border-outline-variant/10 shadow-sm">
+<!-- Abstract Radar Representation -->
+<div class="absolute inset-0 radar-grid opacity-40"></div>
+<svg class="w-full h-full drop-shadow-xl overflow-visible" viewbox="0 0 200 200">
+<!-- Guidelines -->
+<polygon fill="none" points="100,20 180,60 180,140 100,180 20,140 20,60" stroke="#bfc9c1" stroke-dasharray="2,2" stroke-width="0.5"></polygon>
+<polygon fill="none" points="100,50 150,75 150,125 100,150 50,125 50,75" stroke="#bfc9c1" stroke-dasharray="2,2" stroke-width="0.5"></polygon>
+<!-- Radar Shape -->
+<defs>
+<lineargradient id="radarGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+<stop offset="0%" style="stop-color:#2c4e3e; stop-opacity:0.8"></stop>
+<stop offset="100%" style="stop-color:#a9cfba; stop-opacity:0.8"></stop>
+</lineargradient>
+</defs>
+<polygon class="animate-pulse" fill="url(#radarGradient)" points="100,40 160,75 170,130 110,165 45,135 60,65"></polygon>
+<!-- Data Points -->
+<circle cx="100" cy="40" fill="#2c4e3e" r="3"></circle>
+<circle cx="160" cy="75" fill="#2c4e3e" r="3"></circle>
+<circle cx="170" cy="130" fill="#2c4e3e" r="3"></circle>
+<circle cx="110" cy="165" fill="#2c4e3e" r="3"></circle>
+<circle cx="45" cy="135" fill="#2c4e3e" r="3"></circle>
+<circle cx="60" cy="65" fill="#2c4e3e" r="3"></circle>
+</svg>
+<!-- Radar Labels -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary tracking-widest uppercase">Empathy</div>
+<div class="absolute top-1/4 right-2 text-[10px] font-bold text-primary tracking-widest uppercase rotate-45">Leadership</div>
+<div class="absolute bottom-1/4 right-2 text-[10px] font-bold text-primary tracking-widest uppercase -rotate-45">Negotiation</div>
+<div class="absolute bottom-4 left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary tracking-widest uppercase">Resilience</div>
+<div class="absolute bottom-1/4 left-2 text-[10px] font-bold text-primary tracking-widest uppercase rotate-45">Listening</div>
+<div class="absolute top-1/4 left-2 text-[10px] font-bold text-primary tracking-widest uppercase -rotate-45">Adaptability</div>
+</div>
+</section>
+<!-- Section 2: Certificates -->
+<section class="space-y-4">
+<div class="flex justify-between items-center">
+<h2 class="font-headline font-bold text-2xl text-primary">Certificates</h2>
+<span class="text-xs font-semibold text-secondary flex items-center gap-1">SEE ALL <span class="material-symbols-outlined text-sm">arrow_forward</span></span>
+</div>
+<div class="flex gap-4 overflow-x-auto pb-4 hide-scrollbar -mx-6 px-6">
+<!-- Certificate Card 1 -->
+<div class="flex-shrink-0 w-64 bg-surface-container-low rounded-lg p-5 border-l-4 border-[#3b82f6] shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center text-[#3b82f6]">
+<span class="material-symbols-outlined text-3xl">handshake</span>
+</div>
+<span class="text-[10px] font-bold opacity-40">OCT 12</span>
+</div>
+<h3 class="font-headline font-bold text-lg leading-tight mb-2">Mediator of Chefchaouen</h3>
+<div class="flex items-center gap-2">
+<span class="bg-blue-100 text-blue-800 text-[10px] font-bold px-2 py-0.5 rounded-full">Negotiation +10</span>
+<span class="text-[10px] font-medium opacity-50 italic">Verified</span>
+</div>
+</div>
+<!-- Certificate Card 2 -->
+<div class="flex-shrink-0 w-64 bg-surface-container-low rounded-lg p-5 border-l-4 border-[#cca72f] shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center text-[#cca72f]">
+<span class="material-symbols-outlined text-3xl">menu_book</span>
+</div>
+<span class="text-[10px] font-bold opacity-40">SEP 28</span>
+</div>
+<h3 class="font-headline font-bold text-lg leading-tight mb-2">Scholar of Fès</h3>
+<div class="flex items-center gap-2">
+<span class="bg-amber-100 text-[#735c00] text-[10px] font-bold px-2 py-0.5 rounded-full">Wisdom +15</span>
+<span class="text-[10px] font-medium opacity-50 italic">Honors</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Section 3: Family Rankings -->
+<section class="space-y-4">
+<h2 class="font-headline font-bold text-2xl text-primary">Family Rankings</h2>
+<div class="space-y-3">
+<!-- Rank 1 -->
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-lg">
+<div class="w-8 flex justify-center font-headline font-black text-tertiary text-lg">1</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-tertiary">
+<img alt="Cousin Amira" class="w-full h-full object-cover" data-alt="Portrait of a woman with elegant features in professional attire, smiling with confidence in a modern office setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7LTEThaSbIg3doO2I8tnr2SSTSpIgFuvo6w6QKYbT9ktU5D3aYUp6C8kUYToW-FWePxoLoXKDz-hDnZnpfKw-jbUwnXi9GK4HRb3cLYJPBXLG8Mi7Vov-pFNvHmlnKuz2cs12_vxxC5WIRFu5AvdR5hwnncROkMTeFdNah0AZGDn8bZsB0MbzSvjp-k9REt2l5GeZ_yr5kg42_H5qB6mqdxOgRcpoG7T81k52qfvoUcsG1M5r7CHCUuHn2t8WeB2G4y2GqyddgDw"/>
+</div>
+<div class="flex-grow">
+<h4 class="font-bold text-sm">Cousin Amira</h4>
+<p class="text-[10px] font-medium text-tertiary uppercase tracking-wider">Grandmaster</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-sm text-primary">2,450</span>
+<span class="text-[10px] opacity-50 block">XP</span>
+</div>
+</div>
+<!-- Rank 2 -->
+<div class="flex items-center gap-4 bg-surface-container-low p-4 rounded-lg">
+<div class="w-8 flex justify-center font-headline font-black text-on-surface-variant text-lg">2</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-outline-variant">
+<img alt="Uncle Youssef" class="w-full h-full object-cover" data-alt="Distinguished mature man with silver hair and a neat beard, wearing a traditional embroidered jacket in a sunlit atrium" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDoAed7I_rdUc_mBAZP4ynbIOXjGMQwprtM4C_r8JIktCxo9HNAXIB5CRG2IyUtS5PdmxyUz7Nyk3HmX01pEEgfNpgbniaKqXz6JXDvOdZU1ISACNnD0RktFqVoNY_3cOJsGWejDHbltVjyEvY402t8dIJ_O0kDQ4j4IlD_n7ZA-d_XP191Zt3J4jc48VrQcfFsj8mRl40lD1rGQu-k0FvTcrP6up8APjOQvn9HuzzUK7PRpusmJiC9jzZQ3Ahj_Nz2nf-fafG9XsE"/>
+</div>
+<div class="flex-grow">
+<h4 class="font-bold text-sm">Uncle Youssef</h4>
+<p class="text-[10px] font-medium text-on-surface-variant opacity-60 uppercase tracking-wider">Mentor</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-sm text-primary">2,100</span>
+<span class="text-[10px] opacity-50 block">XP</span>
+</div>
+</div>
+<!-- Spacer for visual gap -->
+<div class="flex justify-center gap-1 py-1">
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+</div>
+<!-- Rank 15 (YOU) -->
+<div class="flex items-center gap-4 bg-primary text-white p-4 rounded-xl shadow-lg ring-4 ring-primary-fixed-dim/20">
+<div class="w-8 flex justify-center font-headline font-black text-primary-fixed text-lg">15</div>
+<div class="w-12 h-12 rounded-full overflow-hidden border-2 border-primary-fixed">
+<img alt="You" class="w-full h-full object-cover" data-alt="Profile photo of the user" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBSA0faiiPDMUo0uQHkMMZqL0hV30l_BRHG-6-o931Hqxabl2eCTHEytGM81rg08h48aJf77DNvjccxKKMom_9nYnts-Jjr_gr2OlGRK-vpZ9Y8XA1iY05_RwJOZDgcOMKThJ0ZLkxgc2DXdZLrXPA7CZNUXrLckKK81OWILiU6UOpN4fl0VOOGA8tkurpkcoRX1uhtxUq5XTiilU5aaSnkGJNgwbfWMs6TXRFbc9hyLXQ8xFCcyPM-d9SHDhq7LH0vZ33p7bDLYRo"/>
+</div>
+<div class="flex-grow">
+<h4 class="font-bold text-sm">You</h4>
+<p class="text-[10px] font-medium text-primary-fixed opacity-80 uppercase tracking-wider">Explorer</p>
+</div>
+<div class="text-right">
+<span class="font-headline font-bold text-sm text-white">850</span>
+<span class="text-[10px] opacity-70 block">XP</span>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Button -->
+<button class="w-full py-4 px-6 bg-primary text-white font-headline font-bold text-sm rounded-full flex items-center justify-center gap-2 shadow-xl shadow-primary/20 active:scale-95 transition-transform duration-150">
+<span class="material-symbols-outlined">person_add</span>
+            Invite Friends to Majlis
+        </button>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 dark:bg-stone-900/80 backdrop-blur-xl shadow-[0_-8px_32px_rgba(28,28,24,0.04)] rounded-t-[3rem] border-t border-[#bfc9c1]/15">
+<a class="flex flex-col items-center justify-center text-[#1c1c18] dark:text-stone-400 opacity-60 hover:text-[#2d6a4f]" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-semibold uppercase tracking-widest mt-1">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1c1c18] dark:text-stone-400 opacity-60 hover:text-[#2d6a4f]" href="#">
+<span class="material-symbols-outlined">map</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-semibold uppercase tracking-widest mt-1">Map</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-[#2d6a4f] text-white rounded-full px-5 py-2 active:scale-90 transition-transform duration-300 ease-out" href="#">
+<span class="material-symbols-outlined">groups</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-semibold uppercase tracking-widest">Majlis</span>
+</a>
+<a class="flex flex-col items-center justify-center text-[#1c1c18] dark:text-stone-400 opacity-60 hover:text-[#2d6a4f]" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-['Be_Vietnam_Pro'] text-[10px] font-semibold uppercase tracking-widest mt-1">Inventory</span>
+</a>
+</nav>
+</body></html>

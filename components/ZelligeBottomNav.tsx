@@ -98,11 +98,11 @@ export const ZelligeBottomNav = () => {
       ]}
     >
       <NavItem 
-        name="leaderboard" 
-        icon="leaderboard" 
-        label="Ligue" 
-        path="/leaderboard" 
-        isActive={pathname === '/leaderboard'} 
+        name="accueil" 
+        icon="home" 
+        label="Accueil" 
+        path="/accueil" 
+        isActive={pathname === '/accueil'} 
       />
       <NavItem 
         name="map" 
@@ -112,11 +112,18 @@ export const ZelligeBottomNav = () => {
         isActive={pathname === '/map'} 
       />
       <NavItem 
+        name="majlis" 
+        icon="groups" 
+        label="Majlis" 
+        path="/majlis" 
+        isActive={pathname === '/majlis'} 
+      />
+      <NavItem 
         name="profil" 
         icon="person" 
         label="Profil" 
-        path="/profil" 
-        isActive={pathname === '/profil'} 
+        path="/profil-classique" 
+        isActive={pathname === '/profil-classique' || pathname === '/resume-competence'} 
       />
     </BlurView>
   );

@@ -18,6 +18,7 @@ import { SoundService } from '../services/sounds';
 import { useTheme } from '../hooks/useTheme';
 import { BlurView } from 'expo-blur';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import FamilyTrustGauge from '../components/FamilyTrustGauge';
 
 const { width } = Dimensions.get('window');
 
@@ -117,6 +118,10 @@ export default function MapScreen() {
           <MaterialIcons name="settings" size={24} color={colors.onSurface} />
         </TouchableOpacity>
       </BlurView>
+
+      <View style={{ zIndex: 5, marginTop: 10 }}>
+        <FamilyTrustGauge />
+      </View>
 
       <ScrollView 
         contentContainerStyle={dynamics.scrollContent} 
