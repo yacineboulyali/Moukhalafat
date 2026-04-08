@@ -7,28 +7,18 @@ import Animated, {
   withTiming,
   withDelay,
   withRepeat,
-  withSequence,
   withSpring,
   Easing,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { THEME } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
-const COLORS = {
-  surface: '#fdf9f3',
-  primary: '#2c4e3e',
-  primaryContainer: '#436655',
-  tertiary: '#735c00',
-  tertiaryContainer: '#cca72f',
-  tertiaryFixed: '#ffe088',
-  secondaryContainer: '#ffab69',
-  onBackground: '#1c1c18',
-  onSurfaceVariant: '#404943',
-  surfaceContainerLowest: '#ffffff',
-};
+// On utilise explicitement le thème clair
+const COLORS = THEME.light;
 
 export default function SplashScreen() {
   const logoScale = useSharedValue(0.5);
@@ -47,7 +37,7 @@ export default function SplashScreen() {
     textTranslateY.value = withDelay(400, withSpring(0, { damping: 12, stiffness: 90 }));
 
     // Progress bar fills over 2 seconds
-    progressWidth.value = withTiming(100, { duration: 2000, easing: Easing.out(Easing.ease) });
+    progressWidth.value = withTiming(100, { duration: 2500, easing: Easing.out(Easing.ease) });
 
     // continuous rotation for the outer ring
     ringRotation.value = withRepeat(
@@ -56,19 +46,14 @@ export default function SplashScreen() {
       false
     );
 
-    // Initialize Database
-    const initDb = async () => {
-      try {
-        const { dbService } = require('../services/database');
-        await dbService.init();
-        console.log("SQLite Database initialized successfully");
-      } catch (err) {
-        console.error("Failed to initialize database:", err);
-      }
+    // Initialisation
+    const initApp = async () => {
+      // On pourrait ici charger des données essentielles
+      // Simulation d'un temps de chargement
     };
-    initDb();
+    initApp();
 
-    // Navigate to accueil after 3 seconds
+    // Navigation vers l'accueil
     const timer = setTimeout(() => {
       router.replace('/accueil');
     }, 3000);
@@ -96,23 +81,22 @@ export default function SplashScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Background Decor */}
-      <View style={[styles.decorBand, { backgroundColor: COLORS.primaryContainer }]} />
-      <View style={[styles.decorBandThin, { backgroundColor: COLORS.tertiary }]} />
+      {/* Background Decor (Zellige Stripes) */}
+      <View style={[styles.decorBand, { backgroundColor: COLORS.primary }]} />
+      <View style={[styles.decorBandThin, { backgroundColor: COLORS.gold }]} />
 
       {/* Zellige Pattern Background */}
       <View style={StyleSheet.absoluteFillObject}>
         <Svg width={width} height={height}>
-          {/* Creating a simplistic repeating pattern representation */}
-          {Array.from({ length: 20 }).map((_, i) =>
-            Array.from({ length: 30 }).map((_, j) => (
+          {Array.from({ length: 15 }).map((_, i) =>
+            Array.from({ length: 25 }).map((_, j) => (
               <Path
                 key={`${i}-${j}`}
                 d="M30 0l5 5h10l5 5v10l5 5-5 5v10l-5 5h-10l-5 5-5-5h-10l-5-5v-10l-5-5 5-5v-10l5-5h10z"
-                fill={COLORS.tertiaryContainer}
-                fillOpacity={0.05}
-                x={i * 60 - 30}
-                y={j * 60 - 30}
+                fill={COLORS.gold}
+                fillOpacity={0.03}
+                x={i * 80 - 40}
+                y={j * 80 - 40}
               />
             ))
           )}
@@ -125,15 +109,14 @@ export default function SplashScreen() {
           <Animated.View style={[styles.outerRing, ringAnimatedStyle]} />
           
           <View style={styles.mainCircle}>
-            <MaterialIcons name="map" size={80} color={COLORS.tertiary} style={styles.bgIcon} />
+            <MaterialIcons name="map" size={80} color={COLORS.gold} style={styles.bgIcon} />
             <View style={styles.iconWrapper}>
-              <MaterialIcons name="explore" size={60} color={COLORS.secondaryContainer} />
-              <View style={styles.compassNeedle} />
+              <MaterialIcons name="explore" size={60} color={COLORS.primary} />
             </View>
           </View>
 
           <View style={styles.floatingStar}>
-            <MaterialIcons name="star" size={18} color="#241a00" />
+            <MaterialIcons name="star" size={18} color={COLORS.white} />
           </View>
         </Animated.View>
 
@@ -159,7 +142,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: THEME.light.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -168,16 +151,16 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     width: '100%',
-    height: 16,
-    opacity: 0.2,
+    height: 8,
+    opacity: 0.1,
   },
   decorBandThin: {
     position: 'absolute',
-    top: 16,
+    top: 8,
     left: 0,
     width: '100%',
-    height: 4,
-    opacity: 0.1,
+    height: 2,
+    opacity: 0.05,
   },
   content: {
     alignItems: 'center',
@@ -196,89 +179,74 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 80,
-    borderWidth: 2,
-    borderColor: 'rgba(204, 167, 47, 0.3)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
     borderStyle: 'dashed',
   },
   mainCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: COLORS.surfaceContainerLowest,
-    shadowColor: COLORS.tertiary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 32,
-    elevation: 10,
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    backgroundColor: '#fff',
+    elevation: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   bgIcon: {
     position: 'absolute',
-    opacity: 0.1,
+    opacity: 0.05,
   },
   iconWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  compassNeedle: {
-    position: 'absolute',
-    width: 4,
-    height: 32,
-    backgroundColor: COLORS.tertiaryContainer,
-    borderRadius: 2,
-    opacity: 0.2,
-  },
   floatingStar: {
     position: 'absolute',
-    top: 0,
-    right: 0,
+    top: 10,
+    right: 10,
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: COLORS.tertiaryFixed,
+    backgroundColor: THEME.light.gold,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    elevation: 4,
   },
   textContainer: {
     alignItems: 'center',
   },
   title: {
-    fontFamily: 'Plus Jakarta Sans',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 28,
-    color: COLORS.onBackground,
+    color: THEME.light.primary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   arabicSubtitle: {
-    fontFamily: 'Noto Sans Arabic',
-    fontWeight: '700',
     fontSize: 32,
-    color: COLORS.primary,
+    color: THEME.light.gold,
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 16,
   },
   divider: {
     width: 48,
     height: 4,
-    backgroundColor: COLORS.secondaryContainer,
+    backgroundColor: THEME.light.gold,
     borderRadius: 2,
-    opacity: 0.6,
     marginBottom: 16,
   },
   description: {
-    fontFamily: 'Be Vietnam Pro',
     fontSize: 14,
-    color: COLORS.onSurfaceVariant,
+    color: THEME.light.onSurfaceVariant,
     textAlign: 'center',
-    fontStyle: 'italic',
+    fontWeight: '500',
+    letterSpacing: 0.5,
   },
   progressContainer: {
     position: 'absolute',
@@ -289,21 +257,20 @@ const styles = StyleSheet.create({
   progressTrack: {
     width: '100%',
     height: 4,
-    backgroundColor: '#e6e2dc',
+    backgroundColor: 'rgba(0,0,0,0.05)',
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: 12,
   },
   progressFill: {
     height: '100%',
-    backgroundColor: COLORS.tertiaryContainer,
+    backgroundColor: THEME.light.primary,
   },
   progressText: {
-    fontFamily: 'Plus Jakarta Sans',
     fontSize: 10,
     fontWeight: 'bold',
-    letterSpacing: 2,
-    color: COLORS.onSurfaceVariant,
-    opacity: 0.5,
+    letterSpacing: 1.5,
+    color: THEME.light.onSurfaceVariant,
+    opacity: 0.6,
   },
 });

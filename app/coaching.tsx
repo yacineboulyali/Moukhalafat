@@ -13,6 +13,8 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { SoundService } from '../services/sounds';
+import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import Animated, { 
   FadeInDown, 
   FadeInUp,
@@ -64,7 +66,13 @@ export default function CoachingHubScreen() {
         {/* Profile Header */}
         <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { paddingTop: insets.top + 20 }]}>
           <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <TouchableOpacity 
+              onPress={() => {
+                SoundService.getInstance().triggerHaptic('light');
+                router.back();
+              }} 
+              style={styles.backBtn}
+            >
               <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Coaching Hub</Text>
@@ -175,7 +183,7 @@ export default function CoachingHubScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.fesBtn}
-                onPress={() => router.push('/map' as any)}
+                onPress={() => router.push('/map')}
               >
                 <Text style={styles.fesBtnText}>Vers la Médina</Text>
                 <MaterialIcons name="chevron-right" size={24} color={COLORS.white} />
@@ -185,21 +193,7 @@ export default function CoachingHubScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Floating Menu */}
-      <BlurView intensity={90} tint="light" style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/accueil' as any)}>
-          <MaterialIcons name="dashboard" size={24} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemActive}>
-          <MaterialIcons name="psychology" size={24} color={COLORS.white} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/map' as any)}>
-          <MaterialIcons name="map" size={24} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profil' as any)}>
-          <MaterialIcons name="person" size={24} color={COLORS.onSurfaceVariant} />
-        </TouchableOpacity>
-      </BlurView>
+      <ZelligeBottomNav />
     </View>
   );
 }

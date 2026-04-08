@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { SoundService } from '../services/sounds';
 import {
   View,
   Text,
@@ -11,12 +12,13 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import Animated, { 
   FadeInDown, 
   FadeInUp,
 } from 'react-native-reanimated';
+import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 
 const { width } = Dimensions.get('window');
 
@@ -33,7 +35,7 @@ const COLORS = {
 
 const LeaderboardItem = ({ rank, name, xp, isUser, delay }: { rank: number, name: string, xp: number, isUser?: boolean, delay: number }) => (
   <Animated.View 
-    entering={FadeInUp.delay(delay).duration(600)}
+    entering={FadeInUp.delay(delay).springify().damping(15).stiffness(80)}
     style={[styles.itemCard, isUser && styles.userItemCard]}
   >
     <View style={styles.rankContainer}>
@@ -67,6 +69,10 @@ const LeaderboardItem = ({ rank, name, xp, isUser, delay }: { rank: number, name
 export default function LeaderboardScreen() {
   const insets = useSafeAreaInsets();
 
+  useEffect(() => {
+    SoundService.getInstance().playSound('whoosh');
+  }, []);
+
   const mockData = [
     { rank: 1, name: "Sofia", xp: 12450 },
     { rank: 2, name: "Amine", xp: 11200 },
@@ -96,36 +102,36 @@ export default function LeaderboardScreen() {
           </View>
 
           <View style={styles.topThreeContainer}>
-            <View style={[styles.podiumItem, { marginTop: 40 }]}>
+            <Animated.View entering={FadeInUp.delay(500).springify()} style={[styles.podiumItem, { marginTop: 40 }]}>
               <View style={[styles.podiumAvatar, { borderColor: '#C0C0C0' }]}>
-                <Text style={styles.podiumInitial}>A</Text>
+                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
               </View>
               <Text style={styles.podiumName}>Amine</Text>
               <View style={[styles.podiumBase, { height: 60, backgroundColor: '#C0C0C030' }]}>
                 <Text style={styles.podiumRank}>2</Text>
               </View>
-            </View>
+            </Animated.View>
 
-            <View style={styles.podiumItem}>
+            <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.podiumItem}>
               <FontAwesome5 name="crown" size={24} color="#FFD700" style={styles.crownIcon} />
               <View style={[styles.podiumAvatar, { width: 90, height: 90, borderRadius: 45, borderColor: '#FFD700' }]}>
-                <Text style={[styles.podiumInitial, { fontSize: 32 }]}>S</Text>
+                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
               </View>
               <Text style={[styles.podiumName, { fontWeight: '900' }]}>Sofia</Text>
               <View style={[styles.podiumBase, { height: 90, backgroundColor: '#FFD70030' }]}>
                 <Text style={styles.podiumRank}>1</Text>
               </View>
-            </View>
+            </Animated.View>
 
-            <View style={[styles.podiumItem, { marginTop: 50 }]}>
+            <Animated.View entering={FadeInUp.delay(700).springify()} style={[styles.podiumItem, { marginTop: 50 }]}>
               <View style={[styles.podiumAvatar, { borderColor: '#CD7F32' }]}>
-                <Text style={styles.podiumInitial}>L</Text>
+                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
               </View>
               <Text style={styles.podiumName}>Leila</Text>
               <View style={[styles.podiumBase, { height: 45, backgroundColor: '#CD7F3230' }]}>
                 <Text style={styles.podiumRank}>3</Text>
               </View>
-            </View>
+            </Animated.View>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -141,19 +147,20 @@ export default function LeaderboardScreen() {
               <Text style={styles.listSubtitle}>Semaine du 7 Avril</Text>
             </View>
 
-            {mockData.map((item, index) => (
+            {mockData.slice(3).map((item, index) => (
               <LeaderboardItem 
                 key={index}
                 rank={item.rank}
                 name={item.name}
                 xp={item.xp}
                 isUser={item.isUser}
-                delay={200 + index * 100}
+                delay={1000 + index * 100}
               />
             ))}
           </ScrollView>
         </BlurView>
       </View>
+      <ZelligeBottomNav />
     </View>
   );
 }
@@ -215,6 +222,11 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 24,
     fontWeight: '800',
+  },
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 35,
   },
   podiumName: {
     color: COLORS.white,

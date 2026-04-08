@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { SoundService } from '../services/sounds';
 import {
   View,
   Text,
@@ -16,6 +17,10 @@ import { BlurView } from 'expo-blur';
 import Animated, { 
   FadeInDown, 
   FadeInRight,
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withDelay
 } from 'react-native-reanimated';
 
 const { width } = Dimensions.get('window');
@@ -44,23 +49,39 @@ const BadgeItem = ({ icon, label, color, delay }: { icon: string, label: string,
   </Animated.View>
 );
 
-const SkillBar = ({ label, progress, color, delay }: { label: string, progress: number, color: string, delay: number }) => (
-  <Animated.View 
-    entering={FadeInRight.delay(delay).duration(600)}
-    style={styles.skillBarRow}
-  >
-    <View style={styles.skillBarHeader}>
-      <Text style={styles.skillBarLabel}>{label}</Text>
-      <Text style={styles.skillBarPercent}>{progress}%</Text>
-    </View>
-    <View style={styles.skillBarBg}>
-      <View style={[styles.skillBarFill, { width: `${progress}%`, backgroundColor: color }]} />
-    </View>
-  </Animated.View>
-);
+const SkillBar = ({ label, progress, color, delay }: { label: string, progress: number, color: string, delay: number }) => {
+  const animatedProgress = useSharedValue(0);
+
+  useEffect(() => {
+    animatedProgress.value = withDelay(delay, withSpring(progress, { damping: 15, stiffness: 60 }));
+  }, [progress, delay]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${animatedProgress.value}%`,
+  }));
+
+  return (
+    <Animated.View 
+      entering={FadeInRight.delay(delay).duration(600)}
+      style={styles.skillBarRow}
+    >
+      <View style={styles.skillBarHeader}>
+        <Text style={styles.skillBarLabel}>{label}</Text>
+        <Text style={styles.skillBarPercent}>{progress}%</Text>
+      </View>
+      <View style={styles.skillBarBg}>
+        <Animated.View style={[styles.skillBarFill, { backgroundColor: color }, animatedStyle]} />
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function PortfolioScreen() {
   const insets = useSafeAreaInsets();
+
+  useEffect(() => {
+    SoundService.getInstance().playSound('whoosh');
+  }, []);
 
   return (
     <View style={styles.mainContainer}>
@@ -120,7 +141,9 @@ export default function PortfolioScreen() {
           {/* Section: Skills */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Portfolio des Compétences</Text>
-            <SkillBar label="Communication Interculturelle" progress={85} color={COLORS.emerald} delay={600} />
+            <TouchableOpacity onPress={() => router.push('/competence-detail' as any)}>
+              <SkillBar label="Communication Interculturelle" progress={85} color={COLORS.emerald} delay={600} />
+            </TouchableOpacity>
             <SkillBar label="Négociation Commerciale" progress={72} color={COLORS.gold} delay={700} />
             <SkillBar label="Gestion de Projet Durable" progress={64} color={COLORS.primary} delay={800} />
             <SkillBar label="Leadership & Équipe" progress={90} color={COLORS.accent} delay={900} />

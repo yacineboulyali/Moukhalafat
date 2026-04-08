@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '../hooks/useTheme';
 import {
   View,
   Text,
@@ -53,9 +54,11 @@ const SettingSection = ({ title, arabicTitle, color, children }: SettingSectionP
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
+  const { themeMode, setTheme, colors } = useTheme();
   const [username, setUsername] = useState('Ahmed_AlMaghribi');
-  const [appearance, setAppearance] = useState('light');
   const [language, setLanguage] = useState('fr');
+
+  const COLORS_DYNAMIC = colors;
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
@@ -123,54 +126,54 @@ export default function SettingsScreen() {
             <TouchableOpacity 
               style={[
                 styles.modeBtn, 
-                appearance === 'light' && styles.modeBtnActive
+                themeMode === 'light' && styles.modeBtnActive
               ]}
-              onPress={() => setAppearance('light')}
+              onPress={() => setTheme('light')}
             >
               <MaterialIcons 
                 name="light-mode" 
                 size={24} 
-                color={appearance === 'light' ? COLORS.onPrimary : COLORS.onSurfaceVariant} 
+                color={themeMode === 'light' ? colors.white : colors.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, appearance === 'light' && styles.modeTextActive]}>Clair</Text>
-                <Text style={[styles.modeTextArabic, appearance === 'light' && styles.modeTextActive]}>مضيء</Text>
+                <Text style={[styles.modeText, themeMode === 'light' && styles.modeTextActive]}>Clair</Text>
+                <Text style={[styles.modeTextArabic, themeMode === 'light' && styles.modeTextActive]}>مضيء</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={[
                 styles.modeBtnInactive,
-                appearance === 'dark' && styles.modeBtnActive
+                themeMode === 'dark' && styles.modeBtnActive
               ]}
-              onPress={() => setAppearance('dark')}
+              onPress={() => setTheme('dark')}
             >
               <MaterialIcons 
                 name="dark-mode" 
                 size={24} 
-                color={appearance === 'dark' ? COLORS.onPrimary : COLORS.onSurfaceVariant} 
+                color={themeMode === 'dark' ? colors.white : colors.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, appearance === 'dark' && styles.modeTextActive]}>Sombre</Text>
-                <Text style={[styles.modeTextArabic, appearance === 'dark' && styles.modeTextActive]}>مظلم</Text>
+                <Text style={[styles.modeText, themeMode === 'dark' && styles.modeTextActive]}>Sombre</Text>
+                <Text style={[styles.modeTextArabic, themeMode === 'dark' && styles.modeTextActive]}>مظلم</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={[
                 styles.modeBtnInactive,
-                appearance === 'system' && styles.modeBtnActive
+                themeMode === 'system' && styles.modeBtnActive
               ]}
-              onPress={() => setAppearance('system')}
+              onPress={() => setTheme('system')}
             >
               <MaterialIcons 
                 name="settings-brightness" 
                 size={24} 
-                color={appearance === 'system' ? COLORS.onPrimary : COLORS.onSurfaceVariant} 
+                color={themeMode === 'system' ? colors.white : colors.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, appearance === 'system' && styles.modeTextActive]}>Système</Text>
-                <Text style={[styles.modeTextArabic, appearance === 'system' && styles.modeTextActive]}>النظام</Text>
+                <Text style={[styles.modeText, themeMode === 'system' && styles.modeTextActive]}>Système</Text>
+                <Text style={[styles.modeTextArabic, themeMode === 'system' && styles.modeTextActive]}>النظام</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -218,21 +221,21 @@ export default function SettingsScreen() {
 
       {/* Bottom Nav */}
       <BlurView intensity={80} tint="light" style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 16), height: 60 + Math.max(insets.bottom, 16) }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/map' as any)}>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
+          <MaterialIcons name="leaderboard" size={24} color="#426655" />
+          <Text style={styles.navText}>Ligue</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/map')}>
           <MaterialIcons name="map" size={24} color="#426655" />
-          <Text style={styles.navText}>JOURNEY</Text>
+          <Text style={styles.navText}>Carte</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <MaterialIcons name="explore" size={24} color="#426655" />
-          <Text style={styles.navText}>MAP</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem}>
-          <MaterialIcons name="menu-book" size={24} color="#426655" />
-          <Text style={styles.navText}>LIBRARY</Text>
+        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profil')}>
+          <MaterialIcons name="person" size={24} color="#426655" />
+          <Text style={styles.navText}>Profil</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.navItemActive}>
           <MaterialIcons name="settings" size={24} color="#fff" />
-          <Text style={styles.navTextActive}>SETTINGS</Text>
+          <Text style={styles.navTextActive}>RÉGLAGES</Text>
         </TouchableOpacity>
       </BlurView>
     </SafeAreaView>

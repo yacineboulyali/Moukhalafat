@@ -13,20 +13,11 @@ import {
 } from 'react-native';
 import Svg from 'react-native-svg';
 
+import { THEME } from '../constants/theme';
+
 const { width, height } = Dimensions.get('window');
 
-const COLORS = {
-  background: '#fdf9f3',
-  surface: '#fdf9f3',
-  primary: '#2c4e3e',
-  onPrimary: '#ffffff',
-  secondaryContainer: '#ffab69',
-  onSurface: '#1c1c18',
-  onSurfaceVariant: '#404943',
-  outline: '#707973',
-  surfaceContainerLow: '#f7f3ed',
-  tertiaryContainer: '#cca72f',
-};
+const COLORS = THEME.light; // Default for onboarding
 
 export default function AccueilScreen() {
   return (
@@ -80,18 +71,17 @@ export default function AccueilScreen() {
       <SafeAreaView style={styles.actionSection}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.push('/map' as any)}
+          onPress={() => router.push('/(auth)/register')}
           activeOpacity={0.8}
         >
-          <Text style={styles.primaryButtonText}>Créer un compte
-            / أنشئ حساب</Text>
+          <Text style={styles.primaryButtonText}>Créer un compte</Text>
           <MaterialIcons name="arrow-forward" size={24} color={COLORS.onPrimary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.7}
-          onPress={() => router.push('/profil' as any)}
+          onPress={() => router.push('/(auth)/login')}
         >
           <Text style={styles.secondaryButtonText}>J'ai déjà un compte</Text>
         </TouchableOpacity>
@@ -107,7 +97,7 @@ export default function AccueilScreen() {
             ))}
           </View>
         </View>
-        <Text style={styles.footerText}>© 2024 Le Voyage des Compétences</Text>
+        <Text style={styles.footerText}>© 2026 Le Voyage des Compétences</Text>
       </View>
     </SafeAreaView>
   );

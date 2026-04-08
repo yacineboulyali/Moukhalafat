@@ -1,53 +1,46 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-import { Platform } from 'react-native';
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
-
-export const Colors = {
-  light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
-  },
+export const THEME = {
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    primary: '#1A3D2E',      // Vert Zellige de base
+    primaryLight: '#234D3A', // Effet de surbrillance
+    background: '#080C0A',   // Noir plus profond (Onyx)
+    surface: '#0F1612',      // Vert nuit très sombre pour les cartes
+    surfaceVariant: '#151D19', 
+    onSurface: '#E6E2DC',    // Texte blanc cassé (Antique White)
+    onSurfaceVariant: '#A9B4AC',
+    gold: '#D4AF37',         // Or pur
+    goldMuted: '#997F2B',    // Or patiné pour les détails secondaires
+    zellige: '#2D6B5A',      // Vert Zellige signature
+    locked: '#1E2A22',       // Couleur des éléments verrouillés (foncé)
+    accent: '#CCA72F',
+    white: '#FFFFFF',
+    glass: 'rgba(15, 22, 18, 0.85)',
+    border: '#1E2A22',
+    shadow: 'rgba(0, 0, 0, 0.5)',
+    outline: '#707973',
+    onPrimary: '#FFFFFF',
+    surfaceContainerLow: '#0D1410',
+    secondaryContainer: '#ffab69',
   },
+  light: {
+    primary: '#2c4e3e',
+    primaryLight: '#436655',
+    background: '#fdf9f3',
+    surface: '#ffffff',
+    surfaceVariant: '#f1ede7',
+    onSurface: '#1c1c18',
+    onSurfaceVariant: '#404943',
+    gold: '#D4AF37',
+    goldMuted: '#CCA72F',
+    zellige: '#2D6B5A',
+    locked: '#bfc9c1',
+    accent: '#CCA72F',
+    white: '#FFFFFF',
+    glass: 'rgba(255, 255, 255, 0.8)',
+    border: '#bfc9c1',
+    shadow: 'rgba(28, 28, 24, 0.08)',
+    outline: '#707973',
+    onPrimary: '#FFFFFF',
+    surfaceContainerLow: '#f7f3ed',
+    secondaryContainer: '#ffab69',
+  }
 };
-
-export const Fonts = Platform.select({
-  ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
-    serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
-    rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
-    mono: 'ui-monospace',
-  },
-  default: {
-    sans: 'normal',
-    serif: 'serif',
-    rounded: 'normal',
-    mono: 'monospace',
-  },
-  web: {
-    sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
-    mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
-  },
-});

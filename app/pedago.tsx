@@ -169,7 +169,7 @@ export default function PedagoScreen() {
       <BlurView intensity={80} tint="light" style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
         <TouchableOpacity 
           style={styles.continueBtn}
-          onPress={() => router.push('/coaching' as any)}
+          onPress={() => router.push('/coaching')}
         >
           <Text style={styles.continueText}>Continuer le voyage</Text>
           <MaterialIcons name="arrow-forward" size={20} color={COLORS.white} />

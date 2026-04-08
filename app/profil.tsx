@@ -15,17 +15,20 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Circle } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../hooks/useTheme';
+import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+
 
 const { width, height } = Dimensions.get('window');
 
 const COLORS = {
-  primary: '#2c4e3e',
+  primary: '#1A3D2E', // Vert Zellige profond
   secondary: '#8e4e14',
-  tertiary: '#735c00',
-  surface: '#fdf9f3',
-  onSurface: '#1c1c18',
-  onSurfaceVariant: '#404943',
-  outlineVariant: '#bfc9c1',
+  tertiary: '#CCA72F', // Or brillant
+  surface: '#141D17',  // Mode Sombre
+  onSurface: '#E6E2DC',
+  onSurfaceVariant: '#A9B4AC',
+  outlineVariant: '#344037',
   primaryFixed: '#c4ebd6',
   secondaryFixed: '#ffdcc4',
   tertiaryFixed: '#ffe088',
@@ -93,6 +96,7 @@ const SkillRing = ({ progress, icon, color, label, level, arabicLabel }: SkillRi
 
 export default function ProfilScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const [userStats, setUserStats] = React.useState<any>(null);
 
   React.useEffect(() => {
@@ -113,11 +117,9 @@ export default function ProfilScreen() {
   const level = userStats ? userStats.level : 4;
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
-      <LinearGradient
-        colors={['#fdf9f3', '#f1ede7']}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right', 'bottom']}>
+      {/* Background based on theme if needed, or simple background */}
+      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background }]} />
 
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top }]}>
@@ -126,14 +128,14 @@ export default function ProfilScreen() {
             style={styles.headerBtn}
             onPress={() => router.back()}
           >
-            <MaterialIcons name="menu" size={24} color={COLORS.primary} />
+            <MaterialIcons name="menu" size={24} color={colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Al-Musafer Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.primary }]}>Al-Musafer Profile</Text>
           <TouchableOpacity 
             style={styles.headerBtn}
-            onPress={() => router.push('/settings' as any)}
+            onPress={() => router.push('/settings')}
           >
-            <MaterialIcons name="settings" size={24} color={COLORS.primary} />
+            <MaterialIcons name="settings" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -141,21 +143,21 @@ export default function ProfilScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Section Title */}
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Profil de Voyageur</Text>
-          <Text style={styles.sectionArabic}>ملف المسافر</Text>
+          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Profil de Voyageur</Text>
+          <Text style={[styles.sectionArabic, { color: colors.gold }]}>ملف المسافر</Text>
         </View>
 
         {/* User Info Card */}
         <TouchableOpacity 
-          style={styles.profileCard}
+          style={[styles.profileCard, { backgroundColor: colors.surface }]}
           activeOpacity={0.9}
-          onPress={() => router.push('/portfolio' as any)}
+          onPress={() => router.push('/portfolio')}
         >
-          <View style={styles.avatarGlow} />
+          <View style={[styles.avatarGlow, { backgroundColor: colors.primaryLight, opacity: 0.1 }]} />
           <View style={styles.profileContent}>
             <View style={styles.avatarContainer}>
               <LinearGradient
-                colors={[COLORS.primary, COLORS.tertiary]}
+                colors={[colors.primary, colors.gold]}
                 style={styles.avatarRing}
               >
                 <Image
@@ -163,33 +165,33 @@ export default function ProfilScreen() {
                   style={styles.avatar}
                 />
               </LinearGradient>
-              <View style={styles.avatarLevelBadge}>
-                <Text style={styles.avatarLevelText}>Niv. {level}</Text>
+              <View style={[styles.avatarLevelBadge, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
+                <Text style={[styles.avatarLevelText, { color: colors.onSurface }]}>Niv. {level}</Text>
               </View>
             </View>
             <View style={styles.profileContent}>
-              <Text style={styles.userName}>{userStats?.username || 'Yassine'}</Text>
-              <Text style={styles.userBio}>L'Explorateur des Savoirs</Text>
-              <View style={styles.viewPortfolioBtn}>
-                <Text style={styles.viewPortfolioTxt}>VOIR LE PORTFOLIO COMPLET</Text>
-                <MaterialIcons name="arrow-forward" size={16} color={COLORS.gold} />
+              <Text style={[styles.userName, { color: colors.onSurface }]}>{userStats?.username || 'Yassine'}</Text>
+              <Text style={[styles.userBio, { color: colors.onSurfaceVariant }]}>L'Explorateur des Savoirs</Text>
+              <View style={[styles.viewPortfolioBtn, { backgroundColor: colors.gold + '15', borderColor: colors.gold + '30' }]}>
+                <Text style={[styles.viewPortfolioTxt, { color: colors.gold }]}>VOIR LE PORTFOLIO COMPLET</Text>
+                <MaterialIcons name="arrow-forward" size={16} color={colors.gold} />
               </View>
             </View>
           </View>
         </TouchableOpacity>
 
         {/* XP Section */}
-        <View style={styles.xpSection}>
+        <View style={[styles.xpSection, { backgroundColor: colors.surfaceVariant }]}>
           <View style={styles.xpHeader}>
             <View>
-              <Text style={styles.xpLabel}>PROGRESSION XP</Text>
-              <Text style={styles.xpValue}>⭐ {userStats?.xp || 1450} / {(level) * 1000} XP</Text>
+              <Text style={[styles.xpLabel, { color: colors.primary }]}>PROGRESSION XP</Text>
+              <Text style={[styles.xpValue, { color: colors.onSurface }]}>⭐ {userStats?.xp || 1450} / {(level) * 1000} XP</Text>
             </View>
-            <Text style={styles.xpNextLevel}>Prochain Niveau: {level + 1}</Text>
+            <Text style={[styles.xpNextLevel, { color: colors.gold }]}>Prochain Niveau: {level + 1}</Text>
           </View>
-          <View style={styles.progressBarContainer}>
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
             <LinearGradient
-              colors={[COLORS.primary, '#cca72f']}
+              colors={[colors.primary, colors.gold]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={[styles.progressBar, { width: `${xpProgress * 100}%` }]}
@@ -200,11 +202,11 @@ export default function ProfilScreen() {
         {/* Skills Grid */}
         <View style={styles.skillsSection}>
           <View style={styles.skillsHeader}>
-            <Text style={styles.skillsTitle}>
-              Compétences <Text style={styles.skillsArabicInline}>المهارات</Text>
+            <Text style={[styles.skillsTitle, { color: colors.primary }]}>
+              Compétences <Text style={[styles.skillsArabicInline, { color: colors.gold }]}>المهارات</Text>
             </Text>
-            <TouchableOpacity>
-              <Text style={styles.viewAll}>Voir tout</Text>
+            <TouchableOpacity onPress={() => router.push('/badges')}>
+              <Text style={[styles.viewAll, { color: colors.primary }]}>Voir les Badges</Text>
             </TouchableOpacity>
           </View>
           <View style={styles.skillsGrid}>
@@ -244,27 +246,7 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <BlurView intensity={80} tint="light" style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 16), height: 64 + Math.max(insets.bottom, 16) }]}>
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/map' as any)}
-        >
-          <MaterialIcons name="map" size={24} color="#a8a29e" />
-          <Text style={styles.navText}>MAP</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemActive}>
-          <MaterialIcons name="person" size={24} color="#fff" />
-          <Text style={styles.navTextActive}>PROFILE</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.navItem}
-          onPress={() => router.push('/leaderboard' as any)}
-        >
-          <MaterialIcons name="leaderboard" size={24} color="#a8a29e" />
-          <Text style={styles.navText}>RANKINGS</Text>
-        </TouchableOpacity>
-      </BlurView>
+      <ZelligeBottomNav />
     </SafeAreaView>
   );
 }

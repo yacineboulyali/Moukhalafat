@@ -29,7 +29,7 @@ const CITIES_DATA: Record<string, any> = {
     color: '#735c00'
   },
   chefchaouen: {
-    img: require('../assets/images/intro-chefchaouen.png'),
+    img: require('../assets/images/locations/chefchaouen_intro.png'),
     cityTitle: 'Chefchaouen | شفشاون',
     headline: 'La Cité Bleue | المدينة الزرقاء',
     desc: "La famille Ben Ali arrive au cœur de la médina. Pourront-ils s'orienter dans ce labyrinthe azuré en communiquant avec les habitants ?",
@@ -214,9 +214,9 @@ export default function IntroDefiScreen() {
                 style={[styles.primaryBtn, { backgroundColor: data.color }]}
                 onPress={() => {
                   if (cityName === 'marrakech') {
-                    router.push('/pedago' as any);
+                    router.push('/pedago');
                   } else if (cityName === 'fes') {
-                    router.push('/defi-resultat' as any);
+                    router.push('/defi-resultat');
                   } else {
                     router.back();
                   }
