@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
 import ChallengeTimer from '../../components/ChallengeTimer';
+import { THEME } from '../../constants/theme';
+import { SoundService } from '../../services/sounds';
 
 const SCENARIO = {
   context: "Un artisan vous explique que son secret se transmet de père en fils, mais il semble hésiter à vous laisser entrer dans son atelier.",
@@ -21,26 +21,28 @@ export default function ScenarioDecisionScreen() {
 
   const handleChoice = (id: string) => {
     setSelected(id);
+    SoundService.getInstance().playSound('click');
+    SoundService.getInstance().triggerHaptic('medium');
     setTimeout(() => router.push('/(challenges)/error-detection'), 2000);
   };
 
   return (
     <View style={styles.container}>
       <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-      
+
       <View style={styles.topSection}>
         <Animated.View entering={FadeIn} style={styles.characterBox}>
-           <Image source={{uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Hassan'}} style={styles.avatar} />
-           <View style={styles.bubble}>
-             <Text style={styles.bubbleText}>{SCENARIO.context}</Text>
-           </View>
+          <Image source={{ uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Hassan' }} style={styles.avatar} />
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>{SCENARIO.context}</Text>
+          </View>
         </Animated.View>
       </View>
 
       <View style={styles.choicesSection}>
         {SCENARIO.choices.map((choice, idx) => (
           <Animated.View key={choice.id} entering={SlideInRight.delay(400 + idx * 200)}>
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
                 styles.choiceCard,
                 selected === choice.id && { borderColor: choice.color, backgroundColor: `${choice.color}10` }

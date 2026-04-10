@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Animated, { 
   FadeInDown,
   useSharedValue, 
@@ -19,6 +19,7 @@ import { useTheme } from '../hooks/useTheme';
 import { BlurView } from 'expo-blur';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import FamilyTrustGauge from '../components/FamilyTrustGauge';
+import { useChallenges } from '../hooks/useChallenges';
 
 const { width } = Dimensions.get('window');
 
@@ -29,6 +30,17 @@ export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const dynamics = styles(colors, isDark);
+
+  // ── Challenges data from Supabase ──────────────────────────────
+  const { challenges } = useChallenges();
+  // Active city (hardcoded to 'fes' for now — later comes from player progress)
+  const ACTIVE_CITY  = 'fes';
+  const activeChallenge = challenges[ACTIVE_CITY];
+  const activeColor = activeChallenge?.city_color ?? colors.gold;
+  const activeTitle = activeChallenge?.city_name_fr ?? 'Fès';
+  const activeTitleAr = activeChallenge?.city_name_ar ?? 'فاس';
+  const activeDesc  = activeChallenge?.description_fr ?? 'Explorez la médina historique...';
+  const activeStep  = activeChallenge?.step_label ?? 'ÉTAPE 3';
 
   // Simple animated lantern component moved inside MapScreen to access theme
   const Lantern = ({ delay, style }: { delay: number, style: any }) => {
@@ -166,8 +178,8 @@ export default function MapScreen() {
             </Svg>
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>Dakhla</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>الداخلة</Text>
+            <Text style={dynamics.nodeTitleLocked}>{challenges['dakhla']?.city_name_fr ?? 'Dakhla'}</Text>
+            <Text style={dynamics.nodeSubtitleLocked}>{challenges['dakhla']?.city_name_ar ?? 'الداخلة'}</Text>
           </View>
         </TouchableOpacity>
 
@@ -182,8 +194,8 @@ export default function MapScreen() {
             </Svg>
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>Laâyoune</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>العيون</Text>
+            <Text style={dynamics.nodeTitleLocked}>{challenges['laayoune']?.city_name_fr ?? 'Laâyoune'}</Text>
+            <Text style={dynamics.nodeSubtitleLocked}>{challenges['laayoune']?.city_name_ar ?? 'العيون'}</Text>
           </View>
         </TouchableOpacity>
 
@@ -193,8 +205,8 @@ export default function MapScreen() {
             <MaterialIcons name="temple-hindu" size={40} color={colors.locked} />
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>Marrakech</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>مراكش</Text>
+            <Text style={dynamics.nodeTitleLocked}>{challenges['marrakech']?.city_name_fr ?? 'Marrakech'}</Text>
+            <Text style={dynamics.nodeSubtitleLocked}>{challenges['marrakech']?.city_name_ar ?? 'مراكش'}</Text>
           </View>
         </TouchableOpacity>
 
@@ -208,8 +220,8 @@ export default function MapScreen() {
             </View>
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitle}>Fès</Text>
-            <Text style={[dynamics.nodeSubtitle, { color: colors.gold }]}>فاس</Text>
+            <Text style={dynamics.nodeTitle}>{challenges['fes']?.city_name_fr ?? 'Fès'}</Text>
+            <Text style={[dynamics.nodeSubtitle, { color: activeColor }]}>{challenges['fes']?.city_name_ar ?? 'فاس'}</Text>
           </View>
         </TouchableOpacity>
 
@@ -227,8 +239,8 @@ export default function MapScreen() {
             </View>
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleCompleted}>Chefchaouen</Text>
-            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.zellige }]}>شفشاون</Text>
+            <Text style={dynamics.nodeTitleCompleted}>{challenges['chefchaouen']?.city_name_fr ?? 'Chefchaouen'}</Text>
+            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.zellige }]}>{challenges['chefchaouen']?.city_name_ar ?? 'شفشاون'}</Text>
           </View>
         </TouchableOpacity>
 
@@ -245,38 +257,38 @@ export default function MapScreen() {
             </View>
           </View>
           <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleCompleted}>Rabat</Text>
-            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.gold }]}>الرباط</Text>
+            <Text style={dynamics.nodeTitleCompleted}>{challenges['rabat']?.city_name_fr ?? 'Rabat'}</Text>
+            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.gold }]}>{challenges['rabat']?.city_name_ar ?? 'الرباط'}</Text>
           </View>
         </TouchableOpacity>
 
       </ScrollView>
 
-      {/* Bottom info card avec Blur dynamique */}
+      {/* Bottom info card — données depuis Supabase */}
       <Animated.View 
         entering={FadeInDown.delay(500)}
         style={dynamics.bottomCard}
       >
         <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
         <View style={dynamics.cardHeader}>
-          <View>
+          <View style={{ flex: 1, marginRight: 12 }}>
             <View style={dynamics.cardTag}>
-              <Text style={dynamics.cardTagText}>ÉTAPE 3 • المرحلة ٣</Text>
+              <Text style={dynamics.cardTagText}>{activeStep.toUpperCase()}</Text>
             </View>
-            <Text style={dynamics.cardTitle}>La Médina de Fès</Text>
-            <Text style={dynamics.cardSubtitle}>فاس البالي</Text>
+            <Text style={dynamics.cardTitle}>{activeTitle}</Text>
+            <Text style={dynamics.cardSubtitle}>{activeTitleAr}</Text>
           </View>
           <View style={dynamics.pointsBadge}>
             <Text style={dynamics.pointsLabel}>Points</Text>
             <Text style={dynamics.pointsValue}>450</Text>
           </View>
         </View>
-        <Text style={dynamics.cardDesc}>
-          Explorez le labyrinthe spirituel du Maroc. Maîtrisez le vocabulaire de l'artisanat traditionnel et des souks millénaires...
+        <Text style={dynamics.cardDesc} numberOfLines={2}>
+          {activeDesc}
         </Text>
         <TouchableOpacity 
-          style={dynamics.primaryButton}
-          onPress={() => SoundService.getInstance().triggerHaptic('medium')}
+          style={[dynamics.primaryButton, { backgroundColor: activeColor }]}
+          onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: ACTIVE_CITY } })}
         >
           <Text style={dynamics.btnText}>COMMENCER LE VOYAGE</Text>
           <MaterialIcons name="arrow-forward" size={20} color={colors.white} />

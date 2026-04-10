@@ -5,6 +5,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { THEME } from '../../constants/theme';
 import ChallengeTimer from '../../components/ChallengeTimer';
+import { SoundService } from '../../services/sounds';
 
 export default function ShortAnswerScreen() {
   const router = useRouter();
@@ -13,8 +14,12 @@ export default function ShortAnswerScreen() {
 
   const handleSubmit = () => {
     if (answer.trim().toLowerCase().includes('cuir') || answer.trim().toLowerCase().includes('tannage')) {
+       SoundService.getInstance().playSound('correct');
        setIsDone(true);
        setTimeout(() => router.push('/(challenges)/matching'), 1500);
+    } else {
+       SoundService.getInstance().playSound('wrong');
+       // Optionally show error state or trigger shake, but for now just wrong sound
     }
   };
 

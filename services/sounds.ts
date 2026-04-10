@@ -5,8 +5,10 @@ export const SOUNDS = {
   click: require('../assets/sounds/click.mp3'),
   success: require('../assets/sounds/success.mp3'),
   whoosh: require('../assets/sounds/whoosh.mp3'),
-  // levelUp n'est pas encore présent, on peut utiliser success en attendant ou le laisser vide
   levelUp: require('../assets/sounds/success.mp3'), 
+  correct: require('../assets/sounds/correct.mp3'),
+  wrong: require('../assets/sounds/wrong.mp3'),
+  match: require('../assets/sounds/match.mp3'),
 };
 
 export class SoundService {
@@ -34,16 +36,14 @@ export class SoundService {
   }
 
   public async playSound(soundKey: string) {
-    // Les vibrations restent actives et prioritaires pour le ressenti physique
-    if (soundKey === 'success' || soundKey === 'levelUp') {
+    if (soundKey === 'success' || soundKey === 'levelUp' || soundKey === 'correct') {
       this.triggerHaptic('success');
+    } else if (soundKey === 'wrong') {
+      this.triggerHaptic('error');
     } else {
       this.triggerHaptic('light');
     }
 
-    // Sound disabled by user request
-    return;
-    /*
     try {
       const source = (SOUNDS as any)[soundKey];
       if (!source) return;
@@ -51,7 +51,6 @@ export class SoundService {
       const { sound } = await Audio.Sound.createAsync(source);
       await sound.playAsync();
       
-      // Libération automatique de la mémoire après lecture
       sound.setOnPlaybackStatusUpdate((status) => {
         if (status.isLoaded && status.didJustFinish) {
           sound.unloadAsync();
@@ -60,6 +59,5 @@ export class SoundService {
     } catch (error) {
       console.log(`Erreur Audio [${soundKey}]:`, error);
     }
-    */
   }
 }

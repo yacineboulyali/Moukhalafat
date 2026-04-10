@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import Animated, { FadeIn, ZoomIn, FadeInDown } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import ChallengeTimer from '../../components/ChallengeTimer';
+import { SoundService } from '../../services/sounds';
 
 const { width } = Dimensions.get('window');
 
@@ -20,14 +20,20 @@ export default function ZelligeV2Screen() {
   const [selected, setSelected] = useState<number | null>(null);
 
   const handleFinish = () => {
-    // End of scenario for now, return to map
+    SoundService.getInstance().playSound('success');
     router.push('/map');
+  };
+
+  const handleSelectPattern = (id: number) => {
+    setSelected(id);
+    SoundService.getInstance().playSound('click');
+    SoundService.getInstance().triggerHaptic('light');
   };
 
   return (
     <View style={styles.container}>
       <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={styles.title}>Atelier Zellige</Text>
@@ -37,15 +43,15 @@ export default function ZelligeV2Screen() {
         <View style={styles.zelligeGrid}>
           {PATTERNS.map((pattern, idx) => (
             <Animated.View key={pattern.id} entering={ZoomIn.delay(400 + idx * 100)} style={styles.patternWrapper}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[
                   styles.patternCard,
                   selected === pattern.id && { borderColor: pattern.color, backgroundColor: `${pattern.color}15` }
                 ]}
-                onPress={() => setSelected(pattern.id)}
+                onPress={() => handleSelectPattern(pattern.id)}
               >
                 <View style={[styles.patternIcon, { backgroundColor: pattern.color }]}>
-                   <MaterialIcons name="auto-fix-high" size={24} color="#fff" />
+                  <MaterialIcons name="auto-fix-high" size={24} color="#fff" />
                 </View>
                 <Text style={styles.patternName}>Motif #{pattern.id}</Text>
               </TouchableOpacity>
@@ -62,8 +68,8 @@ export default function ZelligeV2Screen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.finishBtn, !selected && styles.disabledBtn]} 
+        <TouchableOpacity
+          style={[styles.finishBtn, !selected && styles.disabledBtn]}
           onPress={handleFinish}
           disabled={!selected}
         >

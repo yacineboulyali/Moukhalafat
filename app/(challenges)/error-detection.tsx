@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import ChallengeTimer from '../../components/ChallengeTimer';
+import { THEME } from '../../constants/theme';
+import { SoundService } from '../../services/sounds';
 
 const MISTAKES = [
   { id: 1, text: "Fès est la capitale actuelle du Maroc.", correct: "Rabat est la capitale actuelle du Maroc." },
@@ -17,16 +18,20 @@ export default function ErrorDetectionScreen() {
 
   const handlePress = (id: number) => {
     if (found.includes(id)) return;
-    setFound([...found, id]);
-    if (found.length + 1 === MISTAKES.length) {
+    const newFound = [...found, id];
+    setFound(newFound);
+    if (newFound.length === MISTAKES.length) {
+      SoundService.getInstance().playSound('success');
       setTimeout(() => router.push('/(challenges)/zellige-v2'), 2000);
+    } else {
+      SoundService.getInstance().playSound('correct');
     }
   };
 
   return (
     <View style={styles.container}>
       <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <MaterialIcons name="search" size={32} color={THEME.light.primary} />
@@ -37,7 +42,7 @@ export default function ErrorDetectionScreen() {
         <View style={styles.textContainer}>
           {MISTAKES.map((item, idx) => (
             <Animated.View key={item.id} entering={FadeInUp.delay(400 + idx * 200)}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.errorCard, found.includes(item.id) && styles.fixedCard]}
                 onPress={() => handlePress(item.id)}
               >

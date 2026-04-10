@@ -12,6 +12,7 @@ import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { THEME } from '../constants/theme';
+import { SoundService } from '../services/sounds';
 
 const { width } = Dimensions.get('window');
 
@@ -32,8 +33,14 @@ export default function QuizScreen() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
 
+  const handleSelectOption = (id: string) => {
+    setSelectedOption(id);
+    SoundService.getInstance().playSound('click');
+  };
+
   const handleNext = () => {
     if (selectedOption) {
+      SoundService.getInstance().playSound('success');
       router.push('/revelation');
     }
   };
@@ -69,7 +76,7 @@ export default function QuizScreen() {
                 styles.optionButton,
                 selectedOption === option.id && styles.selectedOption
               ]}
-              onPress={() => setSelectedOption(option.id)}
+              onPress={() => handleSelectOption(option.id)}
             >
               <MaterialIcons 
                 name={option.icon as any} 

@@ -6,7 +6,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import { Image } from 'expo-image';
-import Svg, { Polygon, Defs, LinearGradient as SVGLG, Stop, Circle as SVGCircle } from 'react-native-svg';
+import { CompetencyRadar } from '../components/CompetencyRadar';
 
 const { width } = Dimensions.get('window');
 
@@ -82,21 +82,8 @@ export default function ProfilClassiqueScreen() {
               <Text style={styles.cardTitle}>Majlis des Soft Skills</Text>
             </View>
 
-            <View style={styles.radarVisualization}>
-              <Svg viewBox="0 0 100 100" style={styles.radarSvg}>
-                <Polygon points="50,5 95,38 78,92 22,92 5,38" fill="none" stroke={COLORS.outlineVariant} strokeWidth="0.5" />
-                <Polygon points="50,15 85,41 72,81 28,81 15,41" fill="none" stroke={COLORS.outlineVariant} strokeWidth="0.5" />
-                <Polygon points="50,25 75,44 66,70 34,70 25,44" fill="none" stroke={COLORS.outlineVariant} strokeWidth="0.5" />
-                
-                <Polygon points="50,15 90,40 70,85 40,75 20,45" fill="rgba(44, 78, 62, 0.2)" stroke={COLORS.primary} strokeWidth="2" />
-              </Svg>
-
-              <Text style={[styles.radarLabel, { top: -16, left: '50%', transform: [{ translateX: -24 }] }]}>EMPATHIE</Text>
-              <Text style={[styles.radarLabel, { top: '25%', right: -24 }]}>LEADERSHIP</Text>
-              <Text style={[styles.radarLabel, { bottom: 0, right: -16 }]}>ÉCOUTE</Text>
-              <Text style={[styles.radarLabel, { bottom: 0, left: -16 }]}>RÉSOLUE</Text>
-              <Text style={[styles.radarLabel, { top: '25%', left: -24 }]}>AGILITÉ</Text>
-            </View>
+            {/* Animated 3-axis radar */}
+            <CompetencyRadar />
           </View>
         </Animated.View>
 
@@ -104,7 +91,7 @@ export default function ProfilClassiqueScreen() {
         <Animated.View entering={FadeInUp.delay(300)} style={styles.badgesSection}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Coffre aux Bijoux</Text>
-            <TouchableOpacity onPress={() => router.push('/resume-competence')}>
+            <TouchableOpacity onPress={() => router.push('/badges')}>
               <Text style={styles.seeAllText}>VOIR TOUT</Text>
             </TouchableOpacity>
           </View>
@@ -112,30 +99,30 @@ export default function ProfilClassiqueScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
             <View style={styles.badgeCard}>
               <View style={[styles.badgeIconBg, { backgroundColor: COLORS.tertiaryFixed }]}>
-                <MaterialIcons name="star" size={32} color={COLORS.tertiary} />
+                <MaterialIcons name="military-tech" size={32} color={COLORS.tertiary} />
               </View>
-              <Text style={styles.badgeName}>Mdama d'Or</Text>
+              <Text style={styles.badgeName}>Mdama</Text>
             </View>
 
             <View style={styles.badgeCard}>
               <View style={[styles.badgeIconBg, { backgroundColor: COLORS.primaryFixed }]}>
-                <MaterialIcons name="pan-tool" size={32} color={COLORS.primary} />
+                <MaterialIcons name="workspace-premium" size={32} color={COLORS.primary} />
               </View>
-              <Text style={styles.badgeName}>Khmissa Zen</Text>
+              <Text style={styles.badgeName}>Sertla</Text>
             </View>
 
             <View style={styles.badgeCard}>
               <View style={[styles.badgeIconBg, { backgroundColor: COLORS.secondaryFixed }]}>
-                <MaterialIcons name="auto-awesome" size={32} color={COLORS.secondary} />
+                <MaterialIcons name="radio-button-unchecked" size={32} color={COLORS.secondary} />
               </View>
-              <Text style={styles.badgeName}>Perle de Fès</Text>
+              <Text style={styles.badgeName}>Khalkhal</Text>
             </View>
 
             <View style={[styles.badgeCard, { opacity: 0.4 }]}>
               <View style={[styles.badgeIconBg, { backgroundColor: COLORS.surfaceContainerHigh }]}>
-                <MaterialIcons name="lock" size={32} color={COLORS.outline} />
+                <MaterialIcons name="grid-view" size={32} color={COLORS.outline} />
               </View>
-              <Text style={styles.badgeName}>Secret d'Atlas</Text>
+              <Text style={styles.badgeName}>Chebbka</Text>
             </View>
           </ScrollView>
         </Animated.View>

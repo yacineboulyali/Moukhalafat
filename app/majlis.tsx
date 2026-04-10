@@ -6,7 +6,8 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown, SlideInDown } from 'react-native-reanimated';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import { Image } from 'expo-image';
-import Svg, { Polygon, Defs, LinearGradient as SVGLG, Stop, Circle as SVGCircle } from 'react-native-svg';
+import Svg, { Polygon, Circle as SVGCircle } from 'react-native-svg';
+import { CompetencyRadar } from '../components/CompetencyRadar';
 
 const { width } = Dimensions.get('window');
 
@@ -69,33 +70,9 @@ export default function MajlisSocialHubScreen() {
             </View>
           </View>
 
-          <View style={styles.radarCard}>
-            <Svg viewBox="0 0 200 200" style={styles.radarSvg}>
-              <Defs>
-                <SVGLG id="radarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <Stop offset="0%" stopColor={COLORS.primary} stopOpacity={0.8} />
-                  <Stop offset="100%" stopColor={COLORS.primaryFixed} stopOpacity={0.8} />
-                </SVGLG>
-              </Defs>
-              <Polygon points="100,20 180,60 180,140 100,180 20,140 20,60" fill="none" stroke={COLORS.outlineVariant} strokeWidth="0.5" strokeDasharray="2,2" />
-              <Polygon points="100,50 150,75 150,125 100,150 50,125 50,75" fill="none" stroke={COLORS.outlineVariant} strokeWidth="0.5" strokeDasharray="2,2" />
-              
-              <Polygon points="100,40 160,75 170,130 110,165 45,135 60,65" fill="url(#radarGradient)" />
-              
-              <SVGCircle cx="100" cy="40" r="3" fill={COLORS.primary} />
-              <SVGCircle cx="160" cy="75" r="3" fill={COLORS.primary} />
-              <SVGCircle cx="170" cy="130" r="3" fill={COLORS.primary} />
-              <SVGCircle cx="110" cy="165" r="3" fill={COLORS.primary} />
-              <SVGCircle cx="45" cy="135" r="3" fill={COLORS.primary} />
-              <SVGCircle cx="60" cy="65" r="3" fill={COLORS.primary} />
-            </Svg>
-            
-            <Text style={[styles.radarLabel, { top: 16, left: '50%', transform: [{ translateX: -24 }] }]}>EMPATHY</Text>
-            <Text style={[styles.radarLabel, { top: '25%', right: 8, transform: [{ rotate: '45deg' }] }]}>LEADERSHIP</Text>
-            <Text style={[styles.radarLabel, { bottom: '25%', right: 8, transform: [{ rotate: '-45deg' }] }]}>NEGOTIATION</Text>
-            <Text style={[styles.radarLabel, { bottom: 16, left: '50%', transform: [{ translateX: -30 }] }]}>RESILIENCE</Text>
-            <Text style={[styles.radarLabel, { bottom: '25%', left: 8, transform: [{ rotate: '45deg' }] }]}>LISTENING</Text>
-            <Text style={[styles.radarLabel, { top: '25%', left: 8, transform: [{ rotate: '-45deg' }] }]}>ADAPTABILITY</Text>
+          {/* Animated 3-axis radar with draw-in effect */}
+          <View style={styles.radarCardWrap}>
+            <CompetencyRadar />
           </View>
         </Animated.View>
 
@@ -315,26 +292,14 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
   },
-  radarCard: {
+  radarCardWrap: {
     backgroundColor: COLORS.surfaceContainerLowest,
     borderRadius: 24,
-    padding: 24,
-    aspectRatio: 1,
+    padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(191, 201, 193, 0.1)',
-    position: 'relative',
+    borderColor: 'rgba(191, 201, 193, 0.15)',
   },
-  radarSvg: {
-    width: '100%',
-    height: '100%',
-  },
-  radarLabel: {
-    position: 'absolute',
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    letterSpacing: 1,
-  },
+
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
 import ChallengeTimer from '../../components/ChallengeTimer';
+import { THEME } from '../../constants/theme';
+import { SoundService } from '../../services/sounds';
 
 // Data for Matching Épuré
 const DATA = {
@@ -25,28 +25,29 @@ export default function MatchingEpureScreen() {
 
   const handleAssign = (id: string, cat: string) => {
     setSelections(prev => {
-      // Ensure we have a valid array even if prev[id] is undefined
       const currentRaw = prev[id];
       const current = Array.isArray(currentRaw) ? currentRaw : [];
-      
       const isSelected = current.includes(cat);
-      
       let next;
       if (isSelected) {
         next = current.filter(c => c !== cat);
       } else {
         next = [...current, cat];
+        SoundService.getInstance().playSound('click');
+        // Check if this item is now correctly classified
+        const item = DATA.elements.find(e => e.id === id);
+        if (item && item.category === cat) {
+          SoundService.getInstance().playSound('match');
+        }
       }
-      
-      const newSelections = { ...prev, [id]: next };
-      return newSelections;
+      return { ...prev, [id]: next };
     });
   };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
       <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-      
+
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={styles.title}>Classification Rapide</Text>
@@ -59,15 +60,15 @@ export default function MatchingEpureScreen() {
               <View style={styles.itemCard}>
                 <Text style={styles.itemText}>{item.text}</Text>
               </View>
-              
+
               <View style={styles.actions}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.catBtn, (selections[item.id] || []).includes('Plat') && styles.selectedBtn]}
                   onPress={() => handleAssign(item.id, 'Plat')}
                 >
                   <Text style={[styles.catText, (selections[item.id] || []).includes('Plat') && styles.whiteText]}>Plat</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[styles.catBtn, (selections[item.id] || []).includes('Boisson') && styles.selectedBtn]}
                   onPress={() => handleAssign(item.id, 'Boisson')}
                 >

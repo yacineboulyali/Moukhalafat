@@ -112,11 +112,11 @@ export const ZelligeBottomNav = () => {
         isActive={pathname === '/map'} 
       />
       <NavItem 
-        name="majlis" 
-        icon="groups" 
-        label="Majlis" 
-        path="/majlis" 
-        isActive={pathname === '/majlis'} 
+        name="badges" 
+        icon="military-tech" 
+        label="Badges" 
+        path="/badges" 
+        isActive={pathname === '/badges'} 
       />
       <NavItem 
         name="profil" 

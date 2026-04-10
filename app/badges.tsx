@@ -1,167 +1,293 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  TouchableOpacity,
-  ScrollView,
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Dimensions, 
+  SafeAreaView,
+  StatusBar,
+  Modal,
+  Platform
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { router } from 'expo-router';
+import Svg, { Polygon, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
+import Animated, { 
+  FadeInDown, 
+  FadeInUp,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  withDelay,
+  useSharedValue,
+  withSpring
+} from 'react-native-reanimated';
 import { useTheme } from '../hooks/useTheme';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { BADGES, Badge } from '../constants/Badges';
+import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { Audio } from 'expo-av';
+import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
+import { BlurView } from 'expo-blur';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
-const BADGES_DATA = [
-  {
-    id: 'comm',
-    title: 'Orateur de la Médina',
-    arabic: 'خطيب المدينة',
-    skill: 'Communication',
-    icon: 'forum',
-    unlocked: true,
-    description: 'Maîtrise de l\'art de l\'échange avec les habitants.',
-  },
-  {
-    id: 'dec',
-    title: 'Décisionnaire Agile',
-    arabic: 'صانع القرار',
-    skill: 'Décision',
-    icon: 'alt-route',
-    unlocked: true,
-    description: 'Capacité à choisir la meilleure voie dans l\'urgence.',
-  },
-  {
-    id: 'team',
-    title: 'Pilier de Famille',
-    arabic: 'عماد الأسرة',
-    skill: 'Travail d\'équipe',
-    icon: 'groups',
-    unlocked: true,
-    description: 'Soutien inconditionnel aux membres du groupe.',
-  },
-  {
-    id: 'stress',
-    title: 'Sérénité du Désert',
-    arabic: 'سكينة الصحراء',
-    skill: 'Gestion Stress',
-    icon: 'psychology-alt',
-    unlocked: false,
-    description: 'Garder son calme face aux tempêtes de sable.',
-  },
-  {
-    id: 'lead',
-    title: 'Guide Spirituel',
-    arabic: 'مرشد روحي',
-    skill: 'Leadership',
-    icon: 'star',
-    unlocked: false,
-    description: 'Inspirer les autres par sa vision et son action.',
-  },
-  {
-    id: 'adapt',
-    title: 'Caméléon des Dunes',
-    arabic: 'متكيف الرمال',
-    skill: 'Adaptabilité',
-    icon: 'auto-fix-high',
-    unlocked: false,
-    description: 'S\'adapter aux changements brusques d\'environnement.',
-  },
-];
+const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: Badge, size?: number, isLarge?: boolean, onPress?: () => void }) => {
+  const { colors } = useTheme();
+  const unlocked = badge.unlocked;
+  
+  // Octagon points for SVG
+  const half = size / 2;
+  const offset = size * 0.28;
+  const points = `
+    ${offset},0 
+    ${size - offset},0 
+    ${size},${offset} 
+    ${size},${size - offset} 
+    ${size - offset},${size} 
+    ${offset},${size} 
+    0,${size - offset} 
+    0,${offset}
+  `;
+
+  const content = (
+    <View style={[styles.badgeContainer, { width: size + 20, backgroundColor: 'transparent' }]}>
+      <View style={{ width: size, height: size, backgroundColor: 'transparent' }}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}>
+          <Defs>
+            <LinearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor="#D4AF37" />
+              <Stop offset="50%" stopColor="#F9E29C" />
+              <Stop offset="100%" stopColor="#B8860B" />
+            </LinearGradient>
+          </Defs>
+          
+          <Polygon
+            points={points}
+            fill={unlocked ? (isLarge ? 'url(#goldGradient)' : 'transparent') : '#F5F5F5'}
+            fillOpacity={unlocked ? 0 : 1}
+            stroke={unlocked ? '#D4AF37' : '#E0E0E0'}
+            strokeWidth={isLarge ? 4 : 2}
+          />
+        </Svg>
+
+        <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: 'transparent' }]}>
+          {(badge.remoteImage || badge.image) && unlocked ? (
+            <Image 
+              source={badge.remoteImage || badge.image} 
+              style={{ width: size * 0.98, height: size * 0.98, borderRadius: 10, backgroundColor: 'transparent' }}
+              contentFit="contain"
+            />
+          ) : (
+            <MaterialIcons 
+              name={badge.icon as any} 
+              size={size * 0.56} 
+              color={unlocked ? (isLarge ? '#1A3D2E' : colors.primary) : '#BDBDBD'} 
+            />
+          )}
+        </View>
+      </View>
+      
+      {!isLarge && (
+        <View style={styles.badgeTextContainer}>
+          <Text style={[styles.badgeName, { color: colors.onSurface }]}>{badge.name}</Text>
+          <Text style={[styles.badgeArabic, { color: colors.onSurfaceVariant }]}>{badge.arabicName}</Text>
+        </View>
+      )}
+    </View>
+  );
+
+  if (onPress) {
+    return (
+      <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+        {content}
+      </TouchableOpacity>
+    );
+  }
+
+  return content;
+};
+
+const BadgeSection = ({ title, arabicTitle, badges, color, onSelect }: { title: string, arabicTitle: string, badges: Badge[], color: string, onSelect: (b: Badge) => void }) => {
+  return (
+    <Animated.View 
+      entering={FadeInDown.duration(600)}
+      style={styles.section}
+    >
+      <View style={styles.sectionHeader}>
+        <View style={[styles.sectionLine, { backgroundColor: color }]} />
+        <Text style={[styles.sectionTitle, { color }]}>{title.toUpperCase()} • {arabicTitle}</Text>
+        <View style={[styles.sectionLine, { backgroundColor: color }]} />
+      </View>
+      
+      <View style={styles.badgesGrid}>
+        {badges.map((badge) => (
+          <OctagonBadge key={badge.id} badge={badge} onPress={() => onSelect(badge)} />
+        ))}
+      </View>
+    </Animated.View>
+  );
+};
 
 export default function BadgesScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
+  const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
+  const shakeX = useSharedValue(0);
+  
+  const cities = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
+  const cityNames: Record<string, { fr: string, ar: string, color: string }> = {
+    rabat: { fr: 'Rabat', ar: 'الرباط', color: '#6366f1' },
+    chefchaouen: { fr: 'Chefchaouen', ar: 'شفشاون', color: '#3b82f6' },
+    fes: { fr: 'Fès', ar: 'فاس', color: '#b45309' },
+    marrakech: { fr: 'Marrakech', ar: 'مراكش', color: '#ef4444' },
+    laayoune: { fr: 'Laâyoune', ar: 'العيون', color: '#10b981' },
+    dakhla: { fr: 'Dakhla', ar: 'الداخلة', color: '#0ea5e9' }
+  };
+
+  const finalBadge = BADGES.find(b => b.id === 'tabraat_final');
+
+  const playSound = async () => {
+    try {
+      const { sound } = await Audio.Sound.createAsync(
+        require('../assets/sounds/match.mp3')
+      );
+      await sound.playAsync();
+    } catch (e) {
+      console.log('Error playing sound', e);
+    }
+  };
+
+  const handleSelect = (badge: Badge) => {
+    if (badge.unlocked) {
+      setSelectedBadge(badge);
+      playSound();
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      // Start shake animation
+      shakeX.value = withRepeat(
+        withSequence(
+          withTiming(-10, { duration: 50 }),
+          withTiming(10, { duration: 50 }),
+          withTiming(0, { duration: 50 })
+        ),
+        5
+      );
+    }
+  };
+
+  const animatedPopupStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: shakeX.value }]
+  }));
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={[styles.backBtn, { backgroundColor: colors.surfaceVariant }]}
-          onPress={() => router.back()}
-        >
-          <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>Mes Badges</Text>
-          <Text style={[styles.headerArabic, { color: colors.gold }]}>أوسمتي</Text>
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Animated.View entering={FadeInUp.delay(200)} style={styles.statsCard}>
-          <BlurView intensity={isDark ? 40 : 60} tint={isDark ? 'dark' : 'light'} style={styles.statsBlur}>
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.gold }]}>3/6</Text>
-              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>DÉBLOQUÉS</Text>
-            </View>
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: colors.gold }]}>550</Text>
-              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>POINTS DE RÉPUTATION</Text>
-            </View>
-          </BlurView>
+      <StatusBar barStyle="dark-content" />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Animated.View entering={FadeInUp.duration(800)} style={styles.header}>
+          <Text style={[styles.title, { color: colors.primary }]}>Collection de Badges</Text>
+          <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>مجموعة الشارات</Text>
+          <View style={[styles.titleUnderline, { backgroundColor: colors.gold }]} />
         </Animated.View>
 
-        <View style={styles.grid}>
-          {BADGES_DATA.map((badge, index) => (
-            <Animated.View 
-              key={badge.id}
-              entering={FadeInDown.delay(300 + index * 100)}
-              style={[
-                styles.badgeCard, 
-                { 
-                  backgroundColor: badge.unlocked ? colors.surface : colors.locked,
-                  borderColor: badge.unlocked ? colors.gold + '40' : colors.border,
-                }
-              ]}
-            >
-              <View style={[
-                styles.iconContainer, 
-                { backgroundColor: badge.unlocked ? colors.primary + '15' : 'rgba(0,0,0,0.1)' }
-              ]}>
-                <MaterialIcons 
-                  name={badge.icon as any} 
-                  size={32} 
-                  color={badge.unlocked ? colors.gold : colors.onSurfaceVariant} 
-                />
-                {!badge.unlocked && (
-                  <View style={styles.lockOverlay}>
-                    <MaterialIcons name="lock" size={16} color={colors.onSurfaceVariant} />
-                  </View>
-                )}
-              </View>
-              
-              <Text style={[
-                styles.badgeTitle, 
-                { color: badge.unlocked ? colors.onSurface : colors.onSurfaceVariant }
-              ]}>
-                {badge.title}
-              </Text>
-              <Text style={[styles.badgeArabic, { color: colors.gold }]}>
-                {badge.arabic}
-              </Text>
-              
-              {badge.unlocked && (
-                <View style={styles.unlockedTag}>
-                  <Text style={styles.unlockedText}>DÉBLOQUÉ</Text>
-                </View>
-              )}
-            </Animated.View>
-          ))}
-        </View>
+        {cities.map((cityId) => {
+          const cityBadges = BADGES.filter(b => b.city === cityId);
+          const cityInfo = cityNames[cityId];
+          return (
+            <BadgeSection 
+              key={cityId}
+              title={cityInfo.fr}
+              arabicTitle={cityInfo.ar}
+              badges={cityBadges}
+              color={cityInfo.color}
+              onSelect={handleSelect}
+            />
+          );
+        })}
 
-        <View style={styles.infoBox}>
-          <MaterialIcons name="info-outline" size={20} color={colors.onSurfaceVariant} />
-          <Text style={[styles.infoText, { color: colors.onSurfaceVariant }]}>
-            Continuez votre voyage pour débloquer de nouveaux badges et améliorer vos compétences.
-          </Text>
-        </View>
+        {finalBadge && (
+          <Animated.View 
+            entering={FadeInUp.delay(400).duration(800)}
+            style={styles.finalSection}
+          >
+            <OctagonBadge badge={finalBadge} size={180} isLarge onPress={() => handleSelect(finalBadge)} />
+            <Text style={[styles.finalBadgeTitle, { color: colors.onSurface }]}>TABRAAT</Text>
+            <Text style={[styles.finalBadgeArabic, { color: colors.onSurfaceVariant }]}>تبرات - الشارة العليا</Text>
+            
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <MaterialIcons key={s} name="star" size={24} color={colors.gold} />
+              ))}
+            </View>
+            
+            <Text style={[styles.finalBadgeDesc, { color: colors.onSurfaceVariant }]}>
+              Le Maître Artisan des Savoirs Traversants
+            </Text>
+          </Animated.View>
+        )}
+        
+        <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Detail Popup */}
+      <Modal
+        visible={!!selectedBadge}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedBadge(null)}
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          style={styles.modalOverlay}
+          onPress={() => setSelectedBadge(null)}
+        >
+          <BlurView intensity={30} style={StyleSheet.absoluteFill} tint="dark" />
+          
+          <Animated.View 
+            entering={FadeInUp.springify()}
+            style={[styles.modalContent, { backgroundColor: colors.surface }]}
+          >
+            <TouchableOpacity 
+              style={styles.closeButton}
+              onPress={() => setSelectedBadge(null)}
+            >
+              <MaterialIcons name="close" size={24} color={colors.onSurfaceVariant} />
+            </TouchableOpacity>
+
+            <Animated.View style={[styles.popupBadgeWrapper, animatedPopupStyle]}>
+              <OctagonBadge badge={selectedBadge!} size={160} isLarge />
+            </Animated.View>
+
+            <Text style={[styles.popupTitle, { color: colors.primary }]}>{selectedBadge?.name}</Text>
+            <Text style={[styles.popupSubtitle, { color: colors.onSurfaceVariant }]}>{selectedBadge?.arabicName}</Text>
+            
+            <View style={styles.rarityBadge}>
+              <MaterialIcons name="workspace-premium" size={16} color={colors.gold} />
+              <Text style={styles.rarityText}>{selectedBadge?.rarity.toUpperCase() || 'COMMON'}</Text>
+            </View>
+
+            <Text style={[styles.popupDesc, { color: colors.onSurfaceVariant }]}>
+              {selectedBadge?.description}
+            </Text>
+
+            <View style={[styles.cityTag, { backgroundColor: colors.primary + '15' }]}>
+              <MaterialIcons name="location-city" size={16} color={colors.primary} />
+              <Text style={[styles.cityText, { color: colors.primary }]}>
+                {selectedBadge?.city?.toUpperCase() || 'SPÉCIAL'}
+              </Text>
+            </View>
+          </Animated.View>
+        </TouchableOpacity>
+      </Modal>
+
+      <ZelligeBottomNav />
     </SafeAreaView>
   );
 }
@@ -170,140 +296,171 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    height: 70,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    fontFamily: 'Plus Jakarta Sans',
-  },
-  headerArabic: {
-    fontSize: 12,
-    letterSpacing: 2,
-    marginTop: 2,
-    fontWeight: '700',
-  },
   scrollContent: {
-    padding: 24,
-    paddingBottom: 40,
+    paddingTop: 40,
+    paddingBottom: 100,
   },
-  statsCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  statsBlur: {
-    flexDirection: 'row',
-    padding: 24,
-    justifyContent: 'space-around',
+  header: {
     alignItems: 'center',
+    marginBottom: 40,
   },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
+  title: {
     fontSize: 28,
     fontWeight: '900',
     fontFamily: 'Plus Jakarta Sans',
+    textAlign: 'center',
   },
-  statLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 1,
+  subtitle: {
+    fontSize: 20,
     marginTop: 4,
+    fontFamily: 'Plus Jakarta Sans',
+    textAlign: 'center',
   },
-  statDivider: {
-    width: 1,
-    height: 40,
+  titleUnderline: {
+    width: 60,
+    height: 3,
+    borderRadius: 2,
+    marginTop: 15,
+  },
+  section: {
+    marginBottom: 40,
+    paddingHorizontal: 20,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 25,
+  },
+  sectionLine: {
+    height: 1,
+    flex: 1,
     opacity: 0.3,
   },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  badgeCard: {
-    width: (width - 64) / 2,
-    borderRadius: 24,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-  },
-  iconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    position: 'relative',
-  },
-  lockOverlay: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#333',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#000',
-  },
-  badgeTitle: {
+  sectionTitle: {
     fontSize: 14,
+    fontWeight: '800',
+    marginHorizontal: 15,
+    letterSpacing: 1.5,
+  },
+  badgesGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+  },
+  badgeContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  badgeTextContainer: {
+    marginTop: 8,
+    alignItems: 'center',
+  },
+  badgeName: {
+    fontSize: 12,
     fontWeight: '700',
-    textAlign: 'center',
-    fontFamily: 'Plus Jakarta Sans',
   },
   badgeArabic: {
     fontSize: 10,
-    marginTop: 4,
-    fontWeight: '700',
+    marginTop: 2,
   },
-  unlockedTag: {
-    marginTop: 12,
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  finalSection: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingBottom: 40,
   },
-  unlockedText: {
-    color: '#D4AF37',
-    fontSize: 8,
+  finalBadgeTitle: {
+    fontSize: 32,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 6,
+    marginTop: 20,
   },
-  infoBox: {
+  finalBadgeArabic: {
+    fontSize: 18,
+    marginTop: 5,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    marginTop: 15,
+    gap: 5,
+  },
+  finalBadgeDesc: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    marginTop: 15,
+    textAlign: 'center',
+    paddingHorizontal: 40,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: width * 0.85,
+    borderRadius: 30,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    padding: 10,
+  },
+  popupBadgeWrapper: {
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  popupTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  popupSubtitle: {
+    fontSize: 18,
+    marginTop: 2,
+    marginBottom: 15,
+  },
+  rarityBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
-    paddingHorizontal: 16,
-    gap: 12,
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 5,
+    marginBottom: 20,
   },
-  infoText: {
-    flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
+  rarityText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#D4AF37',
+  },
+  popupDesc: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 25,
     fontStyle: 'italic',
   },
+  cityTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 8,
+  },
+  cityText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1,
+  }
 });

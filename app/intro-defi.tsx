@@ -4,99 +4,64 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { 
   FadeIn, 
   FadeInUp, 
-  SlideInDown,
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  runOnJS
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { useChallenges } from '../hooks/useChallenges';
 
 const { width, height } = Dimensions.get('window');
 
-const CITIES_DATA: Record<string, any> = {
-  rabat: {
-    img: require('../assets/images/intro-rabat.png'),
-    cityTitle: 'Rabat | الرباط',
-    headline: 'Le Cœur Institutionnel du Royaume',
-    desc: "Depuis la Kasbah des Oudayas, la famille Ben Ali contemple l'avenir. Sous le regard de la Tour Mohammed VI, découvrez comment Rabat concilie héritage et leadership moderne.",
-    focus: 'Gouvernance & Patrimoine',
-    stepTitle: 'ÉTAPE 1 / 4',
-    progress: 0.25,
-    color: '#735c00'
-  },
-  chefchaouen: {
-    img: require('../assets/images/locations/chefchaouen_intro.png'),
-    cityTitle: 'Chefchaouen | شفشاون',
-    headline: 'La Cité Bleue | المدينة الزرقاء',
-    desc: "La famille Ben Ali arrive au cœur de la médina. Pourront-ils s'orienter dans ce labyrinthe azuré en communiquant avec les habitants ?",
-    focus: 'Communication & Orientation',
-    stepTitle: 'DÉFI 1 — CHEFCHAOUEN',
-    progress: 0.25,
-    color: '#4A90D9'
-  },
-  fes: {
-    img: require('../assets/images/intro-fes.png'),
-    cityTitle: 'Fès | فاس',
-    headline: 'Le Cœur Historique du Royaume',
-    desc: "Au seuil de Bab Boujloud, la famille Ben Ali s'imprègne de douze siècles d'histoire. Explorez les ruelles labyrinthiques de la plus grande médina du monde, où chaque pierre conte le savoir ancestral de Fès.",
-    focus: 'Artisanat & Spiritualité',
-    stepTitle: 'DÉFI 2 — FÈS',
-    progress: 0.5,
-    color: '#d4a843'
-  },
-  marrakech: {
-    img: require('../assets/images/marrakech-intro-bg.jpg'),
-    cityTitle: 'Marrakech | مراكش',
-    headline: 'Le Cœur Battant du Sud | قلب الجنوب النابض',
-    desc: "Au milieu de l'effervescence de Jemaa el-Fna, la famille Ben Ali s'apprête à relever un défi de taille. Apprenez à naviguer dans la complexité des échanges commerciaux au cœur de la ville ocre.",
-    focus: 'Commerce & Négociation',
-    stepTitle: 'DÉFI 3 — MARRAKECH',
-    progress: 0.75,
-    color: '#e2711d' 
-  },
-  laayoune: {
-    img: require('../assets/images/intro-laayoune-v2.png'),
-    cityTitle: 'Laâyoune | العيون',
-    headline: "Le Désert de l'Innovation",
-    desc: "Au cœur du Sahara, la famille Ben Ali découvre les opportunités d'un territoire en pleine transformation. Apprenez à cultiver la créativité et l'esprit d'initiative dans ce paysage grandiose.",
-    focus: "Innovation & Développement",
-    stepTitle: 'DÉFI 4 — LAÂYOUNE',
-    progress: 0.9,
-    color: '#f4a261'
-  },
-  dakhla: {
-    img: require('../assets/images/intro-dakhla.png'),
-    cityTitle: 'Dakhla | الداخلة',
-    headline: 'Le Défilé des Falaises',
-    desc: "Fin du voyage. Le vent, la mer et le désert se rencontrent ici. Préparez-vous pour l'ultime défi d'endurance et de sagesse.",
-    focus: 'Endurance & Sagesse',
-    stepTitle: 'DÉFI FINAL — DAKHLA',
-    progress: 1.0,
-    color: '#2a9d8f'
-  }
+// ─── Fallback couleurs par ville (si DB vide) ─────────────────────
+const CITY_COLORS: Record<string, string> = {
+  rabat:       '#735c00',
+  chefchaouen: '#4A90D9',
+  fes:         '#d4a843',
+  marrakech:   '#e2711d',
+  laayoune:    '#f4a261',
+  dakhla:      '#2a9d8f',
+};
+
+// ─── Fallback images locales (si illustration_url absent) ────────
+const FALLBACK_IMAGES: Record<string, any> = {
+  rabat:       require('../assets/images/intro-rabat-full.png'),
+  chefchaouen: require('../assets/images/intro-chefchaouen-v2.png'),
+  fes:         require('../assets/images/intro-fes-v2.png'),
+  marrakech:   require('../assets/images/intro-marrakech-full.png'),
+  laayoune:    require('../assets/images/intro-laayoune-v3.png'),
+  dakhla:      require('../assets/images/intro-dakhla-full.png'),
 };
 
 export default function IntroDefiScreen() {
   const router = useRouter();
   const { city } = useLocalSearchParams();
-  
   const cityName = (city as string) || 'rabat';
-  const data = CITIES_DATA[cityName] || CITIES_DATA.rabat;
 
-  const translateY = useSharedValue(height); // Start hidden for entry animation
-  const context = useSharedValue({ y: 0 });
-  const isExpanded = useSharedValue(true);
+  // ── Fetch challenges from Supabase ────────────────────────────
+  const { challenges, loading } = useChallenges();
+  const dbData = challenges[cityName];
 
-  // Define collapsed and expanded positions
-  // Collapsed will hide most of the text but leave the drag handle and title
-  const expandedY = 0;
-  const collapsedY = height * 0.4; 
+  // ── Build display data — DB first, fallback to sensible defaults ─
+  const cityColor = dbData?.city_color ?? CITY_COLORS[cityName] ?? '#735c00';
+  const cityTitle = dbData
+    ? `${dbData.city_name_fr}${dbData.city_name_ar ? ' | ' + dbData.city_name_ar : ''}`
+    : cityName.charAt(0).toUpperCase() + cityName.slice(1);
+  const headline   = dbData?.headline_fr   ?? '...';
+  const desc       = dbData?.description_fr ?? '...';
+  const focus      = dbData?.focus_fr       ?? '';
+  const stepLabel  = dbData?.step_label     ?? '';
+  const progress   = dbData?.progress       ?? 0.25;
 
-  // Entry animation
+  // ── Bottom-sheet animation ─────────────────────────────────────
+  const translateY   = useSharedValue(height);
+  const context      = useSharedValue({ y: 0 });
+  const isExpanded   = useSharedValue(true);
+  const expandedY    = 0;
+  const collapsedY   = height * 0.4;
+
   useEffect(() => {
     translateY.value = withSpring(expandedY, { damping: 15, mass: 1, stiffness: 100 });
   }, []);
@@ -112,70 +77,62 @@ export default function IntroDefiScreen() {
   };
 
   const gesture = Gesture.Pan()
-    .onStart(() => {
-      context.value = { y: translateY.value };
-    })
+    .onStart(() => { context.value = { y: translateY.value }; })
     .onUpdate((event) => {
-      // Allow dragging but don't pull too far up above 0 (add resistance)
-      let currentTranslationY = event.translationY + context.value.y;
-      if (currentTranslationY < 0) {
-        currentTranslationY = currentTranslationY / 3; // Resistance feeling
-      }
-      translateY.value = currentTranslationY;
+      let y = event.translationY + context.value.y;
+      if (y < 0) y = y / 3;
+      translateY.value = y;
     })
     .onEnd((event) => {
-      // Snap logic based on velocity or distance
       if (event.translationY > 50 || event.velocityY > 300) {
-        // Going down -> Snap to collapsed
         translateY.value = withSpring(collapsedY, { damping: 15 });
         isExpanded.value = false;
       } else if (event.translationY < -50 || event.velocityY < -300) {
-        // Going up -> Snap to expanded
         translateY.value = withSpring(expandedY, { damping: 15 });
         isExpanded.value = true;
       } else {
-        // Snap back to nearest state
-        if (isExpanded.value) {
-          translateY.value = withSpring(expandedY, { damping: 15 });
-        } else {
-          translateY.value = withSpring(collapsedY, { damping: 15 });
-        }
+        translateY.value = withSpring(isExpanded.value ? expandedY : collapsedY, { damping: 15 });
       }
     });
 
-  const rBottomSheetStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+  const rBottomSheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  // ── Navigate to challenge ─────────────────────────────────────
+  const handleStart = () => {
+    if (cityName === 'marrakech') router.push('/pedago');
+    else if (cityName === 'fes')  router.push('/defi-resultat');
+    else router.back();
+  };
 
   return (
     <View style={styles.container}>
-      {/* Background Hero Image */}
-      <Animated.Image 
+
+      {/* ── Image locale de chaque ville ─────────────────────── */}
+      <Animated.Image
         entering={FadeIn.duration(800)}
-        source={data.img} 
-        style={[StyleSheet.absoluteFillObject, styles.bgImage]} 
+        source={FALLBACK_IMAGES[cityName] ?? FALLBACK_IMAGES.rabat}
+        style={[StyleSheet.absoluteFillObject, styles.bgImage]}
         resizeMode="cover"
       />
-      
-      {/* Dark overlay for readability */}
-      <View style={styles.overlay} />
-      
-      {/* Zellige Pattern overlay */}
-      <View style={styles.zelligeOverlay} />
 
-      {/* Top App Bar */}
+
+
+      {/* Dark overlay */}
+      <View style={styles.overlay} />
+
+      {/* ── Top App Bar ──────────────────────────────────────── */}
       <Animated.View entering={FadeInUp.delay(300).duration(500)} style={styles.topBar}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <MaterialIcons name="close" size={24} color="#fff" />
         </TouchableOpacity>
-        
+
         <View style={styles.progressContainer}>
           <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${data.progress * 100}%`, backgroundColor: data.color }]} />
+            <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: cityColor }]} />
           </View>
-          <Text style={styles.stepTitle}>{data.stepTitle}</Text>
+          {!!stepLabel && <Text style={styles.stepTitle}>{stepLabel}</Text>}
         </View>
 
         <TouchableOpacity style={styles.iconBtn}>
@@ -183,44 +140,38 @@ export default function IntroDefiScreen() {
         </TouchableOpacity>
       </Animated.View>
 
-      {/* Main Bottom Sheet wrapped in GestureDetector */}
+      {/* ── Bottom Sheet ─────────────────────────────────────── */}
       <GestureDetector gesture={gesture}>
         <Animated.View style={[styles.bottomSheet, rBottomSheetStyle]}>
           <BlurView intensity={80} tint="light" style={styles.blurContainer}>
-            
-            {/* Drag Handle to indicate swipeability */}
+
             <TouchableOpacity onPress={toggleSheet} style={styles.dragHandleContainer} activeOpacity={0.8}>
               <View style={styles.dragHandle} />
             </TouchableOpacity>
-            
+
+            {/* City badge */}
             <Animated.View entering={FadeInUp.delay(700)} style={styles.badgeContainer}>
-              <View style={[styles.cityBadge, { backgroundColor: `${data.color}15`, borderColor: `${data.color}30` }]}>
-                <MaterialIcons name="location-on" size={18} color={data.color} />
-                <Text style={[styles.cityBadgeText, { color: data.color }]}>{data.cityTitle}</Text>
+              <View style={[styles.cityBadge, { backgroundColor: `${cityColor}15`, borderColor: `${cityColor}30` }]}>
+                <MaterialIcons name="location-on" size={18} color={cityColor} />
+                <Text style={[styles.cityBadgeText, { color: cityColor }]}>{cityTitle}</Text>
               </View>
             </Animated.View>
 
+            {/* Headline from DB */}
             <Animated.Text entering={FadeInUp.delay(800)} style={styles.title}>
-              {data.headline}
-            </Animated.Text>
-            
-            <Animated.Text entering={FadeInUp.delay(900)} style={styles.description}>
-              {data.desc}
+              {headline}
             </Animated.Text>
 
-            {/* Action Button */}
+            {/* Description from DB */}
+            <Animated.Text entering={FadeInUp.delay(900)} style={styles.description}>
+              {desc}
+            </Animated.Text>
+
+            {/* CTA Button */}
             <Animated.View entering={FadeInUp.delay(1000)} style={{ width: '100%', marginTop: 24 }}>
-              <TouchableOpacity 
-                style={[styles.primaryBtn, { backgroundColor: data.color }]}
-                onPress={() => {
-                  if (cityName === 'marrakech') {
-                    router.push('/pedago');
-                  } else if (cityName === 'fes') {
-                    router.push('/defi-resultat');
-                  } else {
-                    router.back();
-                  }
-                }}
+              <TouchableOpacity
+                style={[styles.primaryBtn, { backgroundColor: cityColor }]}
+                onPress={handleStart}
                 activeOpacity={0.8}
               >
                 <Text style={styles.primaryBtnText}>Découvrir le défi</Text>
@@ -229,20 +180,23 @@ export default function IntroDefiScreen() {
 
               <View style={styles.socialProof}>
                 <View style={styles.avatarsRow}>
-                  <Image source={{uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m'}} style={styles.avatarMini} />
-                  <Image source={{uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m'}} style={[styles.avatarMini, { marginLeft: -10 }]} />
-                  <View style={[styles.avatarMiniNum, { marginLeft: -10, backgroundColor: `${data.color}20` }]}>
-                    <Text style={[styles.avatarNumText, { color: data.color }]}>+12</Text>
+                  <Image source={require('../assets/images/avatar-1.jpg')} style={styles.avatarMini} />
+                  <Image source={require('../assets/images/avatar-2.jpg')} style={[styles.avatarMini, { marginLeft: -10 }]} />
+                  <View style={[styles.avatarMiniNum, { marginLeft: -10, backgroundColor: `${cityColor}20` }]}>
+                    <Text style={[styles.avatarNumText, { color: cityColor }]}>+12</Text>
                   </View>
                 </View>
                 <Text style={styles.socialText}>12 autres voyageurs</Text>
               </View>
             </Animated.View>
 
-            <Animated.View entering={FadeIn.delay(1200)} style={styles.focusChip}>
-              <MaterialIcons name="menu-book" size={14} color="rgba(26,26,46,0.6)" />
-              <Text style={styles.focusText}>Focus: {data.focus}</Text>
-            </Animated.View>
+            {/* Focus chip from DB */}
+            {!!focus && (
+              <Animated.View entering={FadeIn.delay(1200)} style={styles.focusChip}>
+                <MaterialIcons name="menu-book" size={14} color="rgba(26,26,46,0.6)" />
+                <Text style={styles.focusText}>Focus: {focus}</Text>
+              </Animated.View>
+            )}
 
           </BlurView>
         </Animated.View>
@@ -260,13 +214,16 @@ const styles = StyleSheet.create({
     width,
     height,
   },
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 5,
+  },
   overlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',
-  },
-  zelligeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.1,
   },
   topBar: {
     position: 'absolute',
@@ -309,7 +266,6 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: 'bold',
     letterSpacing: 2,
-    fontFamily: 'Plus Jakarta Sans',
   },
   bottomSheet: {
     position: 'absolute',
@@ -356,12 +312,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   cityBadgeText: {
-    fontFamily: 'Plus Jakarta Sans',
     fontWeight: 'bold',
     fontSize: 14,
   },
   title: {
-    fontFamily: 'Plus Jakarta Sans',
     fontSize: 26,
     fontWeight: '900',
     color: '#1A1A2E',
@@ -370,7 +324,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   description: {
-    fontFamily: 'Be Vietnam Pro',
     fontSize: 15,
     color: '#404943',
     textAlign: 'center',
@@ -386,7 +339,6 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     color: '#fff',
-    fontFamily: 'Plus Jakarta Sans',
     fontWeight: 'bold',
     fontSize: 16,
   },
@@ -438,5 +390,5 @@ const styles = StyleSheet.create({
     color: 'rgba(26,26,46,0.6)',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  }
+  },
 });

@@ -9,9 +9,6 @@ const SOUNDS: Record<string, any> = {
 };
 
 export const playSound = async (soundKey: 'correct' | 'wrong' | 'click' | 'match') => {
-  // Sound disabled by user request
-  return;
-  /*
   try {
     const { sound } = await Audio.Sound.createAsync(SOUNDS[soundKey]);
     await sound.playAsync();
@@ -24,5 +21,4 @@ export const playSound = async (soundKey: 'correct' | 'wrong' | 'click' | 'match
   } catch (error) {
     console.log('Error playing sound:', error);
   }
-  */
 };
