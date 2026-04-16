@@ -1,5 +1,6 @@
 import { usePlayerDetail } from '../hooks/useData';
-import { X, MapPin, Star, Award, Zap } from 'lucide-react';
+import { X, MapPin, Star, Award, Zap, Key, User, Trash2, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
 
 const CITY_EMOJIS = {
   rabat: '🏛️', chefchaouen: '🔵', fes: '🕌', marrakech: '🌿', laayoune: '🌊', dakhla: '🏜️',
@@ -26,9 +27,17 @@ function formatDate(dateStr) {
   return new Date(dateStr).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
 }
 
-export default function PlayerPanel({ player, onClose }) {
+export default function PlayerPanel({ player, onClose, onDelete }) {
   const { detail, loading } = usePlayerDetail(player?.id);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
   const open = !!player;
+
+  const handleDelete = async () => {
+    if (onDelete && player) {
+      await onDelete(player.id);
+      onClose();
+    }
+  };
 
   return (
     <>
@@ -62,6 +71,21 @@ export default function PlayerPanel({ player, onClose }) {
             </div>
 
             <div className="panel-body">
+              {/* Credentials Section */}
+              <div className="panel-section credentials-section">
+                <h4><Key size={12} style={{display:'inline', marginRight:4}} />Identifiants d'accès</h4>
+                <div className="credential-grid">
+                  <div className="credential-item">
+                    <span className="credential-label">Utilisateur</span>
+                    <span className="credential-value">{player.username || '—'}</span>
+                  </div>
+                  <div className="credential-item">
+                    <span className="credential-label">Mot de passe</span>
+                    <span className="credential-value">{player.password || '—'}</span>
+                  </div>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="loading"><div className="spinner" /> Chargement...</div>
               ) : (
@@ -150,6 +174,29 @@ export default function PlayerPanel({ player, onClose }) {
                             )}
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Actions Section */}
+                  <div className="panel-section" style={{ borderTop: '1px solid var(--border-light)', paddingTop: 16 }}>
+                    {!showConfirmDelete ? (
+                      <button 
+                        className="btn-danger-outline" 
+                        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                        onClick={() => setShowConfirmDelete(true)}
+                      >
+                        <Trash2 size={16} /> Supprimer le joueur
+                      </button>
+                    ) : (
+                      <div className="delete-confirmation">
+                        <div style={{ color: 'var(--danger)', fontSize: 12, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <AlertTriangle size={14} /> Êtes-vous sûr ? Cette action est irréversible.
+                        </div>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setShowConfirmDelete(false)}>Annuler</button>
+                          <button className="btn-danger" style={{ flex: 1 }} onClick={handleDelete}>Confirmer</button>
+                        </div>
                       </div>
                     )}
                   </div>

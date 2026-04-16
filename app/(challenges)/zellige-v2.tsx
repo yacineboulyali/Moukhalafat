@@ -1,27 +1,67 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import ChallengeTimer from '../../components/ChallengeTimer';
 import { SoundService } from '../../services/sounds';
+import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
+import { ImmediateFeedback } from '../../components/ImmediateFeedback';
+import { useMissionStore } from '../../stores/missionStore';
+import { ChallengeHeader } from '../../components/ChallengeHeader';
+import { useQuestions } from '../../hooks/useQuestions';
+import { MissionSplash } from '../../components/MissionSplash';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTheme } from '../../hooks/useTheme';
 
 const { width } = Dimensions.get('window');
 
-const PATTERNS = [
-  { id: 1, type: 'star', color: '#D4AF37' },
-  { id: 2, type: 'diamond', color: '#2D6B5A' },
-  { id: 3, type: 'cross', color: '#8B4513' },
-  { id: 4, type: 'circle', color: '#B22222' }
-];
-
 export default function ZelligeV2Screen() {
   const router = useRouter();
+  const { colors } = useTheme();
+  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { initQueue, markComplete, getQueue } = useMissionStore();
+  const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
+  
+  const missionId = params.missionId as string;
+  const cityId = params.cityId as string;
+  const questionIndex = params.questionIndex || '0';
+
+  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId);
+  const questions = dbQuestions || [];
+  
+  const currentIdx = parseInt(questionIndex as string) || 0;
+  const qData = questions[currentIdx];
+
   const [selected, setSelected] = useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (questions.length > 0 && missionId) {
+      initQueue(missionId, questions);
+    }
+  }, [questions, missionId, initQueue]);
+
+  const PATTERNS = Array.isArray(qData?.options) ? qData.options : [];
 
   const handleFinish = () => {
     SoundService.getInstance().playSound('success');
-    router.push('/map');
+    
+    markComplete(missionId, parseInt(questionIndex as string));
+    
+    const queue = getQueue(missionId);
+    if (queue.length > 0) {
+      navigateToNext({
+        missionId: missionId,
+        cityId: cityId,
+      });
+    } else {
+      navigateToNext({
+        missionId: missionId,
+        cityId: cityId,
+        isMissionComplete: true
+      });
+    }
   };
 
   const handleSelectPattern = (id: number) => {
@@ -32,7 +72,10 @@ export default function ZelligeV2Screen() {
 
   return (
     <View style={styles.container}>
-      <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
+      <ChallengeHeader 
+        cityId={cityId} 
+        onBack={() => router.back()}
+      />
 
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
@@ -41,14 +84,15 @@ export default function ZelligeV2Screen() {
         </Animated.View>
 
         <View style={styles.zelligeGrid}>
-          {PATTERNS.map((pattern, idx) => (
+          {PATTERNS.map((pattern: any, idx: number) => (
             <Animated.View key={pattern.id} entering={ZoomIn.delay(400 + idx * 100)} style={styles.patternWrapper}>
               <TouchableOpacity
                 style={[
                   styles.patternCard,
                   selected === pattern.id && { borderColor: pattern.color, backgroundColor: `${pattern.color}15` }
                 ]}
-                onPress={() => handleSelectPattern(pattern.id)}
+                onPress={() => setSelected(pattern.id)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
                 <View style={[styles.patternIcon, { backgroundColor: pattern.color }]}>
                   <MaterialIcons name="auto-fix-high" size={24} color="#fff" />
@@ -60,22 +104,57 @@ export default function ZelligeV2Screen() {
         </View>
 
         <Animated.View entering={FadeIn.delay(1000)} style={styles.illustrationBox}>
-          <View style={styles.placeholderArt}>
-            <MaterialIcons name="grid-on" size={80} color="rgba(45, 107, 90, 0.1)" />
-            <Text style={styles.artText}>Aperçu de la restauration</Text>
+          <View style={[styles.placeholderArt, selected !== null && { backgroundColor: PATTERNS.find((p: any) => p.id === selected)?.color + '20' }]}>
+            <MaterialIcons 
+              name={selected !== null ? "stars" : "grid-on"} 
+              size={80} 
+              color={selected !== null ? PATTERNS.find((p: any) => p.id === selected)?.color : "rgba(45, 107, 90, 0.1)"} 
+            />
+            <Text style={[styles.artText, selected !== null && { color: PATTERNS.find((p: any) => p.id === selected)?.color }]}>
+              {selected !== null ? `Motif ${selected} appliqué` : "Aperçu de la restauration"}
+            </Text>
           </View>
         </Animated.View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.finishBtn, !selected && styles.disabledBtn]}
-          onPress={handleFinish}
-          disabled={!selected}
-        >
-          <Text style={styles.finishText}>TERMINER L'ÉTAPE</Text>
-        </TouchableOpacity>
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10 }]}>
+        <View style={styles.footerRow}>
+          <View style={styles.sideActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color={'#2D6B5A'} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelected(null); SoundService.getInstance().playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={24} color={'#2D6B5A'} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={24} color={'#2D6B5A'} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.skipIconBtn, { borderColor: '#2D6B5A' + '40' }]} 
+            onPress={() => skipQuestion({ missionId, cityId })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={'#2D6B5A'} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.primaryActionBtn, { backgroundColor: '#2D6B5A' }, !selected && { opacity: 0.5 }]}
+            onPress={handleFinish}
+            disabled={!selected}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="done-all" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
+      <MissionSplash 
+        isVisible={currentIdx === 0 && !selected}
+        title="Art du Zellige"
+        subtitle="Restaurez les motifs traditionnels"
+        onFinish={() => {}}
+      />
     </View>
   );
 }
@@ -166,20 +245,34 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
   },
-  finishBtn: {
-    backgroundColor: '#2D6B5A',
-    paddingVertical: 18,
-    borderRadius: 16,
+  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  disabledBtn: {
-    backgroundColor: '#ccc',
-    opacity: 0.6,
+  primaryActionBtn: {
+    flex: 1.5,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  finishText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 14,
-    letterSpacing: 1,
+  skipIconBtn: {
+    flex: 1,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

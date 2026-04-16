@@ -205,7 +205,26 @@ export default function MatchingGameScreen() {
         )}
       </ScrollView>
 
-      <ZelligeBottomNav />
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10, backgroundColor: colors.surface }]}>
+        <View style={styles.footerRow}>
+          <View style={styles.sideActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setMatches({}); setSelectedLeft(null); SoundService.getInstance().playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]}
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -213,27 +232,37 @@ export default function MatchingGameScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 24 },
-  header: { alignItems: 'center', marginBottom: 40 },
-  tag: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginBottom: 16 },
-  tagText: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
-  title: { fontSize: 20, fontWeight: '900', textAlign: 'center', marginBottom: 8 },
-  titleAr: { fontSize: 18, textAlign: 'center', marginBottom: 12 },
-  gameWrapper: { position: 'relative' },
-  grid: { flexDirection: 'row', gap: 60 },
-  column: { flex: 1, gap: 16 },
-  itemCard: {
-    height: 70,
+  header: { marginBottom: 32, alignItems: 'center' },
+  tag: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: 8, marginBottom: 12 },
+  tagText: { fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  title: { fontSize: 20, fontWeight: '800', textAlign: 'center', marginBottom: 8 },
+  titleAr: { fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  gameWrapper: { flex: 1, minHeight: 400 },
+  grid: { flexDirection: 'row', justifyContent: 'space-between', gap: 20 },
+  column: { flex: 1, gap: 12 },
+  itemCard: { borderRadius: 16, overflow: 'hidden' },
+  touchable: { padding: 16, alignItems: 'center', minHeight: 80, justifyContent: 'center' },
+  itemText: { fontSize: 15, fontWeight: '700', textAlign: 'center' },
+  itemTextAr: { fontSize: 14, marginTop: 4, textAlign: 'center' },
+  successBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 32, padding: 16, borderRadius: 20, backgroundColor: 'rgba(212, 175, 55, 0.1)' },
+  successText: { fontSize: 16, fontWeight: '800' },
+  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center', justifyContent: 'space-between' },
+  sideActions: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    overflow: 'hidden'
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  touchable: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 4, gap: 2 },
-  itemText: { fontSize: 12, fontWeight: '800', textAlign: 'center' },
-  itemTextAr: { fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  successBox: { marginTop: 40, alignItems: 'center', gap: 12 },
-  successText: { fontSize: 16, fontWeight: '800', textAlign: 'center' }
+  skipIconBtn: {
+    paddingHorizontal: 24,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import Animated, { 
   FadeInDown,
@@ -10,20 +10,23 @@ import Animated, {
   withDelay,
   Easing 
 } from 'react-native-reanimated';
-import { MaterialIcons } from '@expo/vector-icons';
-import Svg, { Path, Ellipse, Rect } from 'react-native-svg';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import Svg, { Path, Ellipse, Rect, Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SoundService } from '../services/sounds';
 import { useTheme } from '../hooks/useTheme';
 import { BlurView } from 'expo-blur';
-import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
-import FamilyTrustGauge from '../components/FamilyTrustGauge';
-import { useChallenges } from '../hooks/useChallenges';
+
+import { useChallenges, Challenge } from '../hooks/useChallenges';
+import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
+import { AVATARS } from '../constants/Avatars';
 
 const { width } = Dimensions.get('window');
 
 // COLORS retiré au profit du hook useTheme
+
+const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
 
 export default function MapScreen() {
   const router = useRouter();
@@ -31,16 +34,37 @@ export default function MapScreen() {
   const { colors, isDark } = useTheme();
   const dynamics = styles(colors, isDark);
 
-  // ── Challenges data from Supabase ──────────────────────────────
-  const { challenges } = useChallenges();
-  // Active city (hardcoded to 'fes' for now — later comes from player progress)
-  const ACTIVE_CITY  = 'fes';
-  const activeChallenge = challenges[ACTIVE_CITY];
+  const { challenges, loading: loadingChallenges } = useChallenges();
+  const { progress, loading: loadingProgress } = usePlayerCityProgress();
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Convert challenges map to sorted array
+  const sortedCities = Object.values(challenges).sort((a, b) => a.sort_order - b.sort_order);
+  
+  // Determine active city: 
+  // 1. First city with 'current' status
+  // 2. Or the first 'locked' city (if we just finished previous)
+  // 3. Or it defaults to the first sorted city
+  const activeCityProgress = Object.values(progress).find(p => p.status === 'current');
+  const ACTIVE_CITY_ID = activeCityProgress?.city_id ?? 
+    (sortedCities.find(c => !progress[c.city_id] || progress[c.city_id].status === 'locked')?.city_id || sortedCities[0]?.city_id || 'rabat');
+  
+  const [selectedCityId, setSelectedCityId] = React.useState<string | null>(null);
+  const [showBottomCard, setShowBottomCard] = React.useState(false);
+
+  const activeChallenge = selectedCityId ? challenges[selectedCityId] : null;
   const activeColor = activeChallenge?.city_color ?? colors.gold;
-  const activeTitle = activeChallenge?.city_name_fr ?? 'Fès';
-  const activeTitleAr = activeChallenge?.city_name_ar ?? 'فاس';
-  const activeDesc  = activeChallenge?.description_fr ?? 'Explorez la médina historique...';
-  const activeStep  = activeChallenge?.step_label ?? 'ÉTAPE 3';
+  const activeTitle = activeChallenge?.city_name_fr ?? '';
+  const activeTitleAr = activeChallenge?.city_name_ar ?? '';
+  const activeDesc  = activeChallenge?.description_fr ?? '';
+  const activeStep  = activeChallenge?.step_label ?? 'DÉCOUVRIR LA VILLE';
+
+  const handleCityPress = (cityId: string) => {
+    setSelectedCityId(cityId);
+    setShowBottomCard(true);
+    SoundService.getInstance().playSound('click');
+    SoundService.getInstance().triggerHaptic('medium');
+  };
 
   // Simple animated lantern component moved inside MapScreen to access theme
   const Lantern = ({ delay, style }: { delay: number, style: any }) => {
@@ -91,6 +115,40 @@ export default function MapScreen() {
     opacity: pulseOpacity.value,
   }));
 
+  // Wave effect for the first active city
+  const wave1Scale = useSharedValue(1);
+  const wave1Opacity = useSharedValue(0.5);
+  const wave2Scale = useSharedValue(1);
+  const wave2Opacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    wave1Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    wave1Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    
+    setTimeout(() => {
+      wave2Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+      wave2Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    }, 1000);
+  }, []);
+
+  const wave1Style = useAnimatedStyle(() => ({
+    transform: [{ scale: wave1Scale.value }],
+    opacity: wave1Opacity.value,
+  }));
+  const wave2Style = useAnimatedStyle(() => ({
+    transform: [{ scale: wave2Scale.value }],
+    opacity: wave2Opacity.value,
+  }));
+
+  // Auto-scroll to bottom (Rabat) on load
+  useEffect(() => {
+    if (!loadingChallenges && !loadingProgress) {
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 500);
+    }
+  }, [loadingChallenges, loadingProgress]);
+
   return (
     <View style={dynamics.mainContainer}>
       {/* Top App Bar avec Blur dynamique */}
@@ -107,7 +165,7 @@ export default function MapScreen() {
             }}
           >
             <Image
-              source={require('../assets/images/user-avatar.png')}
+              source={AVATARS.explorer}
               style={dynamics.avatar}
             />
           </TouchableOpacity>
@@ -119,7 +177,9 @@ export default function MapScreen() {
 
         <View style={dynamics.progressHeader}>
           <View style={dynamics.progressTrack}>
-            <View style={[dynamics.progressFill, { width: '55%' }]} />
+            <View style={[dynamics.progressFill, { 
+              width: `${Math.round(Object.values(progress).reduce((acc, p) => acc + (p.missions_completed / (p.missions_total || 5)), 0) / (Object.keys(challenges).length || 1) * 100)}%` 
+            }]} />
           </View>
         </View>
 
@@ -131,171 +191,192 @@ export default function MapScreen() {
         </TouchableOpacity>
       </BlurView>
 
-      <View style={{ zIndex: 5, marginTop: 10 }}>
-        <FamilyTrustGauge />
-      </View>
+
 
       <ScrollView 
+        ref={scrollViewRef}
         contentContainerStyle={dynamics.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        {/* Floating Lanterns animées avec couleurs dynamiques */}
+        {/* Floating Lanterns animées with dynamic colors */}
         <Lantern delay={0} style={{ top: 200, left: 60 }} />
         <Lantern delay={1000} style={{ top: 400, right: 80 }} />
         <Lantern delay={2000} style={{ top: 600, left: 100 }} />
         <Lantern delay={500} style={{ top: 800, right: 60 }} />
 
-        {/* Path connector layer */}
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-          <Svg width={width} height={1200}>
-            {/* Rabat -> Chef */}
-            <Path d={`M ${width/2} 1050 Q ${width/2 + 60} 950 ${width/2} 850`} fill="none" stroke={colors.gold} strokeWidth="8" strokeLinecap="round" />
-            {/* Chef -> Fès */}
-            <Path d={`M ${width/2} 850 Q ${width/2 - 60} 750 ${width/2} 650`} fill="none" stroke={colors.gold} strokeWidth="8" strokeLinecap="round" />
-            {/* Fès -> Marrakech (Dashed Active) */}
-            <Path d={`M ${width/2} 650 Q ${width/2 + 60} 550 ${width/2} 450`} fill="none" stroke={colors.gold} strokeWidth="6" strokeDasharray="12 12" opacity={0.6} strokeLinecap="round" />
-            {/* Marrakech -> Laayoune (Locked) */}
-            <Path d={`M ${width/2} 450 Q ${width/2 - 60} 350 ${width/2} 250`} fill="none" stroke={colors.gold} strokeWidth="4" strokeLinecap="round" opacity={0.15} />
-            {/* Laayoune -> Dakhla (Locked) */}
-            <Path d={`M ${width/2} 250 Q ${width/2 + 60} 150 ${width/2} 50`} fill="none" stroke={colors.gold} strokeWidth="4" strokeLinecap="round" opacity={0.1} />
-          </Svg>
-        </View>
-
-        {/* Nodes - listed bottom to top for ScrollView natural flow */}
-        
-        {/* Dakhla (Locked) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 40 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'dakhla' } })} activeOpacity={0.8}>
-          <View style={[dynamics.nodeBase, dynamics.nodeLocked]}>
-            <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
-              <Ellipse cx="32" cy="56" rx="20" ry="2.5" fill={colors.locked} opacity="0.1" />
-              <Rect x="20" y="44" width="3" height="12" rx="1.5" fill={colors.locked} opacity="0.6" />
-              <Rect x="27" y="44" width="3" height="12" rx="1.5" fill={colors.locked} opacity="0.6" />
-              <Rect x="37" y="44" width="3" height="12" rx="1.5" fill={colors.locked} opacity="0.6" />
-              <Rect x="44" y="44" width="3" height="12" rx="1.5" fill={colors.locked} opacity="0.6" />
-              <Path d="M14 44C14 36 20 32 32 32C44 32 50 36 50 44H14Z" fill={colors.gold} opacity={0.3} />
-              <Path d="M24 32C24 24 28 20 32 20C36 20 40 24 40 32" fill={colors.gold} opacity={0.2} />
-              <Path d="M48 40L55 26" stroke={colors.gold} strokeWidth="6" strokeLinecap="round" opacity={0.2} />
-            </Svg>
+        {loadingChallenges || loadingProgress ? (
+          <View style={{ marginTop: 200 }}>
+            <ActivityIndicator size="large" color={colors.gold} />
           </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>{challenges['dakhla']?.city_name_fr ?? 'Dakhla'}</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>{challenges['dakhla']?.city_name_ar ?? 'الداخلة'}</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Laâyoune (Locked) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'laayoune' } })} activeOpacity={0.8}>
-          <View style={[dynamics.nodeBase, dynamics.nodeLocked]}>
-            <Svg width={64} height={64} viewBox="0 0 64 64" fill="none">
-              <Path d="M8 48L32 20L56 48" fill={colors.gold} opacity="0.1" />
-              <Path d="M4 52L32 24L60 52H4Z" fill={colors.gold} opacity="0.2" />
-              <Rect x="31" y="24" width="2" height="28" fill={colors.locked} opacity={0.2} />
-              <Rect x="6" y="50" width="52" height="2" fill={colors.locked} opacity="0.2" />
-            </Svg>
-          </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>{challenges['laayoune']?.city_name_fr ?? 'Laâyoune'}</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>{challenges['laayoune']?.city_name_ar ?? 'العيون'}</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Marrakech (Locked) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'marrakech' } })} activeOpacity={0.8}>
-          <View style={[dynamics.nodeBase, dynamics.nodeLocked]}>
-            <MaterialIcons name="temple-hindu" size={40} color={colors.locked} />
-          </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleLocked}>{challenges['marrakech']?.city_name_fr ?? 'Marrakech'}</Text>
-            <Text style={dynamics.nodeSubtitleLocked}>{challenges['marrakech']?.city_name_ar ?? 'مراكش'}</Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* Fès (Active) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'fes' } })} activeOpacity={0.8}>
-          <Animated.View style={[dynamics.pulseRing, pulseStyle]} />
-          <View style={[dynamics.nodeBase, dynamics.nodeActive]}>
-            <MaterialIcons name="door-front" size={40} color={colors.gold} />
-            <View style={dynamics.activePill}>
-              <Text style={dynamics.activePillText}>ACTUEL</Text>
+        ) : (
+          <>
+            {/* Path connector layer */}
+            <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+              <Svg width={width} height={sortedCities.length * 150 + 400}>
+                {sortedCities.map((city, index) => {
+                  if (index === 0) return null;
+                  const prevCity = sortedCities[index - 1];
+                  const startY = 1050 - (index - 1) * 160;
+                  const endY = 1050 - index * 160;
+                  const isRight = index % 2 === 1;
+                  const controlX = width / 2 + (isRight ? 60 : -60);
+                  
+                  const cityProgress = progress[city.city_id];
+                  const isLocked = !cityProgress || cityProgress.status === 'locked';
+                  
+                  return (
+                    <Path 
+                      key={`path-${city.city_id}`}
+                      d={`M ${width/2} ${startY} Q ${controlX} ${(startY + endY)/2} ${width/2} ${endY}`} 
+                      fill="none" 
+                      stroke={colors.gold} 
+                      strokeWidth={isLocked ? "4" : "8"} 
+                      strokeDasharray={cityProgress?.status === 'current' ? "12 12" : "0"}
+                      opacity={isLocked ? 0.15 : 1} 
+                      strokeLinecap="round" 
+                    />
+                  );
+                })}
+              </Svg>
             </View>
-          </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitle}>{challenges['fes']?.city_name_fr ?? 'Fès'}</Text>
-            <Text style={[dynamics.nodeSubtitle, { color: activeColor }]}>{challenges['fes']?.city_name_ar ?? 'فاس'}</Text>
-          </View>
-        </TouchableOpacity>
 
-        {/* Chefchaouen (Completed) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 80 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'chefchaouen' } })} activeOpacity={0.8}>
-          <View style={[dynamics.nodeBase, dynamics.nodeCompletedA]}>
-            <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
-              <Path d="M16 52V28L32 16L48 28V52H16Z" fill="#E3F2FD" />
-              <Path d="M16 52V36H48V52H16Z" fill="#90CAF9" />
-              <Path d="M28 52V42C28 39.7909 29.7909 38 32 38C34.2091 38 36 39.7909 36 42V52H28Z" fill={colors.zellige} />
-              <Path d="M14 30L32 16.5L50 30" stroke={colors.zellige} strokeWidth="2" strokeLinecap="round" fill="none" />
-            </Svg>
-            <View style={dynamics.checkBadge}>
-              <MaterialIcons name="check" size={16} color={colors.zellige} style={{ fontWeight: 'bold' }} />
-            </View>
-          </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleCompleted}>{challenges['chefchaouen']?.city_name_fr ?? 'Chefchaouen'}</Text>
-            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.zellige }]}>{challenges['chefchaouen']?.city_name_ar ?? 'شفشاون'}</Text>
-          </View>
-        </TouchableOpacity>
+            {/* Nodes - rendered bottom to top (reversed array) */}
+            {[...sortedCities].reverse().map((city, index) => {
+              const cityProgress = progress[city.city_id];
+              let status = cityProgress?.status ?? 'locked';
+              
+              // Rabat should be unlocked by default
+              if (city.city_id === 'rabat' && status === 'locked') {
+                status = 'current';
+              }
 
-        {/* Rabat (Completed) */}
-        <TouchableOpacity style={[dynamics.nodeContainer, { marginTop: 80, marginBottom: 120 }]} onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: 'rabat' } })} activeOpacity={0.8}>
-          <View style={[dynamics.nodeBase, dynamics.nodeCompletedB]}>
-            <Svg width={48} height={48} viewBox="0 0 64 64" fill="none">
-              <Rect x="22" y="10" width="20" height="44" fill={colors.gold} />
-              <Rect x="20" y="54" width="24" height="4" fill={colors.gold} opacity={0.6} />
-              <Rect x="20" y="8" width="24" height="2" fill={colors.gold} opacity={0.6} />
-            </Svg>
-            <View style={dynamics.checkBadge}>
-              <MaterialIcons name="check" size={16} color={colors.gold} style={{ fontWeight: 'bold' }} />
-            </View>
-          </View>
-          <View style={dynamics.nodeTextContainer}>
-            <Text style={dynamics.nodeTitleCompleted}>{challenges['rabat']?.city_name_fr ?? 'Rabat'}</Text>
-            <Text style={[dynamics.nodeSubtitleCompleted, { color: colors.gold }]}>{challenges['rabat']?.city_name_ar ?? 'الرباط'}</Text>
-          </View>
-        </TouchableOpacity>
+              const isLocked = status === 'locked';
+              const isFirstActive = city.city_id === ACTIVE_CITY_ID;
+              
+              return (
+                <TouchableOpacity 
+                  key={city.city_id}
+                  style={[dynamics.nodeContainer, { marginTop: index === 0 ? 40 : 80, marginBottom: index === sortedCities.length - 1 ? 120 : 0 }]} 
+                  onPress={() => handleCityPress(city.city_id)} 
+                  activeOpacity={0.8}
+                >
+                  {/* Wave effect for the first active/suggested city */}
+                  {isFirstActive && (
+                    <>
+                      <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave1Style]} />
+                      <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave2Style]} />
+                    </>
+                  )}
 
+                  {status === 'current' && <Animated.View style={[dynamics.pulseRing, pulseStyle]} />}
+                  
+                  <View style={[
+                    dynamics.nodeBase, 
+                    isLocked ? dynamics.nodeLocked : 
+                    status === 'current' ? [dynamics.nodeActive, { borderColor: city.city_color || colors.gold }] : 
+                    dynamics.nodeCompletedB
+                  ]}>
+                    <View style={isLocked ? { opacity : 0.6 } : {}}>
+                      {isLocked ? (
+                        <MaterialIcons name="landscape" size={32} color={colors.onSurfaceVariant} />
+                      ) : status === 'done' ? (
+                        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+                           <MaterialIcons name="check" size={40} color={city.city_color || colors.gold} />
+                           <View style={dynamics.checkBadge}>
+                             <MaterialIcons name="verified" size={16} color={city.city_color || colors.gold} />
+                           </View>
+                        </View>
+                      ) : (
+                        <MaterialIcons name="location-city" size={40} color={city.city_color || colors.gold} />
+                      )}
+                    </View>
+                    
+                    {isLocked && (
+                      <View style={dynamics.lockIconContainer}>
+                         <MaterialIcons name="lock" size={14} color="#fff" />
+                      </View>
+                    )}
+
+                    {status === 'current' && (
+                      <View style={[dynamics.activePill, { backgroundColor: city.city_color || colors.gold }]}>
+                        <Text style={dynamics.activePillText}>ACTUEL</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View style={dynamics.nodeTextContainer}>
+                    <Text style={isLocked ? dynamics.nodeTitleLocked : dynamics.nodeTitle}>
+                      {city.city_name_fr}
+                    </Text>
+                    <Text style={[isLocked ? dynamics.nodeSubtitleLocked : dynamics.nodeSubtitle, { color: isLocked ? colors.onSurfaceVariant + '40' : (city.city_color || colors.gold) }]}>
+                      {city.city_name_ar}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </>
+        )}
       </ScrollView>
 
-      {/* Bottom info card — données depuis Supabase */}
-      <Animated.View 
-        entering={FadeInDown.delay(500)}
-        style={dynamics.bottomCard}
-      >
-        <BlurView intensity={60} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
-        <View style={dynamics.cardHeader}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <View style={dynamics.cardTag}>
-              <Text style={dynamics.cardTagText}>{activeStep.toUpperCase()}</Text>
-            </View>
-            <Text style={dynamics.cardTitle}>{activeTitle}</Text>
-            <Text style={dynamics.cardSubtitle}>{activeTitleAr}</Text>
-          </View>
-          <View style={dynamics.pointsBadge}>
-            <Text style={dynamics.pointsLabel}>Points</Text>
-            <Text style={dynamics.pointsValue}>450</Text>
-          </View>
-        </View>
-        <Text style={dynamics.cardDesc} numberOfLines={2}>
-          {activeDesc}
-        </Text>
-        <TouchableOpacity 
-          style={[dynamics.primaryButton, { backgroundColor: activeColor }]}
-          onPress={() => router.push({ pathname: '/intro-defi' as any, params: { city: ACTIVE_CITY } })}
+      {/* Bottom info card — Pop-up vibrant et réduit de 20% */}
+      {showBottomCard && activeChallenge && (
+        <Animated.View 
+          entering={FadeInDown.springify()}
+          style={dynamics.bottomCard}
         >
-          <Text style={dynamics.btnText}>COMMENCER LE VOYAGE</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={colors.white} />
-        </TouchableOpacity>
-      </Animated.View>
+          <BlurView intensity={90} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
+          
+          <TouchableOpacity 
+            style={dynamics.closeBtn}
+            onPress={() => setShowBottomCard(false)}
+          >
+            <MaterialIcons name="close" size={20} color={colors.onSurfaceVariant} />
+          </TouchableOpacity>
 
-      <ZelligeBottomNav />
+          <View style={dynamics.cardHeader}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <View style={[dynamics.cardTag, { borderColor: activeColor }]}>
+                <Text style={[dynamics.cardTagText, { color: activeColor }]}>{activeStep.toUpperCase()}</Text>
+              </View>
+              <Text style={dynamics.cardTitle}>{activeTitle}</Text>
+              <Text style={[dynamics.cardSubtitle, { color: activeColor }]}>{activeTitleAr}</Text>
+            </View>
+            <View style={[dynamics.pointsBadge, { borderColor: activeColor }]}>
+              <Text style={dynamics.pointsLabel}>Points</Text>
+              <Text style={[dynamics.pointsValue, { color: activeColor }]}>450</Text>
+            </View>
+          </View>
+          <Text style={dynamics.cardDesc} numberOfLines={2}>
+            {activeDesc}
+          </Text>
+          <TouchableOpacity 
+            style={[dynamics.primaryButton, { backgroundColor: activeColor }]}
+            onPress={async () => {
+              SoundService.getInstance().triggerHaptic('medium');
+              
+              // Check if pedago has been seen
+              try {
+                const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+                const hasSeen = await AsyncStorage.getItem(`pedago_seen_${selectedCityId}`);
+                if (!hasSeen) {
+                  router.push({ pathname: '/pedago' as any, params: { cityId: selectedCityId } });
+                  return;
+                }
+              } catch (e) {
+                console.error('Error checking pedago status', e);
+              }
+
+              router.push({ pathname: '/intro-defi' as any, params: { city: selectedCityId } });
+            }}
+          >
+            <Text style={dynamics.btnText}>POURSUIVRE LE DÉFI</Text>
+            <MaterialIcons name="stars" size={22} color={colors.white} />
+          </TouchableOpacity>
+        </Animated.View>
+      )}
+
+
     </View>
   );
 }
@@ -376,26 +457,25 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     zIndex: 10,
   },
   nodeBase: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    elevation: 5,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
   },
   nodeLocked: {
-    backgroundColor: isDark ? colors.surfaceVariant : '#fff',
-    borderColor: colors.locked,
-    opacity: 0.6,
+    backgroundColor: isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.05)',
+    borderColor: colors.locked + '40',
+    opacity: 0.7,
   },
   nodeActive: {
     backgroundColor: colors.surface,
-    borderColor: colors.gold,
-  },
-  nodeCompletedA: {
-    backgroundColor: colors.surfaceVariant,
-    borderColor: colors.zellige,
   },
   nodeCompletedB: {
     backgroundColor: colors.surfaceVariant,
@@ -403,24 +483,45 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   pulseRing: {
     position: 'absolute',
-    width: 128,
-    height: 128,
-    borderRadius: 64,
-    backgroundColor: isDark ? 'rgba(212,168,67,0.1)' : 'rgba(212,168,67,0.2)',
-    top: -16,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: isDark ? 'rgba(212,168,67,0.1)' : 'rgba(212,168,67,0.15)',
+    top: -15,
   },
   activePill: {
     position: 'absolute',
-    top: 4,
-    backgroundColor: colors.gold,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    top: -10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    elevation: 4,
   },
   activePillText: {
     color: colors.white,
-    fontSize: 8,
-    fontWeight: 'bold',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  lockIconContainer: {
+    position: 'absolute',
+    bottom: -6,
+    backgroundColor: colors.locked,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: colors.background,
+  },
+  waveRing: {
+    position: 'absolute',
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    borderWidth: 3,
+    top: -20,
   },
   checkBadge: {
     position: 'absolute',
@@ -464,15 +565,29 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   bottomCard: {
     position: 'absolute',
-    bottom: 110,
-    left: 16,
-    right: 16,
-    borderRadius: 24,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    zIndex: 40,
+    bottom: 120,
+    left: width * 0.1, // Adjusted for 20% total reduction (center 80%)
+    right: width * 0.1,
+    borderRadius: 32,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212,168,67,0.4)',
+    zIndex: 100,
     overflow: 'hidden',
+    elevation: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    padding: 4,
+    zIndex: 10,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    borderRadius: 12,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -496,14 +611,13 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: 'bold',
   },
   cardTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '900',
     color: colors.onSurface,
   },
   cardSubtitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.gold,
+    fontSize: 14,
+    fontWeight: '800',
   },
   pointsBadge: {
     backgroundColor: isDark ? 'rgba(212,168,67,0.1)' : 'rgba(212,168,67,0.05)',
@@ -520,16 +634,15 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     color: colors.onSurfaceVariant,
   },
   pointsValue: {
-    color: colors.gold,
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontWeight: '900',
   },
   cardDesc: {
-    fontSize: 13,
+    fontSize: 12,
     color: colors.onSurface,
-    lineHeight: 18,
-    marginBottom: 20,
-    opacity: 0.7,
+    lineHeight: 16,
+    marginBottom: 16,
+    opacity: 0.8,
   },
   primaryButton: {
     backgroundColor: colors.gold,

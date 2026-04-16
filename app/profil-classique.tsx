@@ -4,9 +4,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
 import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
-import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import { Image } from 'expo-image';
 import { CompetencyRadar } from '../components/CompetencyRadar';
+import { AVATARS } from '../constants/Avatars';
+import { BADGES } from '../constants/Badges';
+import { useAuthStore } from '../stores/authStore';
 
 const { width } = Dimensions.get('window');
 
@@ -34,6 +36,7 @@ const COLORS = {
 
 export default function ProfilClassiqueScreen() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -47,7 +50,7 @@ export default function ProfilClassiqueScreen() {
         </View>
         <View style={styles.headerAvatarContainer}>
           <Image 
-            source={require('../assets/images/stitch/amine_icon.jpg')} 
+            source={AVATARS.explorer} 
             style={styles.headerAvatar} 
             contentFit="cover" 
           />
@@ -60,7 +63,7 @@ export default function ProfilClassiqueScreen() {
           <View style={styles.mainAvatarWrapper}>
             <View style={styles.mainAvatarBorder}>
               <Image 
-                source={require('../assets/images/stitch/amine_avatar.jpg')} 
+                source={AVATARS.explorer} 
                 style={styles.mainAvatar} 
                 contentFit="cover" 
               />
@@ -97,33 +100,29 @@ export default function ProfilClassiqueScreen() {
           </View>
           
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
-            <View style={styles.badgeCard}>
-              <View style={[styles.badgeIconBg, { backgroundColor: COLORS.tertiaryFixed }]}>
-                <MaterialIcons name="military-tech" size={32} color={COLORS.tertiary} />
-              </View>
-              <Text style={styles.badgeName}>Mdama</Text>
-            </View>
-
-            <View style={styles.badgeCard}>
-              <View style={[styles.badgeIconBg, { backgroundColor: COLORS.primaryFixed }]}>
-                <MaterialIcons name="workspace-premium" size={32} color={COLORS.primary} />
-              </View>
-              <Text style={styles.badgeName}>Sertla</Text>
-            </View>
-
-            <View style={styles.badgeCard}>
-              <View style={[styles.badgeIconBg, { backgroundColor: COLORS.secondaryFixed }]}>
-                <MaterialIcons name="radio-button-unchecked" size={32} color={COLORS.secondary} />
-              </View>
-              <Text style={styles.badgeName}>Khalkhal</Text>
-            </View>
-
-            <View style={[styles.badgeCard, { opacity: 0.4 }]}>
-              <View style={[styles.badgeIconBg, { backgroundColor: COLORS.surfaceContainerHigh }]}>
-                <MaterialIcons name="grid-view" size={32} color={COLORS.outline} />
-              </View>
-              <Text style={styles.badgeName}>Chebbka</Text>
-            </View>
+            {BADGES.slice(0, 6).map((badge) => {
+              const unlocked = user?.badges?.includes(badge.id);
+              return (
+                <TouchableOpacity 
+                  key={badge.id} 
+                  style={[styles.badgeCard, !unlocked && { opacity: 0.5 }]}
+                  onPress={() => router.push('/badges')}
+                >
+                  <View style={[styles.badgeIconBg, { backgroundColor: unlocked ? COLORS.primaryFixed : COLORS.surfaceContainerHigh }]}>
+                    {badge.remoteImage ? (
+                      <Image 
+                        source={badge.remoteImage} 
+                        style={{ width: 44, height: 44 }}
+                        contentFit="contain"
+                      />
+                    ) : (
+                      <MaterialIcons name={badge.icon as any} size={32} color={unlocked ? COLORS.primary : COLORS.outline} />
+                    )}
+                  </View>
+                  <Text style={styles.badgeName}>{badge.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </ScrollView>
         </Animated.View>
 
@@ -139,7 +138,7 @@ export default function ProfilClassiqueScreen() {
               <View style={styles.lbItem}>
                 <View style={styles.lbItemLeft}>
                   <Text style={styles.lbRankTertiary}>1</Text>
-                  <Image source={require('../assets/images/stitch/uncle_youssef.jpg')} style={[styles.lbAvatar, { borderColor: COLORS.tertiaryFixed }]} />
+                  <Image source={AVATARS.mentor} style={[styles.lbAvatar, { borderColor: COLORS.tertiaryFixed }]} />
                   <View>
                     <Text style={styles.lbName}>Oncle Youssef</Text>
                     <Text style={styles.lbRole}>Savant de la Famille</Text>
@@ -151,7 +150,7 @@ export default function ProfilClassiqueScreen() {
               <View style={styles.lbItemActive}>
                 <View style={styles.lbItemLeft}>
                   <Text style={styles.lbRankActive}>2</Text>
-                  <Image source={require('../assets/images/stitch/amine_rank.jpg')} style={[styles.lbAvatar, { borderColor: COLORS.primaryFixedDim }]} />
+                  <Image source={AVATARS.explorer} style={[styles.lbAvatar, { borderColor: COLORS.primaryFixedDim }]} />
                   <View>
                     <Text style={styles.lbNameActive}>Moi (Amine)</Text>
                     <Text style={styles.lbRoleActive}>En pleine ascension</Text>
@@ -163,7 +162,7 @@ export default function ProfilClassiqueScreen() {
               <View style={styles.lbItem}>
                 <View style={styles.lbItemLeft}>
                   <Text style={styles.lbRankOutline}>3</Text>
-                  <Image source={require('../assets/images/stitch/cousin_amira.jpg')} style={[styles.lbAvatar, { borderColor: COLORS.surfaceContainerHighest }]} />
+                  <Image source={AVATARS.girl} style={[styles.lbAvatar, { borderColor: COLORS.surfaceContainerHighest }]} />
                   <View>
                     <Text style={styles.lbName}>Cousin Amira</Text>
                     <Text style={styles.lbRole}>Voyageuse Curieuse</Text>
@@ -176,11 +175,6 @@ export default function ProfilClassiqueScreen() {
         </Animated.View>
         
       </ScrollView>
-
-      {/* Navigation */}
-      <View style={styles.navContainer}>
-        <ZelligeBottomNav />
-      </View>
     </View>
   );
 }

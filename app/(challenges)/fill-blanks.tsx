@@ -1,344 +1,259 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import Animated, { 
-  FadeInDown, 
-  FadeInUp, 
-  FadeIn,
-  useAnimatedStyle,
-  withSpring,
-  useSharedValue,
-  withSequence,
-  withTiming
-} from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BadgeRewardModal } from '../../components/BadgeRewardModal';
+import ChallengeProgressBar from '../../components/ChallengeProgressBar';
+import { ImmediateFeedback } from '../../components/ImmediateFeedback';
+import { ChallengeHeader } from '../../components/ChallengeHeader';
+import { useBadges } from '../../hooks/useBadges';
+import { useChallenges } from '../../hooks/useChallenges';
+import { useMissions } from '../../hooks/useMissions';
+import { useQuestions } from '../../hooks/useQuestions';
 import { useTheme } from '../../hooks/useTheme';
-import ChallengeTimer from '../../components/ChallengeTimer';
-import { ZelligeBottomNav } from '../../components/ZelligeBottomNav';
-import { SoundService } from '../../services/sounds';
+import { playSound } from '../../utils/SoundManager';
+import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
+import { useMissionStore } from '../../stores/missionStore';
+import { ConfettiEffect } from '../../components/ConfettiEffect';
+import { MissionSplash } from '../../components/MissionSplash';
 
 const { width } = Dimensions.get('window');
 
-// Data for Fill Blanks - Adapted for Fès (Scenario "Le Voyage des Compétences")
-const BLANKS_DATA = {
-  sentence: "La cité de Fès est célèbre pour ses ________ et ses ________ traditionnels.",
-  sentenceAr: "تشتهر مدينة فاس بـ ________ و ________ التقليدية.",
-  options: [
-    { text: "Moussem", textAr: "موسم" },
-    { text: "Tanneries", textAr: "الدباغة" },
-    { text: "Souks", textAr: "الأسواق" },
-    { text: "Cascades", textAr: "شلالات" },
-    { text: "Kasbahs", textAr: "قصبات" },
-    { text: "Oasis", textAr: "واحات" }
-  ],
-  correct: ["Tanneries", "Souks"]
-};
-
-export default function FillBlanksScreen() {
+export default function V1FillBlanksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { initQueue, markComplete, getQueue } = useMissionStore();
+  const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
+  const cityId = cityParam as string;
+
+  const { missions, loading: loadingMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  
+  const questions = dbQuestions || [];
+
+  const currentIdx = parseInt(questionIndex as string) || 0;
+  const qData = questions[currentIdx];
+
   const [selections, setSelections] = useState<string[]>([]);
   const [completed, setCompleted] = useState(false);
-  const [error, setError] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSplash, setShowSplash] = useState(currentIdx === 0);
+  const { awardBadge, showReward, lastAwardedBadge, dismissReward } = useBadges();
 
-  const shake = useSharedValue(0);
-
-  const toggleOption = (optObj: {text: string, textAr: string}) => {
-    if (completed) return;
-    const opt = optObj.text;
-    
-    if (selections.includes(opt)) {
-      SoundService.getInstance().playSound('click');
-      setSelections(selections.filter(s => s !== opt));
-    } else {
-      if (selections.length < 2) {
-        SoundService.getInstance().playSound('click');
-        const newSel = [...selections, opt];
-        setSelections(newSel);
-        if (newSel.length === 2) {
-          checkResult(newSel);
-        }
-      }
+  useEffect(() => {
+    if (questions.length > 0 && missionId) {
+      initQueue(missionId as string, questions);
     }
+  }, [questions, missionId]);
+
+  const correctAnswers = (qData?.correct_answer || '').split(',').map((a: string) => a.trim());
+  const options = Array.isArray(qData?.options) ? qData.options : [];
+
+  const handleSelect = (text: string) => {
+    if (selections.length >= correctAnswers.length) return;
+    setSelections([...selections, text]);
+    playSound('click');
   };
 
-  const triggerShake = () => {
-    shake.value = withSequence(
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(0, { duration: 50 })
-    );
+  const handleUndo = () => {
+    setSelections(selections.slice(0, -1));
+    playSound('click');
   };
 
-  const checkResult = (current: string[]) => {
-    const isCorrect = current.every(s => BLANKS_DATA.correct.includes(s)) && current.length === BLANKS_DATA.correct.length;
-    
-    if (isCorrect) {
-      setCompleted(true);
-      setError(false);
-      SoundService.getInstance().playSound('correct');
-      SoundService.getInstance().triggerHaptic('success');
-      setTimeout(() => router.push('/(challenges)/puzzle-riddle'), 2000);
-    } else {
-      setError(true);
-      SoundService.getInstance().playSound('wrong');
-      SoundService.getInstance().triggerHaptic('error');
-      triggerShake();
-      setTimeout(() => {
+  const handleValidation = () => {
+    if (selections.length < correctAnswers.length) return;
+    const correct = selections.every((s, i) => s.toLowerCase() === correctAnswers[i].toLowerCase());
+    setIsCorrect(correct);
+    setCompleted(correct);
+    setShowFeedback(true);
+    playSound(correct ? 'correct' : 'wrong');
+
+    if (correct && currentIdx + 1 === questions.length) {
+      setShowConfetti(true);
+      awardBadge('expert_des_mots');
+    }
+
+    markComplete(missionId as string, currentIdx);
+
+    setTimeout(() => {
+      setShowFeedback(false);
+      if (correct) {
+        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
         setSelections([]);
-        setError(false);
-      }, 1500);
-    }
+        setIsCorrect(null);
+      } else {
+        setIsCorrect(null);
+      }
+    }, 2500);
   };
 
-  const cardStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shake.value }]
-  }));
+  if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+  if (!qData) return null;
 
-  const renderSentence = () => {
-    const parts = BLANKS_DATA.sentence.split('________');
+  const partsFr = qData.question_fr.split(/(________)/);
+  const partsAr = qData.question_ar ? qData.question_ar.split(/(________)/) : [];
+
+  const renderSentence = (parts: string[], isAr: boolean = false) => {
+    let blankIdx = 0;
     return (
-      <View>
-        <Text style={[styles.sentence, { color: colors.primary }]}>
-          {parts[0]}
-          <View style={[styles.blankContainer, selections[0] ? { borderBottomColor: colors.gold } : { borderBottomColor: colors.onSurfaceVariant }]}>
-            <Text style={[styles.blankText, { color: colors.gold }]}>{selections[0] || "          "}</Text>
-          </View>
-          {parts[1]}
-          <View style={[styles.blankContainer, selections[1] ? { borderBottomColor: colors.gold } : { borderBottomColor: colors.onSurfaceVariant }]}>
-            <Text style={[styles.blankText, { color: colors.gold }]}>{selections[1] || "          "}</Text>
-          </View>
-          {parts[2]}
-        </Text>
-        <Text style={[styles.sentenceAr, { color: colors.primary + '80' }]}>{BLANKS_DATA.sentenceAr}</Text>
+      <View style={[styles.sentenceWrapper, isAr && { flexDirection: 'row-reverse' }]}>
+        {parts.map((p, i) => {
+          if (p === '________') {
+            const currentBlank = blankIdx++;
+            const selection = selections[currentBlank];
+            return (
+              <View key={i} style={[styles.blank, { backgroundColor: selection ? colors.primary : colors.surface, borderColor: selection ? colors.primary : colors.border }]}>
+                <Text style={[styles.blankText, { color: selection ? '#fff' : colors.primary }]}>{selection || ""}</Text>
+              </View>
+            );
+          }
+          return <Text key={i} style={[styles.staticText, isAr && styles.staticTextAr, { color: colors.onSurface }]}>{p}</Text>;
+        })}
       </View>
     );
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={{ height: insets.top }} />
-      
-      <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-      
-      <ScrollView 
-        contentContainerStyle={[
-          styles.content, 
-          { paddingBottom: insets.bottom + 100 }
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
-            <View style={[styles.tag, { backgroundColor: colors.gold + '20' }]}>
-              <Text style={[styles.tagText, { color: colors.gold }]}>DÉFI LINGUISTIQUE</Text>
-            </View>
-            <Text style={[styles.title, { color: colors.primary }]}>Texte à trous</Text>
-            <Text style={[styles.titleAr, { color: colors.primary + '80' }]}>نص بكلمات مفقودة</Text>
-            <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>
-              Utilisez vos connaissances pour compléter cette description de la ville impériale.
-            </Text>
-        </Animated.View>
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <ChallengeHeader 
+        cityId={cityId} 
+        onBack={() => router.back()}
+      />
+      <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
-        <Animated.View 
-          entering={FadeInUp.delay(400)} 
-          style={[
-            styles.sentenceCard, 
-            { backgroundColor: colors.surface },
-            error && styles.errorCard,
-            cardStyle
-          ]}
-        >
-          {renderSentence()}
-          {completed && (
-            <Animated.View entering={FadeIn} style={styles.successOverlay}>
-              <MaterialIcons name="check-circle" size={48} color="#4CAF50" />
-              <Text style={styles.successText}>Parfait !</Text>
-            </Animated.View>
-          )}
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
+          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>COMPLÉTER LES BLANCS</Text>
+          <View style={styles.sentencesBox}>
+            {renderSentence(partsFr)}
+            {partsAr.length > 0 && <View style={{ height: 20 }} />}
+            {partsAr.length > 0 && renderSentence(partsAr, true)}
+          </View>
         </Animated.View>
 
         <View style={styles.optionsGrid}>
-          {BLANKS_DATA.options.map((opt, idx) => {
-            const isSelected = selections.includes(opt.text);
-            const isCorrect = completed && BLANKS_DATA.correct.includes(opt.text);
-            
+          {options.map((opt: any, idx: number) => {
+            const isUsed = selections.includes(opt.text);
             return (
-              <Animated.View key={opt.text} entering={FadeInUp.delay(500 + idx * 100)}>
-                <TouchableOpacity 
-                  style={[
-                    styles.optionBtn,
-                    { backgroundColor: colors.surface, borderColor: colors.border },
-                    isSelected && { borderColor: colors.gold, backgroundColor: colors.gold + '10' },
-                    isCorrect && styles.correctOption,
-                    (error && isSelected) && styles.wrongOption
-                  ]}
-                  onPress={() => toggleOption(opt)}
-                  disabled={completed || (error && isSelected)}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ alignItems: 'center' }}>
-                    <Text style={[
-                        styles.optionText, 
-                        { color: colors.primary },
-                        isSelected && { color: colors.gold },
-                        isCorrect && { color: '#fff' }
-                      ]}
-                    >
-                      {opt.text}
-                    </Text>
-                    <Text style={[
-                        styles.optionTextAr, 
-                        { color: colors.primary + '70' },
-                        isSelected && { color: colors.gold },
-                        isCorrect && { color: '#fff' }
-                      ]}
-                    >
-                      {opt.textAr}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              </Animated.View>
+              <TouchableOpacity
+                key={idx}
+                style={[styles.optionBtn, isUsed && { opacity: 0.3 }]}
+                onPress={() => handleSelect(opt.text)}
+                disabled={isUsed || isCorrect !== null}
+              >
+                <Text style={styles.optionBtnText}>{opt.text}</Text>
+                {!!opt.textAr && <Text style={styles.optionBtnTextAr}>{opt.textAr}</Text>}
+              </TouchableOpacity>
             );
           })}
         </View>
+
+        {selections.length > 0 && (
+          <TouchableOpacity style={styles.undoBtn} onPress={handleUndo} disabled={isCorrect !== null}>
+            <MaterialIcons name="undo" size={20} color={colors.primary} />
+            <Text style={{ color: colors.primary, fontWeight: '700', marginLeft: 8 }}>ANNULER LE DERNIER MOT</Text>
+          </TouchableOpacity>
+        )}
       </ScrollView>
 
-      <ZelligeBottomNav />
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 10, backgroundColor: colors.surface }]}>
+        <View style={styles.footerRow}>
+          <View style={styles.sideActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelections([]); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]} 
+            onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.primaryActionBtn, { backgroundColor: colors.primary }, (!selections.length || isCorrect !== null) && { opacity: 0.5 }]}
+            onPress={handleValidation}
+            disabled={!selections.length || isCorrect !== null}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="done-all" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      {showConfetti && <ConfettiEffect />}
+      <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
+      <MissionSplash 
+        isVisible={showSplash} 
+        title={qData?.title_fr || "Texte à trous"} 
+        subtitle="Remplissez les espaces vides"
+        onFinish={() => setShowSplash(false)} 
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  tag: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+  container: { flex: 1 },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scroll: { padding: 24 },
+  header: { marginBottom: 30, alignItems: 'center' },
+  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  sentencesBox: { width: '100%', padding: 20, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  sentenceWrapper: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center' },
+  staticText: { fontSize: 18, fontWeight: '600', lineHeight: 32 },
+  staticTextAr: { fontSize: 20, fontWeight: '700' },
+  blank: { minWidth: 80, height: 36, marginHorizontal: 6, borderRadius: 8, borderWidth: 2, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
+  blankText: { fontWeight: '800', fontSize: 14 },
+  optionsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center', marginTop: 20 },
+  optionBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, alignItems: 'center' },
+  optionBtnText: { fontWeight: '700', fontSize: 14 },
+  optionBtnTextAr: { fontSize: 13, marginTop: 2, opacity: 0.7 },
+  undoBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30, opacity: 0.8 },
+  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    marginBottom: 16,
-  },
-  tagText: {
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '900',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  titleAr: {
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  instruction: {
-    fontSize: 15,
-    fontWeight: '500',
-    textAlign: 'center',
-    lineHeight: 22,
-    paddingHorizontal: 20,
-  },
-  sentenceCard: {
-    borderRadius: 32,
-    padding: 32,
-    marginBottom: 40,
-    minHeight: 180,
+    backgroundColor: 'rgba(0,0,0,0.03)',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-    elevation: 8,
+    alignItems: 'center',
+  },
+  primaryActionBtn: {
+    paddingHorizontal: 32,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  errorCard: {
-    borderColor: '#EF4444',
-  },
-  sentence: {
-    fontSize: 20,
-    fontWeight: '600',
-    lineHeight: 44,
-    textAlign: 'center',
-  },
-  sentenceAr: {
-    fontSize: 18,
-    fontWeight: '600',
-    lineHeight: 40,
-    textAlign: 'center',
-    marginTop: 12,
-  },
-  blankContainer: {
-    borderBottomWidth: 2,
-    minWidth: 100,
-    alignItems: 'center',
-    marginHorizontal: 4,
-    transform: [{ translateY: 4 }],
-  },
-  blankText: {
-    fontSize: 20,
-    fontWeight: '900',
-    fontStyle: 'italic',
-  },
-  successOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  successText: {
-    marginTop: 8,
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#4CAF50',
-  },
-  optionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'center',
-  },
-  optionBtn: {
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 20,
+  skipIconBtn: {
+    paddingHorizontal: 24,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
-    minWidth: width * 0.4,
+    justifyContent: 'center',
     alignItems: 'center',
-  },
-  correctOption: {
-    backgroundColor: '#4CAF50',
-    borderColor: '#4CAF50',
-  },
-  wrongOption: {
-    backgroundColor: '#FFEBEE',
-    borderColor: '#EF4444',
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  optionTextAr: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 2,
   }
 });
-

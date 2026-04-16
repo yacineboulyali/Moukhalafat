@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
 import { router } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -14,6 +14,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Svg, { Path } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { THEME } from '../constants/theme';
+import { preloadAllChallenges } from '../hooks/useChallenges';
+import { preloadAllMissions } from '../hooks/useMissions';
+import { preloadAllQuestions } from '../hooks/useQuestions';
+import { useAuthStore } from '../stores/authStore';
 
 const { width, height } = Dimensions.get('window');
 
@@ -27,6 +31,8 @@ export default function SplashScreen() {
   const textTranslateY = useSharedValue(20);
   const progressWidth = useSharedValue(0);
   const ringRotation = useSharedValue(0);
+  const [loadPercentage, setLoadPercentage] = React.useState(0);
+  const { user, loading: authLoading } = useAuthStore();
 
   useEffect(() => {
     // Initial animations
@@ -35,9 +41,6 @@ export default function SplashScreen() {
 
     textOpacity.value = withDelay(400, withTiming(1, { duration: 800 }));
     textTranslateY.value = withDelay(400, withSpring(0, { damping: 12, stiffness: 90 }));
-
-    // Progress bar fills over 2 seconds
-    progressWidth.value = withTiming(100, { duration: 2500, easing: Easing.out(Easing.ease) });
 
     // continuous rotation for the outer ring
     ringRotation.value = withRepeat(
@@ -48,18 +51,39 @@ export default function SplashScreen() {
 
     // Initialisation
     const initApp = async () => {
-      // On pourrait ici charger des données essentielles
-      // Simulation d'un temps de chargement
+      try {
+        // Step 1: Challenges
+        await preloadAllChallenges();
+        progressWidth.value = withTiming(33, { duration: 500 });
+        setLoadPercentage(33);
+
+        // Step 2: Missions 
+        await preloadAllMissions();
+        progressWidth.value = withTiming(66, { duration: 500 });
+        setLoadPercentage(66);
+
+        // Step 3: Questions
+        await preloadAllQuestions();
+        progressWidth.value = withTiming(100, { duration: 500 });
+        setLoadPercentage(100);
+
+        // Attendre l'auth si nécessaire
+        while (authLoading) {
+           await new Promise(r => setTimeout(r, 100));
+        }
+
+        // Navigation finale directe vers la carte
+        setTimeout(() => {
+          router.replace('/map');
+        }, 800);
+      } catch (err) {
+        console.error("Erreur d'initialisation:", err);
+        router.replace('/accueil');
+      }
     };
+    
     initApp();
-
-    // Navigation vers l'accueil
-    const timer = setTimeout(() => {
-      router.replace('/accueil');
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
+  }, [authLoading, user]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: logoScale.value }],
@@ -87,20 +111,13 @@ export default function SplashScreen() {
 
       {/* Zellige Pattern Background */}
       <View style={StyleSheet.absoluteFillObject}>
-        <Svg width={width} height={height}>
-          {Array.from({ length: 15 }).map((_, i) =>
-            Array.from({ length: 25 }).map((_, j) => (
-              <Path
-                key={`${i}-${j}`}
-                d="M30 0l5 5h10l5 5v10l5 5-5 5v10l-5 5h-10l-5 5-5-5h-10l-5-5v-10l-5-5 5-5v-10l5-5h10z"
-                fill={COLORS.gold}
-                fillOpacity={0.03}
-                x={i * 80 - 40}
-                y={j * 80 - 40}
-              />
-            ))
-          )}
-        </Svg>
+        <Image 
+          source={require('../assets/images/zellige_splash.png')}
+          style={[styles.splashBg, { opacity: 0.1 }]}
+          resizeMode="repeat"
+        />
+        {/* Tint Overlay */}
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgb(212, 175, 55)', opacity: 0.5 }]} />
       </View>
 
       {/* Main Content */}
@@ -133,7 +150,9 @@ export default function SplashScreen() {
         <View style={styles.progressTrack}>
           <Animated.View style={[styles.progressFill, progressAnimatedStyle]} />
         </View>
-        <Text style={styles.progressText}>INITIALISATION DU VOYAGE...</Text>
+        <Text style={styles.progressText}>
+          {loadPercentage === 100 ? "VOYAGE PRÊT !" : `CHARGEMENT DES RESSOURCES... ${loadPercentage}%`}
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -145,6 +164,10 @@ const styles = StyleSheet.create({
     backgroundColor: THEME.light.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  splashBg: {
+    width: '100%',
+    height: '100%',
   },
   decorBand: {
     position: 'absolute',

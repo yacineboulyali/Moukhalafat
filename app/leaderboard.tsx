@@ -18,7 +18,8 @@ import Animated, {
   FadeInDown, 
   FadeInUp,
 } from 'react-native-reanimated';
-import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { useTheme } from '../hooks/useTheme';
+import { AVATARS, getAvatarById } from '../constants/Avatars';
 
 const { width } = Dimensions.get('window');
 
@@ -51,7 +52,7 @@ const LeaderboardItem = ({ rank, name, xp, isUser, delay }: { rank: number, name
     </View>
     
     <View style={styles.avatarMini}>
-      <Text style={styles.avatarInitial}>{name[0]}</Text>
+      <Image source={getAvatarById(name === 'Yassine' ? 'explorer' : (rank % 2 === 0 ? 'boy' : 'girl'))} style={styles.avatarMiniImg} />
     </View>
 
     <View style={styles.nameContainer}>
@@ -104,7 +105,7 @@ export default function LeaderboardScreen() {
           <View style={styles.topThreeContainer}>
             <Animated.View entering={FadeInUp.delay(500).springify()} style={[styles.podiumItem, { marginTop: 40 }]}>
               <View style={[styles.podiumAvatar, { borderColor: '#C0C0C0' }]}>
-                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
+                <Image source={AVATARS.boy} style={styles.avatarImg} />
               </View>
               <Text style={styles.podiumName}>Amine</Text>
               <View style={[styles.podiumBase, { height: 60, backgroundColor: '#C0C0C030' }]}>
@@ -115,7 +116,7 @@ export default function LeaderboardScreen() {
             <Animated.View entering={FadeInUp.delay(300).springify()} style={styles.podiumItem}>
               <FontAwesome5 name="crown" size={24} color="#FFD700" style={styles.crownIcon} />
               <View style={[styles.podiumAvatar, { width: 90, height: 90, borderRadius: 45, borderColor: '#FFD700' }]}>
-                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
+                <Image source={AVATARS.girl} style={styles.avatarImg} />
               </View>
               <Text style={[styles.podiumName, { fontWeight: '900' }]}>Sofia</Text>
               <View style={[styles.podiumBase, { height: 90, backgroundColor: '#FFD70030' }]}>
@@ -125,7 +126,7 @@ export default function LeaderboardScreen() {
 
             <Animated.View entering={FadeInUp.delay(700).springify()} style={[styles.podiumItem, { marginTop: 50 }]}>
               <View style={[styles.podiumAvatar, { borderColor: '#CD7F32' }]}>
-                <Image source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC1_hR4-L6Fp9q1m7_u-XfNqX2s0r4e_v0W7m8p9q1m7_u-XfNqX2s0r4e_v0W7m' }} style={styles.avatarImg} />
+                <Image source={AVATARS.mentor} style={styles.avatarImg} />
               </View>
               <Text style={styles.podiumName}>Leila</Text>
               <View style={[styles.podiumBase, { height: 45, backgroundColor: '#CD7F3230' }]}>
@@ -157,10 +158,27 @@ export default function LeaderboardScreen() {
                 delay={1000 + index * 100}
               />
             ))}
+
+            <Animated.View entering={FadeInUp.delay(2000)} style={{ marginTop: 24, marginBottom: 40 }}>
+              <TouchableOpacity
+                style={styles.coachingBtn}
+                onPress={() => router.push('/coaching')}
+                activeOpacity={0.8}
+              >
+                <LinearGradient
+                  colors={[COLORS.primary, '#1a3d2e']}
+                  style={styles.coachingBtnGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                >
+                  <Text style={styles.coachingBtnText}>Analyser mes performances</Text>
+                  <MaterialIcons name="insights" size={24} color={COLORS.white} />
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
           </ScrollView>
         </BlurView>
       </View>
-      <ZelligeBottomNav />
     </View>
   );
 }
@@ -319,6 +337,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: COLORS.gold,
   },
+  avatarMiniImg: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 22,
+  },
   nameContainer: {
     flex: 1,
   },
@@ -348,5 +371,27 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.onSurfaceVariant,
     fontWeight: '700',
+  },
+  coachingBtn: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    elevation: 8,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+  },
+  coachingBtnGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    gap: 16,
+  },
+  coachingBtnText: {
+    color: COLORS.white,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
 });

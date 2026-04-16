@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { router, usePathname } from 'expo-router';
@@ -32,8 +32,8 @@ const NavItem = ({ icon, label, path, isActive }: NavItemProps) => {
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: withSpring(isActive ? 1.2 : scale.value) },
-      { translateY: withSpring(isActive ? -8 : translateY.value) }
+      { scale: withSpring(isActive ? 1.1 : scale.value) },
+      { translateY: withSpring(isActive ? -4 : translateY.value) }
     ],
   }));
 
@@ -61,19 +61,13 @@ const NavItem = ({ icon, label, path, isActive }: NavItemProps) => {
       <Animated.View style={[styles.iconWrapper, animatedStyle]}>
         <MaterialIcons 
           name={icon} 
-          size={28} 
-          color={isActive ? colors.gold : (isActive ? colors.onSurface : 'rgba(169, 180, 172, 0.6)')} 
+          size={24} 
+          color={isActive ? colors.gold : (isActive ? colors.onSurface : 'rgba(169, 180, 172, 0.4)')} 
         />
         {isActive && (
-          <View style={[styles.activeGlow, { backgroundColor: colors.gold + '20' }]} />
+          <View style={[styles.activeGlow, { backgroundColor: colors.gold + '15' }]} />
         )}
       </Animated.View>
-      <Text style={[
-        styles.navText, 
-        { color: isActive ? colors.gold : 'rgba(169, 180, 172, 0.6)' }
-      ]}>
-        {label}
-      </Text>
       <Animated.View style={[styles.indicator, { backgroundColor: colors.gold }, indicatorStyle]} />
     </TouchableOpacity>
   );
@@ -91,8 +85,9 @@ export const ZelligeBottomNav = () => {
       style={[
         styles.container, 
         { 
-          paddingBottom: Math.max(insets.bottom, 16),
-          height: 70 + Math.max(insets.bottom, 16),
+          paddingBottom: Math.max(insets.bottom, 4),
+          paddingTop: 4,
+          height: 52 + Math.max(insets.bottom, 0),
           borderTopColor: colors.border
         }
       ]}
@@ -123,7 +118,7 @@ export const ZelligeBottomNav = () => {
         icon="person" 
         label="Profil" 
         path="/profil-classique" 
-        isActive={pathname === '/profil-classique' || pathname === '/resume-competence'} 
+        isActive={pathname === '/profil-classique'} 
       />
     </BlurView>
   );
@@ -146,33 +141,26 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 12,
+    paddingTop: 4,
   },
   iconWrapper: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
   },
   activeGlow: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     zIndex: -1,
   },
-  navText: {
-    fontSize: 10,
-    fontWeight: '800',
-    marginTop: 4,
-    fontFamily: 'Plus Jakarta Sans',
-    letterSpacing: 0.5,
-  },
   indicator: {
-    width: 20,
+    width: 16,
     height: 3,
     borderRadius: 2,
-    marginTop: 6,
+    marginTop: 2,
   }
 });

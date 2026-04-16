@@ -1,166 +1,270 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Animated as RNAnimated } from 'react-native';
-import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { THEME } from '../../constants/theme';
-import ChallengeTimer from '../../components/ChallengeTimer';
-import { SoundService } from '../../services/sounds';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring, withSequence, withTiming } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BadgeRewardModal } from '../../components/BadgeRewardModal';
+import ChallengeProgressBar from '../../components/ChallengeProgressBar';
+import MissionTracker from '../../components/MissionTracker';
+import { ImmediateFeedback } from '../../components/ImmediateFeedback';
+import { ChallengeHeader } from '../../components/ChallengeHeader';
+import { ConfettiEffect } from '../../components/ConfettiEffect';
+import { MissionSplash } from '../../components/MissionSplash';
+import { useBadges } from '../../hooks/useBadges';
+import { useChallenges } from '../../hooks/useChallenges';
+import { useMissions } from '../../hooks/useMissions';
+import { useQuestions } from '../../hooks/useQuestions';
+import { useTheme } from '../../hooks/useTheme';
+import { playSound } from '../../utils/SoundManager';
+import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
+import { useMissionStore } from '../../stores/missionStore';
+
+const { width } = Dimensions.get('window');
 
 export default function ShortAnswerScreen() {
   const router = useRouter();
-  const [answer, setAnswer] = useState('');
-  const [isDone, setIsDone] = useState(false);
+  const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { initQueue, markComplete, getQueue } = useMissionStore();
+  const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
+  const cityId = cityParam as string;
 
-  const handleSubmit = () => {
-    if (answer.trim().toLowerCase().includes('cuir') || answer.trim().toLowerCase().includes('tannage')) {
-       SoundService.getInstance().playSound('correct');
-       setIsDone(true);
-       setTimeout(() => router.push('/(challenges)/matching'), 1500);
-    } else {
-       SoundService.getInstance().playSound('wrong');
-       // Optionally show error state or trigger shake, but for now just wrong sound
+  const { missions, loading: loadingMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  
+  const questions = dbQuestions || [];
+
+  const currentIdx = parseInt(questionIndex as string) || 0;
+  const qData = questions[currentIdx];
+
+  const { awardBadge, showReward, lastAwardedBadge, dismissReward } = useBadges();
+  const [answer, setAnswer] = useState('');
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSplash, setShowSplash] = useState(currentIdx === 0);
+
+  // Animation values
+  const inputShake = useSharedValue(0);
+
+  useEffect(() => {
+    if (questions.length > 0 && missionId) {
+      initQueue(missionId as string, questions);
     }
+  }, [questions, missionId]);
+
+  const handleValidation = () => {
+    if (!qData || !answer.trim()) return;
+    
+    const correctVal = qData.correct_answer.toLowerCase().trim();
+    const userVal = answer.toLowerCase().trim();
+    const correct = userVal === correctVal;
+
+    setIsCorrect(correct);
+    setShowFeedback(true);
+    playSound(correct ? 'correct' : 'wrong');
+
+    if (!correct) {
+      inputShake.value = withSequence(
+        withTiming(-10, { duration: 50 }),
+        withTiming(10, { duration: 50 }),
+        withTiming(-10, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      );
+    }
+
+    if (correct && currentIdx + 1 === questions.length) {
+      setShowConfetti(true);
+      awardBadge('linguiste_en_herbe');
+    }
+
+    markComplete(missionId as string, currentIdx);
+
+    setTimeout(() => {
+      setShowFeedback(false);
+      if (correct) {
+        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        setAnswer('');
+        setIsCorrect(null);
+      } else {
+        setIsCorrect(null);
+      }
+    }, 2500);
   };
 
+  const handleSkip = () => {
+    skipQuestion({ missionId: missionId as string, cityId });
+  };
+
+  const handleCancel = () => {
+    setAnswer('');
+    playSound('click');
+  };
+
+  const rInputStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: inputShake.value }],
+    borderColor: isCorrect === true ? colors.primary : (isCorrect === false ? '#EF4444' : (answer.length > 0 ? colors.primary : colors.border))
+  }));
+
+  if (loadingMissions || loadingQuestions) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  if (!qData) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: colors.primary }}>Défi non trouvé</Text>
+        <TouchableOpacity onPress={handleSkip}><Text>Passer</Text></TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <ChallengeHeader 
+        cityId={cityId} 
+        onBack={() => router.back()}
+      />
       
-      <ScrollView contentContainerStyle={styles.content}>
+      <ChallengeProgressBar
+        progress={currentIdx / questions.length}
+        label={`Question ${currentIdx + 1} / ${questions.length}`}
+        color={colors.primary}
+      />
+
+      <ScrollView contentContainerStyle={styles.scroll}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
-          <View style={styles.iconBox}>
-             <MaterialIcons name="edit" size={28} color="#fff" />
+          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>RÉPONSE COURTE</Text>
+          <View style={styles.bilingualBox}>
+            <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
+            {!!qData.question_ar && <Text style={styles.arabicText}>{qData.question_ar}</Text>}
           </View>
-          <Text style={styles.title}>Réponse Courte</Text>
-          <Text style={styles.subtitle}>Saisissez votre réponse ci-dessous</Text>
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(400)} style={styles.inputCard}>
-          <Text style={styles.question}>Comment appelle-t-on le quartier des tanneurs à Fès ?</Text>
+        <Animated.View style={[styles.inputContainer, rInputStyle]}>
           <TextInput
-            style={styles.input}
-            placeholder="Votre réponse..."
+            style={[styles.input, { color: colors.onSurface }]}
+            placeholder="Écrivez votre réponse ici..."
+            placeholderTextColor={colors.onSurfaceVariant + '80'}
             value={answer}
             onChangeText={setAnswer}
-            multiline
-            numberOfLines={2}
+            autoFocus
+            autoCorrect={false}
           />
         </Animated.View>
 
-        <Animated.View entering={FadeInUp.delay(600)} style={styles.tipBox}>
-          <MaterialIcons name="lightbulb" size={18} color={THEME.light.gold} />
-          <Text style={styles.tipText}>Indice : C'est un métier lié au travail des peaux d'animaux.</Text>
-        </Animated.View>
+        {!!qData.hint_fr && (
+          <Animated.View entering={FadeInUp.delay(500)} style={styles.hintBox}>
+            <MaterialIcons name="lightbulb-outline" size={20} color={colors.gold} />
+            <View style={{ flex: 1, marginLeft: 12 }}>
+              <Text style={[styles.hintText, { color: colors.onSurfaceVariant }]}>{qData.hint_fr}</Text>
+              {!!qData.hint_ar && <Text style={[styles.hintTextAr, { color: colors.onSurfaceVariant }]}>{qData.hint_ar}</Text>}
+            </View>
+          </Animated.View>
+        )}
       </ScrollView>
 
-      <View style={styles.footer}>
-        <TouchableOpacity 
-          style={[styles.btn, (!answer.trim() || isDone) && styles.disabledBtn]} 
-          onPress={handleSubmit}
-          disabled={!answer.trim() || isDone}
-        >
-          <Text style={styles.btnText}>ENVOYER LA RÉPONSE</Text>
-        </TouchableOpacity>
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10, backgroundColor: colors.surface }]}>
+        <View style={styles.footerRow}>
+          <View style={styles.sideActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setAnswer(''); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]} 
+            onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.primaryActionBtn, { backgroundColor: colors.primary }, (!answer.trim() || isCorrect !== null) && { opacity: 0.5 }]}
+            onPress={handleValidation}
+            disabled={!answer.trim() || isCorrect !== null}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="done-all" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
+
+      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      {showConfetti && <ConfettiEffect />}
+      <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
+      <MissionSplash 
+        isVisible={showSplash} 
+        title={qData?.title_fr || "Défi d'écriture"} 
+        subtitle="Rédigez votre réponse"
+        onFinish={() => setShowSplash(false)} 
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: THEME.light.background,
-  },
-  content: {
-    padding: 24,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  iconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: THEME.light.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: THEME.light.primary,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: THEME.light.onSurfaceVariant,
-    marginTop: 4,
-  },
-  inputCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-  },
-  question: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: THEME.light.onSurface,
-    marginBottom: 20,
-    lineHeight: 24,
-  },
-  input: {
-    backgroundColor: 'rgba(0,0,0,0.02)',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 16,
-    color: THEME.light.primary,
-    minHeight: 80,
-    textAlignVertical: 'top',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.05)',
-  },
-  tipBox: {
+  container: { flex: 1 },
+  scroll: { padding: 24 },
+  header: { marginBottom: 32, alignItems: 'center' },
+  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  bilingualBox: { width: '100%', alignItems: 'center' },
+  questionText: { fontSize: 22, fontWeight: '800', textAlign: 'center', marginBottom: 8 },
+  arabicText: { fontSize: 20, textAlign: 'center', color: '#B8860B', fontWeight: '700' },
+  inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    padding: 16,
-    borderRadius: 16,
-    marginTop: 24,
-    gap: 10,
+    borderWidth: 2,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    height: 64,
+    backgroundColor: 'rgba(0,0,0,0.02)',
   },
-  tipText: {
-    flex: 1,
-    fontSize: 12,
-    color: THEME.light.goldMuted,
-    fontWeight: '600',
-  },
-  footer: {
-    padding: 24,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-  },
-  btn: {
-    backgroundColor: THEME.light.primary,
-    paddingVertical: 18,
-    borderRadius: 16,
+  input: { flex: 1, fontSize: 18, fontWeight: '600' },
+  hintBox: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 24, padding: 16, borderRadius: 16, borderStyle: 'dashed', borderWidth: 1, borderColor: '#ccc' },
+  hintText: { fontSize: 14, fontWeight: '600' },
+  hintTextAr: { fontSize: 14, marginTop: 4, textAlign: 'right' },
+  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  disabledBtn: {
-    backgroundColor: THEME.light.locked,
-    opacity: 0.6,
+  primaryActionBtn: {
+    paddingHorizontal: 32,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  btnText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 14,
-    letterSpacing: 1,
-  },
+  skipIconBtn: {
+    paddingHorizontal: 24,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
+  }
 });

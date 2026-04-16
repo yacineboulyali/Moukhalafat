@@ -27,7 +27,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../hooks/useTheme';
 import { BADGES, Badge } from '../constants/Badges';
-import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { useAuthStore } from '../stores/authStore';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
@@ -35,9 +35,63 @@ import { BlurView } from 'expo-blur';
 
 const { width, height } = Dimensions.get('window');
 
+const WaveContour = ({ size, color, unlocked }: { size: number, color: string, unlocked: boolean }) => {
+  const scale = useSharedValue(1);
+  const opacity = useSharedValue(0.6);
+
+  useEffect(() => {
+    if (unlocked) {
+      scale.value = withRepeat(
+        withTiming(1.2, { duration: 2000 }),
+        -1,
+        true
+      );
+      opacity.value = withRepeat(
+        withTiming(0, { duration: 2000 }),
+        -1,
+        false
+      );
+    }
+  }, [unlocked]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: opacity.value,
+  }));
+
+  if (!unlocked) return null;
+
+  return (
+    <Animated.View 
+      style={[
+        StyleSheet.absoluteFill, 
+        animatedStyle, 
+        { 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          zIndex: -1 
+        }
+      ]}
+    >
+      <Svg width={size * 1.5} height={size * 1.5} viewBox={`0 0 ${size} ${size}`}>
+        <Circle 
+          cx={size / 2} 
+          cy={size / 2} 
+          r={(size / 2) - 2} 
+          stroke={color} 
+          strokeWidth={1} 
+          fill="none" 
+        />
+      </Svg>
+    </Animated.View>
+  );
+};
+
 const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: Badge, size?: number, isLarge?: boolean, onPress?: () => void }) => {
   const { colors } = useTheme();
   const unlocked = badge.unlocked;
+  const rotation = useSharedValue(0);
+  const scale = useSharedValue(1);
   
   // Octagon points for SVG
   const half = size / 2;
@@ -53,9 +107,31 @@ const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: B
     0,${offset}
   `;
 
+  const animatedBadgeStyle = useAnimatedStyle(() => ({
+    transform: [
+      { rotate: `${rotation.value}deg` },
+      { scale: scale.value }
+    ]
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(1.1);
+    rotation.value = withSequence(
+      withTiming(-5, { duration: 50 }),
+      withTiming(5, { duration: 50 }),
+      withSpring(0)
+    );
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
   const content = (
     <View style={[styles.badgeContainer, { width: size + 20, backgroundColor: 'transparent' }]}>
-      <View style={{ width: size, height: size, backgroundColor: 'transparent' }}>
+      <Animated.View style={[{ width: size, height: size, backgroundColor: 'transparent' }, animatedBadgeStyle]}>
+        <WaveContour size={size} color={colors.gold} unlocked={unlocked || false} />
+        
         <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={[StyleSheet.absoluteFill, { backgroundColor: 'transparent' }]}>
           <Defs>
             <LinearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -68,17 +144,22 @@ const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: B
           <Polygon
             points={points}
             fill={unlocked ? (isLarge ? 'url(#goldGradient)' : 'transparent') : '#F5F5F5'}
-            fillOpacity={unlocked ? 0 : 1}
+            fillOpacity={unlocked ? (isLarge ? 1 : 0) : 1}
             stroke={unlocked ? '#D4AF37' : '#E0E0E0'}
             strokeWidth={isLarge ? 4 : 2}
           />
         </Svg>
 
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center', overflow: 'hidden', backgroundColor: 'transparent' }]}>
-          {(badge.remoteImage || badge.image) && unlocked ? (
+          {(badge.remoteImage || badge.image) ? (
             <Image 
               source={badge.remoteImage || badge.image} 
-              style={{ width: size * 0.98, height: size * 0.98, borderRadius: 10, backgroundColor: 'transparent' }}
+              style={{ 
+                width: size * 0.85, 
+                height: size * 0.85, 
+                opacity: unlocked ? 1 : 0.25,
+                backgroundColor: 'transparent'
+              }}
               contentFit="contain"
             />
           ) : (
@@ -89,7 +170,7 @@ const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: B
             />
           )}
         </View>
-      </View>
+      </Animated.View>
       
       {!isLarge && (
         <View style={styles.badgeTextContainer}>
@@ -102,7 +183,12 @@ const OctagonBadge = ({ badge, size = 80, isLarge = false, onPress }: { badge: B
 
   if (onPress) {
     return (
-      <TouchableOpacity activeOpacity={0.7} onPress={onPress}>
+      <TouchableOpacity 
+        activeOpacity={0.9} 
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+      >
         {content}
       </TouchableOpacity>
     );
@@ -134,9 +220,16 @@ const BadgeSection = ({ title, arabicTitle, badges, color, onSelect }: { title: 
 
 export default function BadgesScreen() {
   const { colors } = useTheme();
+  const { user } = useAuthStore();
   const [selectedBadge, setSelectedBadge] = useState<Badge | null>(null);
   const shakeX = useSharedValue(0);
-  
+
+  // Map user earned badges to the global constant
+  const userBadges = BADGES.map(b => ({
+    ...b,
+    unlocked: user?.badges?.includes(b.id) || false
+  }));
+
   const cities = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
   const cityNames: Record<string, { fr: string, ar: string, color: string }> = {
     rabat: { fr: 'Rabat', ar: 'الرباط', color: '#6366f1' },
@@ -147,7 +240,7 @@ export default function BadgesScreen() {
     dakhla: { fr: 'Dakhla', ar: 'الداخلة', color: '#0ea5e9' }
   };
 
-  const finalBadge = BADGES.find(b => b.id === 'tabraat_final');
+        const finalBadge = userBadges.find(b => b.id === 'tabraat_final');
 
   const playSound = async () => {
     try {
@@ -161,26 +254,60 @@ export default function BadgesScreen() {
   };
 
   const handleSelect = (badge: Badge) => {
-    if (badge.unlocked) {
-      setSelectedBadge(badge);
-      playSound();
-      if (Platform.OS !== 'web') {
+    setSelectedBadge(badge);
+    playSound();
+    
+    if (Platform.OS !== 'web') {
+      if (badge.unlocked) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      } else {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      // Start shake animation
-      shakeX.value = withRepeat(
-        withSequence(
-          withTiming(-10, { duration: 50 }),
-          withTiming(10, { duration: 50 }),
-          withTiming(0, { duration: 50 })
-        ),
-        5
-      );
     }
+
+    // Start shake/vibration animation
+    shakeX.value = withRepeat(
+      withSequence(
+        withTiming(-5, { duration: 50 }),
+        withTiming(5, { duration: 50 }),
+        withTiming(0, { duration: 50 })
+      ),
+      3
+    );
   };
 
+  const reflexX = useSharedValue(0);
+  const reflexY = useSharedValue(0);
+
+  useEffect(() => {
+    if (selectedBadge) {
+      reflexX.value = withRepeat(
+        withSequence(
+          withTiming(5, { duration: 1500 }),
+          withTiming(-5, { duration: 1500 })
+        ),
+        -1,
+        true
+      );
+      reflexY.value = withRepeat(
+        withSequence(
+          withTiming(-5, { duration: 2000 }),
+          withTiming(5, { duration: 2000 })
+        ),
+        -1,
+        true
+      );
+    } else {
+      reflexX.value = 0;
+      reflexY.value = 0;
+    }
+  }, [selectedBadge]);
+
   const animatedPopupStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shakeX.value }]
+    transform: [
+      { translateX: shakeX.value + reflexX.value },
+      { translateY: reflexY.value }
+    ]
   }));
 
   return (
@@ -198,7 +325,7 @@ export default function BadgesScreen() {
         </Animated.View>
 
         {cities.map((cityId) => {
-          const cityBadges = BADGES.filter(b => b.city === cityId);
+          const cityBadges = userBadges.filter(b => b.city === cityId);
           const cityInfo = cityNames[cityId];
           return (
             <BadgeSection 
@@ -211,6 +338,17 @@ export default function BadgesScreen() {
             />
           );
         })}
+
+        {/* Quest/Special Badges Section */}
+        {userBadges.filter(b => b.type === 'quest').length > 0 && (
+           <BadgeSection 
+              title="Quêtes"
+              arabicTitle="مهام"
+              badges={userBadges.filter(b => b.type === 'quest')}
+              color={colors.gold}
+              onSelect={handleSelect}
+            />
+        )}
 
         {finalBadge && (
           <Animated.View 
@@ -273,11 +411,27 @@ export default function BadgesScreen() {
               <Text style={styles.rarityText}>{selectedBadge?.rarity.toUpperCase() || 'COMMON'}</Text>
             </View>
 
+            {selectedBadge?.pointsRequired !== undefined && (
+              <View style={[styles.pointsBadge, { backgroundColor: colors.gold + '20' }]}>
+                <MaterialIcons name="stars" size={18} color={colors.gold} />
+                <Text style={[styles.pointsText, { color: colors.gold }]}>
+                  {selectedBadge.pointsRequired} points requis
+                </Text>
+              </View>
+            )}
+
             <Text style={[styles.popupDesc, { color: colors.onSurfaceVariant }]}>
               {selectedBadge?.description}
             </Text>
 
-            <View style={[styles.cityTag, { backgroundColor: colors.primary + '15' }]}>
+            {!selectedBadge?.unlocked && (
+               <View style={[styles.lockedTag, { backgroundColor: '#F5F5F5' }]}>
+                <MaterialIcons name="lock" size={16} color="#BDBDBD" />
+                <Text style={[styles.lockedText, { color: '#BDBDBD' }]}>VERROUILLÉ</Text>
+              </View>
+            )}
+
+            <View style={[styles.cityTag, { backgroundColor: colors.primary + '15', marginTop: 10 }]}>
               <MaterialIcons name="location-city" size={16} color={colors.primary} />
               <Text style={[styles.cityText, { color: colors.primary }]}>
                 {selectedBadge?.city?.toUpperCase() || 'SPÉCIAL'}
@@ -287,7 +441,6 @@ export default function BadgesScreen() {
         </TouchableOpacity>
       </Modal>
 
-      <ZelligeBottomNav />
     </SafeAreaView>
   );
 }
@@ -461,6 +614,33 @@ const styles = StyleSheet.create({
   cityText: {
     fontSize: 12,
     fontWeight: '700',
+    letterSpacing: 1,
+  },
+  pointsBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 15,
+    gap: 8,
+    marginBottom: 20,
+  },
+  pointsText: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  lockedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    gap: 5,
+    marginBottom: 20,
+  },
+  lockedText: {
+    fontSize: 11,
+    fontWeight: '800',
     letterSpacing: 1,
   }
 });

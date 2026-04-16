@@ -2,9 +2,10 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import ChallengeTimer from '../../components/ChallengeTimer';
+import { MaterialIcons } from '@expo/vector-icons';
 import { THEME } from '../../constants/theme';
 import { SoundService } from '../../services/sounds';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Data for Matching Épuré
 const DATA = {
@@ -15,8 +16,6 @@ const DATA = {
     { id: '4', text: 'Jus d\'orange', category: 'Boisson' },
   ]
 };
-
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MatchingEpureScreen() {
   const insets = useSafeAreaInsets();
@@ -45,9 +44,7 @@ export default function MatchingEpureScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-      <ChallengeTimer duration={90} onTimeUp={() => router.back()} />
-
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={styles.title}>Classification Rapide</Text>
@@ -79,6 +76,18 @@ export default function MatchingEpureScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10, backgroundColor: '#fff' }]}>
+        <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <TouchableOpacity 
+            style={styles.skipIconBtn}
+            onPress={() => router.back()}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={THEME.light.primary} />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 }
@@ -151,8 +160,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 24,
-    backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  skipIconBtn: {
+    paddingHorizontal: 24,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 2,
+    borderColor: THEME.light.primary + '40',
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

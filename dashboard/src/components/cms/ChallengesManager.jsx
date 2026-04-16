@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, ChevronRight, Image, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, ChevronRight, Image, MapPin, Eye } from 'lucide-react';
 import { useChallenges } from '../../hooks/useContent';
 import { Modal, Field, Input, Textarea, Toggle, Toast, Confirm } from './CmsUI';
 import ImageUploader from './ImageUploader';
@@ -19,9 +19,10 @@ const EMPTY = {
   description_fr: '', description_ar: '', focus_fr: '',
   step_label: '', progress: 0.25, illustration_url: '',
   sort_order: 0, is_published: false,
+  missions_title_fr: 'Missions :', missions_title_ar: 'المهمات :',
 };
 
-export default function ChallengesManager({ onSelectChallenge }) {
+export default function ChallengesManager({ onSelectChallenge, onViewCurriculum }) {
   const { challenges, loading, save, remove } = useChallenges();
   const [modal, setModal] = useState(null); // null | object
   const [toast, setToast] = useState(null);
@@ -122,6 +123,9 @@ export default function ChallengesManager({ onSelectChallenge }) {
 
               {/* Actions */}
               <div className="challenge-card-actions">
+                <button className="icon-btn" title="Aperçu complet (Curriculum)" onClick={() => onViewCurriculum(c)}>
+                  <Eye size={16} />
+                </button>
                 <button className="icon-btn" title="Voir les missions" onClick={() => onSelectChallenge(c)}>
                   <ChevronRight size={16} />
                 </button>
@@ -183,15 +187,23 @@ export default function ChallengesManager({ onSelectChallenge }) {
               <Field label="Description (FR) *">
                 <Textarea value={modal.description_fr} onChange={v => set('description_fr', v)} placeholder="Depuis la Kasbah des Oudayas…" rows={4} />
               </Field>
+            <div className="form-row-2">
               <Field label="Description (AR)">
                 <Textarea value={modal.description_ar} onChange={v => set('description_ar', v)} placeholder="من قصبة الأوداية…" rows={4} dir="rtl" />
               </Field>
+              <Field label="Libellé bloc missions (FR)" hint="Titre au-dessus des jetons missions (ex: Missions :)">
+                <Input value={modal.missions_title_fr} onChange={v => set('missions_title_fr', v)} placeholder="Missions :" />
+              </Field>
             </div>
 
-            <div className="form-row-3">
+            <div className="form-row-2">
+               <Field label="Libellé bloc missions (AR)">
+                <Input value={modal.missions_title_ar} onChange={v => set('missions_title_ar', v)} placeholder="المهمات :" dir="rtl" />
+              </Field>
               <Field label="Focus pédagogique">
                 <Input value={modal.focus_fr} onChange={v => set('focus_fr', v)} placeholder="Gouvernance & Patrimoine" />
               </Field>
+            </div>
               <Field label="Label d'étape">
                 <Input value={modal.step_label} onChange={v => set('step_label', v)} placeholder="ÉTAPE 1 / 4" />
               </Field>

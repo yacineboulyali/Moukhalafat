@@ -19,6 +19,8 @@ const { width, height } = Dimensions.get('window');
 
 const COLORS = THEME.light; // Default for onboarding
 
+const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
+
 export default function AccueilScreen() {
   return (
     <SafeAreaView style={styles.container}>
@@ -43,7 +45,7 @@ export default function AccueilScreen() {
         {/* Main Hero Image: Ben Ali Family */}
         <View style={styles.imageContainer}>
           <Video
-            source={require('../assets/videos/welcome video.mp4')}
+            source={{ uri: `${ASSETS_URL}/welcome_video.mp4` }}
             style={styles.heroImage}
             resizeMode={ResizeMode.CONTAIN}
             shouldPlay
@@ -66,7 +68,7 @@ export default function AccueilScreen() {
         <View style={styles.divider} />
 
         <Text style={styles.description}>
-          Suis la famille Ben Ali à travers le Maroc et développe tes compétences professionnelles en t'amusant.
+          Suis la famille Ben Ali à travers le Maroc et développe tes compétences professionnelles en t’amusant.
         </Text>
       </View>
 
@@ -74,19 +76,19 @@ export default function AccueilScreen() {
       <SafeAreaView style={styles.actionSection}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => router.push('/(auth)/register')}
+          onPress={() => router.push('/welcome')}
           activeOpacity={0.8}
         >
-          <Text style={styles.primaryButtonText}>Créer un compte</Text>
-          <MaterialIcons name="arrow-forward" size={24} color={COLORS.onPrimary} />
+          <Text style={styles.primaryButtonText}>Démarrer l'Aventure</Text>
+          <MaterialIcons name="auto-fix-high" size={24} color={COLORS.onPrimary} />
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.secondaryButton}
           activeOpacity={0.7}
-          onPress={() => router.push('/(auth)/login')}
+          onPress={() => router.push('/(auth)/register')}
         >
-          <Text style={styles.secondaryButtonText}>J'ai déjà un compte</Text>
+          <Text style={styles.secondaryButtonText}>Créer un compte</Text>
         </TouchableOpacity>
       </SafeAreaView>
 

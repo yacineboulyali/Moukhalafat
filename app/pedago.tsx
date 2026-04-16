@@ -7,11 +7,14 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { useMissions } from '../hooks/useMissions';
+import { useChallenges } from '../hooks/useChallenges';
 import { BlurView } from 'expo-blur';
 import Animated, { 
   FadeInDown, 
@@ -49,6 +52,29 @@ const PrincipleItem = ({ icon, title, arabicTitle, delay }: { icon: any, title: 
 
 export default function PedagoScreen() {
   const insets = useSafeAreaInsets();
+  const params = useLocalSearchParams();
+  const cityId = params.cityId as string;
+  const targetCity = cityId || 'rabat';
+
+  const { missions, loading: loadingMissions } = useMissions(targetCity);
+  const { challenges } = useChallenges();
+  const cityData = challenges[targetCity];
+  const cityColor = cityData?.city_color ?? COLORS.gold;
+
+  const handleContinue = async () => {
+    try {
+      const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
+      await AsyncStorage.setItem(`pedago_seen_${targetCity}`, 'true');
+    } catch (e) {
+      console.error('Error saving pedago status', e);
+    }
+
+    if (params.fromChallenge === 'true') {
+      router.back();
+    } else {
+      router.push({ pathname: '/intro-defi' as any, params: { city: targetCity } });
+    }
+  };
 
   return (
     <View style={styles.mainContainer}>
@@ -58,13 +84,13 @@ export default function PedagoScreen() {
       />
       
       <ScrollView 
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View entering={FadeInDown.duration(800)}>
           <View style={styles.imageWrapper}>
             <Image 
-              source={require('../assets/images/pedago-marrakech.png')}
+              source={{ uri: cityData?.illustration_url || 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/pedago-marrakech.png?v=1775991607482' }}
               style={styles.heroImage}
               resizeMode="cover"
             />
@@ -86,93 +112,73 @@ export default function PedagoScreen() {
         <View style={styles.contentPadding}>
           <Animated.View entering={FadeInDown.delay(200).duration(800)} style={styles.expertSection}>
             <View style={styles.expertHeader}>
-              <View style={styles.vLine} />
+              <View style={[styles.vLine, { backgroundColor: cityColor }]} />
               <View>
-                <Text style={styles.expertName}>Dr. Karim Alaoui</Text>
-                <Text style={styles.expertTitle}>Expert en communication • OFPPT</Text>
+                <Text style={styles.expertName}>{cityData?.city_name_fr || 'Rabat'} : Objectifs</Text>
+                <Text style={styles.expertTitle}>Préparez votre voyage de compétences</Text>
               </View>
             </View>
             
             <View style={styles.quoteCard}>
-              <MaterialIcons name="format-quote" size={32} color={COLORS.gold} style={styles.quoteIcon} />
+              <MaterialIcons name="info" size={32} color={cityColor} style={styles.quoteIcon} />
               <Text style={styles.quoteText}>
-                "Dans un contexte multiculturel, l'écoute active est la compétence la plus sous-estimée — et la plus puissante."
+                {cityData?.description_fr || "Découvrez les secrets de cette ville à travers des missions culturelles et professionnelles."}
               </Text>
-              <Text style={styles.quoteArabic}>الاستماع النشط هو المهارة الأقوى</Text>
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(400).duration(800)} style={styles.section}>
-            <Text style={styles.sectionLabel}>Pourquoi ce choix était optimal?</Text>
-            
+            <Text style={[styles.sectionLabel, { color: cityColor }]}>{cityData?.missions_title_fr || "Missions à accomplir"}</Text>
             <View style={styles.analysisCard}>
-              <View style={styles.analysisRow}>
-                <View style={[styles.statusDot, { backgroundColor: '#4CAF50' }]} />
-                <Text style={styles.analysisOption}>"J'interviens calmement pour recentrer la discussion"</Text>
-              </View>
-              <Text style={styles.analysisResult}>
-                Cette approche préserve la cohésion d'équipe tout en affirmant votre leadership naturel sans agressivité.
-              </Text>
-
-              <View style={[styles.analysisRow, { marginTop: 20 }]}>
-                <View style={[styles.statusDot, { backgroundColor: '#FF5252' }]} />
-                <Text style={styles.analysisOption}>"J'attends que la situation se calme d'elle-même"</Text>
-              </View>
-              <Text style={styles.analysisResult}>
-                La passivité peut être interprétée comme un désintérêt, laissant le conflit s'enraciner dans l'organisation.
-              </Text>
+              {loadingMissions ? (
+                <ActivityIndicator color={cityColor} />
+              ) : missions.length === 0 ? (
+                <Text style={styles.emptyText}>Aucune mission disponible pour le moment.</Text>
+              ) : (
+                missions.map((mission, idx) => (
+                  <View key={mission.id} style={[styles.analysisRow, idx > 0 && { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' }]}>
+                    <View style={[styles.statusDot, { backgroundColor: cityColor }]} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.analysisOption}>{mission.title_fr}</Text>
+                      <Text style={styles.analysisResult}>
+                        {mission.description_fr || "Relevez le défi pour maîtriser cette facette du patrimoine."}
+                      </Text>
+                    </View>
+                  </View>
+                ))
+              )}
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.section}>
-            <Text style={styles.sectionLabel}>3 principes à retenir</Text>
+            <Text style={[styles.sectionLabel, { color: cityColor }]}>Compétences Clés</Text>
             <PrincipleItem 
               icon="hearing" 
-              title="L'écoute active" 
-              arabicTitle="الاستماع النشط" 
+              title="Intelligence Culturelle" 
+              arabicTitle="الذكاء الثقافي" 
               delay={700}
             />
             <PrincipleItem 
               icon="security" 
-              title="La neutralité bienveillante" 
-              arabicTitle="الحياد الإيجابي" 
+              title="Communication Assertive" 
+              arabicTitle="التواصل الفعال" 
               delay={850}
             />
-            <PrincipleItem 
-              icon="auto-graph" 
-              title="La synthèse constructive" 
-              arabicTitle="التركيب البناء" 
-              delay={1000}
-            />
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(1100).duration(800)} style={styles.statsSection}>
-            <Text style={styles.sectionLabel}>Dans le monde professionnel</Text>
-            <View style={styles.statsCard}>
-              <Text style={styles.statsText}>
-                Selon les baromètres de l'OFPPT, les compétences comportementales (Soft Skills) comptent pour :
-              </Text>
-              <View style={styles.chartContainer}>
-                <LinearGradient
-                  colors={[COLORS.gold, COLORS.accent]}
-                  start={{x:0, y:0}} end={{x:1, y:0}}
-                  style={[styles.progressBar, { width: '85%' }]}
-                />
-                <Text style={styles.percentageText}>85% des recruteurs</Text>
-              </View>
-              <Text style={styles.sourceText}>Source: Observatoire des métiers OFPPT 2024</Text>
-            </View>
           </Animated.View>
         </View>
       </ScrollView>
 
-      <BlurView intensity={80} tint="light" style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+      <BlurView intensity={80} tint="light" style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 20) + 110 }]}>
         <TouchableOpacity 
-          style={styles.continueBtn}
-          onPress={() => router.push('/coaching')}
+          style={[styles.continueBtn, { backgroundColor: cityColor }]}
+          onPress={handleContinue}
         >
-          <Text style={styles.continueText}>Continuer le voyage</Text>
-          <MaterialIcons name="arrow-forward" size={20} color={COLORS.white} />
+          <Text style={styles.continueText}>POURSUIVRE LE DÉFI</Text>
+          <MaterialIcons 
+            name={params.fromChallenge === 'true' ? 'assignment-return' : 'play-arrow'} 
+            size={24} 
+            color={COLORS.white} 
+          />
         </TouchableOpacity>
       </BlurView>
     </View>
@@ -419,5 +425,13 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 18,
     fontWeight: '800',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.onSurfaceVariant,
+    opacity: 0.6,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    padding: 20,
   },
 });

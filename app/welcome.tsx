@@ -21,26 +21,28 @@ import { THEME } from '../constants/theme';
 
 const { width, height } = Dimensions.get('window');
 
+const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
+
 const ONBOARDING_STEPS = [
   {
     title: "Une Mission de Famille",
     arabic: "مهمة عائلية",
     description: "Accompagne la famille Ben Ali dans un voyage à travers le Maroc pour relever des défis professionnels réels.",
-    image: require('../assets/images/family-portrait-v3.png'),
+    image: { uri: `${ASSETS_URL}/family-portrait-v3.png` },
     color: '#1A3D2E'
   },
   {
     title: "Apprentissage Ludique",
     arabic: "تعلم ممتع",
     description: "Développe tes Soft Skills et Hard Skills en résolvant des scénarios complexes et des mini-jeux captivants.",
-    image: require('../assets/images/character-guide.jpg'),
+    image: { uri: `${ASSETS_URL}/character-guide.jpg` },
     color: '#D4AF37'
   },
   {
     title: "Trace ton Chemin",
     arabic: "ارسم مسارك",
     description: "Chaque décision compte. Tes choix influencent ta progression et tes badges de compétences.",
-    image: require('../assets/images/map-morocco.jpg'),
+    image: { uri: `${ASSETS_URL}/map-morocco.jpg` },
     color: '#ffab69'
   }
 ];
@@ -53,7 +55,7 @@ export default function WelcomeScreen() {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      router.push('/(auth)/register');
+      router.push('/family-setup');
     }
   };
 

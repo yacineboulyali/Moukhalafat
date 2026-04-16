@@ -25,6 +25,8 @@ export interface Challenge {
   illustration_url: string | null;
   sort_order: number;
   is_published: boolean;
+  missions_title_fr: string | null;
+  missions_title_ar: string | null;
 }
 
 // ─── In-memory cache ──────────────────────────────────────────────
@@ -39,37 +41,48 @@ export function useChallenges() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (_cache !== null) return; // already loaded
-
-    (async () => {
-      setLoading(true);
-      const { data, error: err } = await supabase
-        .from('challenges')
-        .select('*')
-        .order('sort_order');
-
-      if (err) {
-        setError(err.message);
-        setLoading(false);
-        return;
-      }
-
-      // Build lookup map by city_id
-      const map: Record<string, Challenge> = {};
-      (data ?? []).forEach((c: Challenge) => {
-        map[c.city_id] = c;
-      });
-
-      _cache = map;
-      setChallenges(map);
-      setLoading(false);
-    })();
+    refresh();
   }, []);
 
-  return { challenges, loading, error };
+  const refresh = async () => {
+    setLoading(true);
+    const { data, error: err } = await supabase
+      .from('challenges')
+      .select('*')
+      .order('sort_order');
+
+    if (err) {
+      console.warn('Supabase fetch failed:', err.message);
+      setError(err.message);
+      setLoading(false);
+      return;
+    }
+
+    const finalMap: Record<string, Challenge> = {};
+    (data ?? []).forEach((c: Challenge) => {
+      finalMap[c.city_id] = c;
+    });
+
+    _cache = finalMap;
+    setChallenges(finalMap);
+    setLoading(false);
+  };
+
+  return { challenges, loading, error, refresh };
 }
 
-/** Get a single challenge from the cache (sync, after first load) */
-export function getChallengeByCity(cityId: string): Challenge | undefined {
-  return _cache?.[cityId];
+/** Preload all challenges into the cache */
+export async function preloadAllChallenges() {
+  const { data } = await supabase
+    .from('challenges')
+    .select('*')
+    .order('sort_order');
+
+  if (data) {
+    const map: Record<string, Challenge> = {};
+    data.forEach((c: Challenge) => {
+      map[c.city_id] = c;
+    });
+    _cache = map;
+  }
 }

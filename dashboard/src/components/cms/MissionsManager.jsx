@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Plus, Edit2, Trash2, ChevronRight, Layers } from 'lucide-react';
-import { useMissions } from '../../hooks/useContent';
+import { Plus, Edit2, Trash2, ChevronRight, Layers, MapPin } from 'lucide-react';
+import { useMissions, useChallenges } from '../../hooks/useContent';
 import { Modal, Field, Input, Textarea, Toggle, Toast, Confirm } from './CmsUI';
 
 const MISSION_TYPES = [
@@ -16,6 +16,7 @@ const EMPTY = {
 };
 
 export default function MissionsManager({ challenge, onSelectMission, onBack }) {
+  const { challenges } = useChallenges();
   const { missions, loading, save, remove } = useMissions(challenge?.id);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
@@ -27,7 +28,7 @@ export default function MissionsManager({ challenge, onSelectMission, onBack }) 
     setTimeout(() => setToast(null), 3000);
   };
 
-  const openNew = () => setModal({ ...EMPTY, city_id: challenge.city_id });
+  const openNew = () => setModal({ ...EMPTY, challenge_id: challenge.id });
   const openEdit = (m) => setModal({ ...m });
   const closeModal = () => setModal(null);
 
@@ -137,6 +138,31 @@ export default function MissionsManager({ challenge, onSelectMission, onBack }) 
         {modal && (
           <div className="modal-form">
             <div className="form-row-2">
+              <Field label="Ville / Défi de rattachement">
+                <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(124, 58, 237, 0.05)', padding:'8px 12px', borderRadius:8, border:'1px solid rgba(124, 58, 237, 0.1)' }}>
+                  <MapPin size={16} color="var(--primary)" />
+                  <select 
+                    className="cms-select" 
+                    value={modal.challenge_id || challenge.id} 
+                    onChange={e => set('challenge_id', e.target.value)}
+                    style={{ flex:1, border:'none', background:'none', padding:0 }}
+                  >
+                    {challenges.map(c => (
+                      <option key={c.id} value={c.id}>
+                        {c.city_name_fr} ({c.city_id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </Field>
+              <Field label="Type de mission">
+                <select className="cms-select" value={modal.mission_type} onChange={e => set('mission_type', e.target.value)}>
+                  {MISSION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </Field>
+            </div>
+
+            <div className="form-row-2">
               <Field label="Titre (FR) *">
                 <Input value={modal.title_fr} onChange={v => set('title_fr', v)} placeholder="Naviguer dans la médina" />
               </Field>
@@ -154,16 +180,11 @@ export default function MissionsManager({ challenge, onSelectMission, onBack }) 
               </Field>
             </div>
 
-            <div className="form-row-3">
-              <Field label="Type de mission">
-                <select className="cms-select" value={modal.mission_type} onChange={e => set('mission_type', e.target.value)}>
-                  {MISSION_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                </select>
-              </Field>
+            <div className="form-row-2">
               <Field label="Récompense XP">
                 <Input type="number" value={modal.xp_reward} onChange={v => set('xp_reward', parseInt(v))} min="0" max="500" />
               </Field>
-              <Field label="Ordre">
+              <Field label="Ordre d'affichage">
                 <Input type="number" value={modal.sort_order} onChange={v => set('sort_order', parseInt(v))} min="0" />
               </Field>
             </div>

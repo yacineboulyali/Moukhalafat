@@ -1,177 +1,228 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
-import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp, withSequence, withTiming, useSharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BadgeRewardModal } from '../../components/BadgeRewardModal';
+import ChallengeProgressBar from '../../components/ChallengeProgressBar';
+import { ImmediateFeedback } from '../../components/ImmediateFeedback';
+import { ChallengeHeader } from '../../components/ChallengeHeader';
+import { useBadges } from '../../hooks/useBadges';
+import { useChallenges } from '../../hooks/useChallenges';
+import { useMissions } from '../../hooks/useMissions';
+import { useQuestions } from '../../hooks/useQuestions';
 import { useTheme } from '../../hooks/useTheme';
-import ChallengeTimer from '../../components/ChallengeTimer';
-import { ZelligeBottomNav } from '../../components/ZelligeBottomNav';
-import { SoundService } from '../../services/sounds';
+import { playSound } from '../../utils/SoundManager';
+import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
+import { useMissionStore } from '../../stores/missionStore';
+import { ConfettiEffect } from '../../components/ConfettiEffect';
+import { MissionSplash } from '../../components/MissionSplash';
 
 const { width } = Dimensions.get('window');
 
-const TRUE_FALSE_DATA = {
-  question: "La muraille de Chine est visible depuis la Lune à l'œil nu.",
-  questionAr: "سور الصين العظيم مرئي من القمر بالعين المجردة.",
-  explanation: "C'est un mythe courant. Le mur est trop étroit pour être vu depuis la lune, bien qu'il puisse parfois être vu depuis l'orbite terrestre basse.",
-  correctAnswer: false
-};
-
-export default function TrueFalseScreen() {
+export default function V1TrueFalseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
+  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { initQueue, markComplete, getQueue } = useMissionStore();
+  const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
+  const cityId = cityParam as string;
+
+  const { missions, loading: loadingMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
   
-  const [selectedAnswer, setSelectedAnswer] = useState<boolean | null>(null);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const shake = useSharedValue(0);
+  const questions = dbQuestions || [];
 
-  const triggerShake = () => {
-    shake.value = withSequence(
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(0, { duration: 50 })
-    );
-  };
+  const currentIdx = parseInt(questionIndex as string) || 0;
+  const qData = questions[currentIdx];
 
-  const handleSelect = (answer: boolean) => {
-    if (isConfirmed) return;
-    setSelectedAnswer(answer);
-    SoundService.getInstance().playSound('click');
-    SoundService.getInstance().triggerHaptic('light');
-  };
+  const [selected, setSelected] = useState<string | null>(null);
+  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [showSplash, setShowSplash] = useState(currentIdx === 0);
+  const { awardBadge, showReward, lastAwardedBadge, dismissReward } = useBadges();
 
-  const handleValidate = () => {
-    if (selectedAnswer === null || isConfirmed) return;
-    
-    const correct = selectedAnswer === TRUE_FALSE_DATA.correctAnswer;
-    setIsConfirmed(true);
-    
-    if (correct) {
-      SoundService.getInstance().playSound('correct');
-      SoundService.getInstance().triggerHaptic('success');
-      setTimeout(() => router.push('/(challenges)/puzzle-riddle'), 2500);
-    } else {
-      SoundService.getInstance().playSound('wrong');
-      SoundService.getInstance().triggerHaptic('error');
-      triggerShake();
+  useEffect(() => {
+    if (questions.length > 0 && missionId) {
+      initQueue(missionId as string, questions);
     }
+  }, [questions, missionId]);
+
+  const handleValidation = () => {
+    if (!qData || !selected) return;
+    const correct = selected.toLowerCase() === qData.correct_answer.toLowerCase();
+    setIsCorrect(correct);
+    setShowFeedback(true);
+    playSound(correct ? 'correct' : 'wrong');
+
+    // Milestones badges
+    const halfWay = Math.floor(questions.length / 2);
+    if (correct && currentIdx + 1 === halfWay) {
+      awardBadge('detective_vrai_faux'); // Halfway reward
+    }
+
+    if (correct && currentIdx + 1 === questions.length) {
+      setShowConfetti(true);
+      awardBadge('as_de_la_verite'); // Mission full complete reward id
+    }
+
+    markComplete(missionId as string, currentIdx);
+
+    setTimeout(() => {
+      setShowFeedback(false);
+      if (correct) {
+        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        setSelected(null);
+        setIsCorrect(null);
+      } else {
+        setIsCorrect(null);
+      }
+    }, 2000);
   };
 
-  const shakeStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: shake.value }]
-  }));
+  if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+  if (!qData) return null;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={{ height: insets.top }} />
-      <ChallengeTimer duration={60} onTimeUp={() => router.back()} />
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+      <ChallengeHeader 
+        cityId={cityId} 
+        onBack={() => router.back()}
+      />
+      <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
-      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
+      <ScrollView contentContainerStyle={styles.scroll}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
-          <View style={[styles.tag, { backgroundColor: colors.gold + '15' }]}>
-            <Text style={[styles.tagText, { color: colors.gold }]}>VRAI OU FAUX</Text>
-          </View>
-          <Animated.View style={shakeStyle}>
-            <Text style={[styles.title, { color: colors.primary }]}>{TRUE_FALSE_DATA.question}</Text>
-            <Text style={[styles.titleAr, { color: colors.primary + '80' }]}>{TRUE_FALSE_DATA.questionAr}</Text>
-          </Animated.View>
+          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>VRAI OU FAUX</Text>
+          <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
+          {!!qData.question_ar && <Text style={styles.arabicHeader}>{qData.question_ar}</Text>}
         </Animated.View>
 
-        <View style={styles.optionsGrid}>
-          {[true, false].map((val, idx) => (
-            <Animated.View key={val.toString()} entering={FadeInUp.delay(400 + idx * 100)} style={{ flex: 1 }}>
-              <TouchableOpacity
-                onPress={() => handleSelect(val)}
-                disabled={isConfirmed}
-                style={[
-                  styles.optionCard,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                  selectedAnswer === val && { borderColor: colors.primary, borderWidth: 3 },
-                  isConfirmed && val === TRUE_FALSE_DATA.correctAnswer && styles.correctCard,
-                  isConfirmed && selectedAnswer === val && val !== TRUE_FALSE_DATA.correctAnswer && styles.wrongCard
-                ]}
-              >
-                <MaterialIcons 
-                  name={val ? "check-circle" : "cancel"} 
-                  size={48} 
-                  color={selectedAnswer === val ? colors.primary : colors.onSurfaceVariant + '40'} 
-                />
-                <Text style={[styles.optionLabel, { color: colors.primary }]}>{val ? "VRAI" : "FAUX"}</Text>
-                <Text style={[styles.optionLabelAr, { color: colors.primary + '70' }]}>{val ? "صحيح" : "خطأ"}</Text>
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+        <View style={styles.optionsWrapper}>
+          <TouchableOpacity
+            style={[
+              styles.choiceBtn,
+              selected === 'vrai' && { backgroundColor: '#E8F5E9', borderColor: '#4CAF50' },
+              isCorrect !== null && 'vrai' === qData.correct_answer.toLowerCase() && { borderColor: '#4CAF50', borderWidth: 3 }
+            ]}
+            onPress={() => { setSelected('vrai'); playSound('click'); }}
+            disabled={isCorrect !== null}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#4CAF50' }]}>
+              <MaterialIcons name="check" size={32} color="#fff" />
+            </View>
+            <Text style={styles.choiceText}>VRAI</Text>
+            <Text style={styles.choiceTextAr}>صحيح</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.choiceBtn,
+              selected === 'faux' && { backgroundColor: '#FFEBEE', borderColor: '#EF5350' },
+              isCorrect !== null && 'faux' === qData.correct_answer.toLowerCase() && { borderColor: '#4CAF50', borderWidth: 3 }
+            ]}
+            onPress={() => { setSelected('faux'); playSound('click'); }}
+            disabled={isCorrect !== null}
+          >
+            <View style={[styles.iconCircle, { backgroundColor: '#EF5350' }]}>
+              <MaterialIcons name="close" size={32} color="#fff" />
+            </View>
+            <Text style={styles.choiceText}>FAUX</Text>
+            <Text style={styles.choiceTextAr}>خطأ</Text>
+          </TouchableOpacity>
         </View>
-
-        {isConfirmed && (
-          <Animated.View entering={FadeInUp} style={[styles.explanationBox, { backgroundColor: colors.gold + '10' }]}>
-            <View style={styles.explanationHeader}>
-              <MaterialIcons name="info" size={20} color={colors.gold} />
-              <Text style={[styles.explanationTitle, { color: colors.gold }]}>LE SAVIEZ-VOUS ?</Text>
-            </View>
-            <Text style={[styles.explanationText, { color: colors.onSurface }]}>{TRUE_FALSE_DATA.explanation}</Text>
-          </Animated.View>
-        )}
-
-        <Animated.View entering={FadeInUp.delay(800)} style={styles.footer}>
-          {!isConfirmed ? (
-            <TouchableOpacity 
-              style={[styles.validateBtn, { backgroundColor: colors.primary }, selectedAnswer === null && styles.disabledBtn]}
-              onPress={handleValidate}
-              disabled={selectedAnswer === null}
-            >
-              <Text style={styles.validateBtnText}>VALIDER</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.nextInfo}>
-              <Text style={[styles.nextText, { color: colors.onSurfaceVariant }]}>Chargement du prochain défi...</Text>
-            </View>
-          )}
-        </Animated.View>
       </ScrollView>
 
-      <ZelligeBottomNav />
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 10, backgroundColor: colors.surface }]}>
+        <View style={styles.footerRow}>
+          <View style={styles.sideActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelected(null); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity 
+            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]} 
+            onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.primaryActionBtn, { backgroundColor: colors.primary }, (selected === null || isCorrect !== null) && { opacity: 0.5 }]}
+            onPress={handleValidation}
+            disabled={selected === null || isCorrect !== null}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="done-all" size={28} color="#fff" />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      {showConfetti && <ConfettiEffect />}
+      <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
+      <MissionSplash 
+        isVisible={showSplash} 
+        title={qData?.title_fr || "Vrai ou Faux"} 
+        subtitle="Démantelez le vrai du faux"
+        onFinish={() => setShowSplash(false)} 
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24 },
-  header: { alignItems: 'center', marginBottom: 40 },
-  tag: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginBottom: 20 },
-  tagText: { fontSize: 10, fontWeight: '900', letterSpacing: 1.5 },
-  title: { fontSize: 22, fontWeight: '900', textAlign: 'center', marginBottom: 12, lineHeight: 30 },
-  titleAr: { fontSize: 20, textAlign: 'center', marginBottom: 12 },
-  optionsGrid: { flexDirection: 'row', gap: 16, marginBottom: 32 },
-  optionCard: {
-    height: 180,
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  scroll: { padding: 24 },
+  header: { marginBottom: 40, alignItems: 'center' },
+  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  questionText: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
+  arabicHeader: { fontSize: 22, textAlign: 'center', marginTop: 12, color: '#B8860B', fontWeight: '700' },
+  optionsWrapper: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
+  choiceBtn: { flex: 1, height: 180, borderRadius: 24, borderWidth: 2, borderColor: 'rgba(0,0,0,0.05)', backgroundColor: 'rgba(0,0,0,0.01)', alignItems: 'center', justifyContent: 'center', elevation: 2 },
+  iconCircle: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
+  choiceText: { fontSize: 18, fontWeight: '900', letterSpacing: 1 },
+  choiceTextAr: { fontSize: 16, fontWeight: '700', marginTop: 4, opacity: 0.6 },
+  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: 6 },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  primaryActionBtn: {
+    paddingHorizontal: 32,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  skipIconBtn: {
+    paddingHorizontal: 24,
+    height: 60,
     borderRadius: 30,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-  },
-  correctCard: { borderColor: '#4CAF50', backgroundColor: '#E8F5E9', borderWidth: 3 },
-  wrongCard: { borderColor: '#F44336', backgroundColor: '#FFEBEE', borderWidth: 3 },
-  optionLabel: { fontSize: 16, fontWeight: '900', marginTop: 12 },
-  optionLabelAr: { fontSize: 14, fontWeight: '700' },
-  explanationBox: { padding: 20, borderRadius: 24, marginBottom: 32 },
-  explanationHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
-  explanationTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 1 },
-  explanationText: { fontSize: 14, lineHeight: 22, fontWeight: '600' },
-  footer: { alignItems: 'center' },
-  validateBtn: { width: '100%', height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
-  disabledBtn: { opacity: 0.5 },
-  validateBtnText: { color: '#fff', fontSize: 16, fontWeight: '900' },
-  nextInfo: { alignItems: 'center' },
-  nextText: { fontSize: 14, fontWeight: '600', fontStyle: 'italic' }
+  }
 });

@@ -44,3 +44,5 @@ export const THEME = {
     secondaryContainer: '#ffab69',
   }
 };
+
+export const Colors = THEME;

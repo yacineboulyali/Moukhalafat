@@ -104,7 +104,7 @@ export default function RegisterScreen() {
               <MaterialIcons name="person-add" size={60} color={COLORS.gold} />
             </View>
             <Text style={styles.title}>Créer un compte</Text>
-            <Text style={styles.subtitle}>Rejoignez la famille Ben Ali aujourd'hui !</Text>
+            <Text style={styles.subtitle}>Rejoignez la famille Ben Ali aujourd’hui !</Text>
           </View>
 
           <View style={styles.form}>
@@ -159,7 +159,7 @@ export default function RegisterScreen() {
                 <ActivityIndicator color={COLORS.white} />
               ) : (
                 <>
-                  <Text style={styles.loginButtonText}>S'inscrire</Text>
+                  <Text style={styles.loginButtonText}>S’inscrire</Text>
                   <MaterialIcons name="how-to-reg" size={24} color={COLORS.white} />
                 </>
               )}

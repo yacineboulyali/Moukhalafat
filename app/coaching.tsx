@@ -11,8 +11,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { MaterialIcons } from '@expo/vector-icons';
+import { THEME } from '../constants/theme';
 import { SoundService } from '../services/sounds';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
 import Animated, { 
@@ -73,7 +73,7 @@ export default function CoachingHubScreen() {
               }} 
               style={styles.backBtn}
             >
-              <Ionicons name="arrow-back" size={24} color={COLORS.primary} />
+              <MaterialIcons name="arrow-back" size={24} color={COLORS.primary} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Coaching Hub</Text>
             <View style={{ width: 40 }} />
@@ -83,7 +83,7 @@ export default function CoachingHubScreen() {
             <View style={styles.avatarContainer}>
               <Animated.View entering={ZoomIn.delay(300)} style={styles.avatarRing}>
                 <Image 
-                  source={require('../assets/images/family-portrait-v3.png')}
+                  source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/family-portrait-v3.png?v=1775991607430' }}
                   style={styles.avatarImg}
                 />
               </Animated.View>
@@ -112,7 +112,7 @@ export default function CoachingHubScreen() {
               <Text style={styles.insightValue}>التحليل التفصيلي للأداء</Text>
               <View style={styles.insightDivider} />
               <Text style={styles.insightText}>
-                Insight : Tes capacités d'analyse surpassent ta communication. 
+                Insight : Tes capacités d’analyse surpassent ta communication. 
               </Text>
               <Text style={styles.insightArabic}>بصيرتك تتجاوز مهارات تواصلك حالياً.</Text>
               
@@ -163,7 +163,7 @@ export default function CoachingHubScreen() {
           {/* Next Step / Fès Card */}
           <Animated.View entering={FadeInUp.delay(1200)} style={styles.nextStepCard}>
             <Image 
-              source={require('../assets/images/intro-fes.png')}
+              source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/intro-fes.png?v=1775991607430' }}
               style={styles.nextStepBg}
               blurRadius={2}
             />
@@ -175,7 +175,7 @@ export default function CoachingHubScreen() {
               <Text style={styles.nextStepTitle}>La Prochaine Étape</Text>
               <View style={styles.quoteBox}>
                 <Text style={styles.quoteText}>
-                  "Le vrai stratège sait s'adapter. Chaque défi est une nouvelle leçon à intégrer à ta vision."
+                  &quot;Le vrai stratège sait s’adapter. Chaque défi est une nouvelle leçon à intégrer à ta vision.&quot;
                 </Text>
                 <Text style={styles.quoteArabic}>
                   الاستراتيجي الحقيقي يعرف كيف يتكيف. كل تحد هو درس جديد لتدمجه في رؤيتك.

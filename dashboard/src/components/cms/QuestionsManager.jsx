@@ -4,69 +4,263 @@ import { useQuestions } from '../../hooks/useContent';
 import { Modal, Field, Input, Textarea, Toggle, Toast, Confirm } from './CmsUI';
 
 const QUESTION_TYPES = [
-  { value: 'multiple_choice',   label: '🔘 QCM (choix multiple)' },
-  { value: 'true_false',        label: '✅ Vrai / Faux' },
+  { value: 'qcm',               label: '🔘 QCM (choix multiple)' },
+  { value: 'vrai_faux',         label: '✅ Vrai / Faux (Multiple)' },
   { value: 'fill_blanks',       label: '✏️ Compléter les blancs' },
-  { value: 'matching',          label: '🔗 Association' },
-  { value: 'ranking',           label: '📊 Classement' },
+  { value: 'matching',          label: '🔗 Relier / Appariement' },
+  { value: 'ranking',           label: '📊 Classement / Ordre' },
   { value: 'short_answer',      label: '💬 Réponse courte' },
   { value: 'scenario_decision', label: '🎭 Décision scénario' },
-  { value: 'puzzle_riddle',     label: '🧩 Devinette / Puzzle' },
+  { value: 'puzzle_riddle',     label: '🧩 Énigme / Devinette' },
   { value: 'error_detection',   label: '🔍 Détection d\'erreurs' },
+  { value: 'time_attack',       label: '⚡ Time Attack' },
+  { value: 'scenario_cascade',  label: '🌊 Scénario en Cascade' },
+  { value: 'team_roles',        label: '👥 Rôles d\'Équipe' },
+  { value: 'scenario_dialogue', label: '💬 Dialogue Narratif' },
 ];
 
 const EMPTY = {
-  question_fr: '', question_ar: '', question_type: 'multiple_choice',
+  question_fr: '', question_ar: '', question_type: 'qcm',
   options: [], correct_answer: '',
   score_decision: 0, score_equipe: 0, score_stress: 0,
   xp_reward: 20, time_limit_sec: 30,
-  hint_fr: '', explanation_fr: '',
+  hint_fr: '', hint_ar: '', explanation_fr: '', explanation_ar: '',
   sort_order: 0, is_published: false,
 };
 
-function OptionsEditor({ options, onChange }) {
+// ─── ÉDITEURS SPÉCIALISÉS ──────────────────────────────────────────
+
+function QcmEditor({ options, correctAnswer, onChange, onSetCorrect }) {
   const opts = Array.isArray(options) ? options : [];
-
-  const addOption = () => {
-    onChange([...opts, { id: `opt_${Date.now()}`, label_fr: '', label_ar: '' }]);
-  };
-
-  const updateOpt = (idx, key, val) => {
-    const next = opts.map((o, i) => i === idx ? { ...o, [key]: val } : o);
-    onChange(next);
-  };
-
-  const removeOpt = (idx) => {
-    onChange(opts.filter((_, i) => i !== idx));
-  };
+  const add = () => onChange([...opts, { id: `opt_${Date.now()}`, label_fr: '', label_ar: '' }]);
+  const update = (idx, key, val) => onChange(opts.map((o, i) => i === idx ? { ...o, [key]: val } : o));
+  const remove = (idx) => onChange(opts.filter((_, i) => i !== idx));
 
   return (
-    <div className="options-editor">
+    <div className="specialized-editor">
       <div className="options-list">
         {opts.map((opt, i) => (
-          <div key={opt.id || i} className="option-row">
-            <span className="option-idx">{String.fromCharCode(65 + i)}</span>
-            <input
-              className="cms-input"
-              value={opt.label_fr}
-              onChange={e => updateOpt(i, 'label_fr', e.target.value)}
-              placeholder={`Option ${String.fromCharCode(65 + i)} (FR)`}
-              style={{ flex: 1 }}
-            />
-            <input
-              className="cms-input"
-              value={opt.label_ar}
-              onChange={e => updateOpt(i, 'label_ar', e.target.value)}
-              placeholder="Arabe"
-              dir="rtl"
-              style={{ flex: 1 }}
-            />
-            <button className="icon-btn danger" onClick={() => removeOpt(i)}><Trash2 size={14} /></button>
+          <div key={opt.id || i} className={`option-row ${opt.id === correctAnswer ? 'is-correct' : ''}`}>
+             <button 
+              className={`correct-toggle ${opt.id === correctAnswer ? 'active' : ''}`}
+              onClick={() => onSetCorrect(opt.id || '')}
+              title="Cocher comme bonne réponse"
+            >
+              {opt.id === correctAnswer ? '✅' : '⚪️'}
+            </button>
+            <input className="cms-input" value={opt.label_fr} onChange={e => update(i, 'label_fr', e.target.value)} placeholder="Option (FR)" style={{ flex: 1 }} />
+            <input className="cms-input" value={opt.label_ar} onChange={e => update(i, 'label_ar', e.target.value)} placeholder="Arabe" dir="rtl" style={{ flex: 1 }} />
+            <button className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
           </div>
         ))}
       </div>
-      <button className="btn btn-ghost" style={{ fontSize:12, padding:'6px 14px' }} onClick={addOption}>
+      <button className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
         <Plus size={13} /> Ajouter une option
+      </button>
+    </div>
+  );
+}
+
+function MatchingEditor({ options, onChange }) {
+  // Structure: options = { left: [{id, text}], right: [{id, text}] }
+  // Mais on peut simplifier en stockant un tableau de paires: [{ id, left_fr, left_ar, right_fr, right_ar }]
+  const items = Array.isArray(options) ? options : [];
+  const add = () => onChange([...items, { id: `pair_${Date.now()}`, left_fr: '', left_ar: '', right_fr: '', right_ar: '' }]);
+  const update = (idx, key, val) => onChange(items.map((o, i) => i === idx ? { ...o, [key]: val } : o));
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+
+  return (
+    <div className="specialized-editor">
+      <div className="matching-list">
+        {items.map((item, i) => (
+          <div key={item.id || i} className="matching-row-v2">
+            <div className="match-col">
+              <input className="cms-input" value={item.left_fr} onChange={e => update(i, 'left_fr', e.target.value)} placeholder="Gauche (FR)" />
+              <input className="cms-input" value={item.left_ar} onChange={e => update(i, 'left_ar', e.target.value)} placeholder="Gauche (AR)" dir="rtl" />
+            </div>
+            <div className="match-arrow">↔️</div>
+            <div className="match-col">
+              <input className="cms-input" value={item.right_fr} onChange={e => update(i, 'right_fr', e.target.value)} placeholder="Droite (FR)" />
+              <input className="cms-input" value={item.right_ar} onChange={e => update(i, 'right_ar', e.target.value)} placeholder="Droite (AR)" dir="rtl" />
+            </div>
+            <button className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </div>
+      <button className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
+        <Plus size={13} /> Ajouter une paire
+      </button>
+    </div>
+  );
+}
+
+function RankingEditor({ options, onChange }) {
+  const items = Array.isArray(options) ? options : [];
+  const add = () => onChange([...items, { id: `rank_${Date.now()}`, label_fr: '', label_ar: '' }]);
+  const update = (idx, key, val) => onChange(items.map((o, i) => i === idx ? { ...o, [key]: val } : o));
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+  const move = (idx, dir) => {
+    const next = [...items];
+    const target = idx + dir;
+    if (target < 0 || target >= next.length) return;
+    [next[idx], next[target]] = [next[target], next[idx]];
+    onChange(next);
+  };
+
+  return (
+    <div className="specialized-editor">
+      <p style={{ fontSize:11, color:'var(--text-muted)', marginBottom:8 }}>L'ordre défini ici sera l'ordre correct à trouver.</p>
+      <div className="ranking-list">
+        {items.map((item, i) => (
+          <div key={item.id || i} className="ranking-row">
+            <div className="rank-num">{i + 1}</div>
+            <input className="cms-input" value={item.label_fr} onChange={e => update(i, 'label_fr', e.target.value)} placeholder="Étape (FR)" style={{ flex: 1 }} />
+            <input className="cms-input" value={item.label_ar} onChange={e => update(i, 'label_ar', e.target.value)} placeholder="Arabe" dir="rtl" style={{ flex: 1 }} />
+            <div className="rank-moves">
+              <button type="button" className="rank-move-btn" onClick={() => move(i, -1)} disabled={i===0}>▲</button>
+              <button type="button" className="rank-move-btn" onClick={() => move(i, 1)} disabled={i===items.length-1}>▼</button>
+            </div>
+            <button type="button" className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </div>
+      <button type="button" className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
+        <Plus size={13} /> Ajouter une étape
+      </button>
+    </div>
+  );
+}
+
+function FillBlanksEditor({ options, correctAnswer, onChange, onSetCorrect }) {
+  const opts = Array.isArray(options) ? options : [];
+  const add = () => onChange([...opts, { id: `blank_${Date.now()}`, text: '', textAr: '' }]);
+  const update = (idx, key, val) => {
+    const next = opts.map((o, i) => i === idx ? { ...o, [key]: val } : o);
+    onChange(next);
+  };
+  const remove = (idx) => onChange(opts.filter((_, i) => i !== idx));
+
+  const answers = correctAnswer ? correctAnswer.split(',').map(s => s.trim()) : [];
+  
+  const toggleAnswer = (val) => {
+    if (!val) return;
+    if (answers.includes(val)) {
+      onSetCorrect(answers.filter(a => a !== val).join(', '));
+    } else {
+      onSetCorrect([...answers, val].join(', '));
+    }
+  };
+
+  const clearAnswers = () => onSetCorrect('');
+
+  return (
+    <div className="specialized-editor">
+      <div style={{ marginBottom: 12 }}>
+        <p style={{ fontSize:11, color:'var(--text-muted)' }}>
+          1. Ajoutez les mots (puces) ci-dessous.<br/>
+          2. Cliquez sur les puces dans l'<b>ordre d'apparition</b> pour définir la réponse.<br/>
+          3. Pour corriger l'ordre, videz les réponses et recommencez.
+        </p>
+      </div>
+
+      <div style={{ background: 'var(--bg-elevated)', padding: 12, borderRadius: 8, marginBottom: 12, border: '1px dashed var(--border)' }}>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6, display: 'flex', justifyContent: 'space-between' }}>
+          <span>Séquence de réponses :</span>
+          <button type="button" onClick={clearAnswers} style={{ color: 'var(--danger)', background: 'none', border: 'none', fontSize: 10, cursor: 'pointer' }}>Vider l'ordre</button>
+        </div>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', minHeight: 24 }}>
+          {answers.length > 0 ? answers.map((a, i) => (
+            <span key={i} style={{ background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: 4, fontSize: 12, fontWeight: 700 }}>
+              {i + 1}. {a}
+            </span>
+          )) : <span style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--text-muted)' }}>Aucune réponse sélectionnée</span>}
+        </div>
+      </div>
+
+      <div className="options-list">
+        {opts.map((opt, i) => {
+          const isCorrect = answers.includes(opt.text) && opt.text;
+          const orderIdx = answers.indexOf(opt.text);
+          return (
+            <div key={opt.id || i} className={`option-row ${isCorrect ? 'is-correct' : ''}`}>
+               <button 
+                type="button"
+                className={`correct-toggle ${isCorrect ? 'active' : ''}`}
+                onClick={() => toggleAnswer(opt.text)}
+                disabled={!opt.text}
+                title={isCorrect ? `Ordre: ${orderIdx + 1}` : "Ajouter à l'ordre"}
+              >
+                {isCorrect ? (orderIdx + 1) : '⚪️'}
+              </button>
+              <input className="cms-input" value={opt.text} onChange={e => update(i, 'text', e.target.value)} placeholder="Mot (FR)" style={{ flex: 1 }} />
+              <input className="cms-input" value={opt.textAr} onChange={e => update(i, 'textAr', e.target.value)} placeholder="Arabe" dir="rtl" style={{ flex: 1 }} />
+              <button type="button" className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
+            </div>
+          );
+        })}
+      </div>
+      <button type="button" className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
+        <Plus size={13} /> Ajouter une puce
+      </button>
+    </div>
+  );
+}
+
+function ScenarioEditor({ options, onChange }) {
+  const opts = Array.isArray(options) ? options : [];
+  const add = () => onChange([...opts, { id: `choice_${Date.now()}`, label_fr: '', label_ar: '', impact_decision: 0, feedback_fr: '' }]);
+  const update = (idx, key, val) => onChange(opts.map((o, i) => i === idx ? { ...o, [key]: val } : o));
+  const remove = (idx) => onChange(opts.filter((_, i) => i !== idx));
+
+  return (
+    <div className="specialized-editor">
+      <div className="options-list">
+        {opts.map((opt, i) => (
+          <div key={opt.id || i} className="scenario-choice-card" style={{ background:'var(--bg-elevated)', padding:12, borderRadius:8, marginBottom:10 }}>
+            <div style={{ display:'flex', gap:8, marginBottom:8 }}>
+              <input className="cms-input" value={opt.label_fr} onChange={e => update(i, 'label_fr', e.target.value)} placeholder="Choix (FR)" style={{ flex: 1 }} />
+              <input className="cms-input" value={opt.label_ar} onChange={e => update(i, 'label_ar', e.target.value)} placeholder="Choix (AR)" dir="rtl" style={{ flex: 1 }} />
+              <button type="button" className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
+            </div>
+            <div style={{ display:'flex', gap:8 }}>
+              <input className="cms-input" type="number" value={opt.impact_decision} onChange={e => update(i, 'impact_decision', parseInt(e.target.value)||0)} placeholder="Impact Decision" style={{ width:120 }} title="Impact sur le score décision" />
+              <input className="cms-input" value={opt.feedback_fr} onChange={e => update(i, 'feedback_fr', e.target.value)} placeholder="Feedback après choix (ex: Excellente décision !)" style={{ flex: 1 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button type="button" className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
+        <Plus size={13} /> Ajouter un choix scénario
+      </button>
+    </div>
+  );
+}
+
+function ErrorDetectionEditor({ options, onChange }) {
+  const items = Array.isArray(options) ? options : [];
+  const add = () => onChange([...items, { id: `err_${Date.now()}`, text_fr: '', is_error: false, correction_fr: '' }]);
+  const update = (idx, key, val) => onChange(items.map((o, i) => i === idx ? { ...o, [key]: val } : o));
+  const remove = (idx) => onChange(items.filter((_, i) => i !== idx));
+
+  return (
+    <div className="specialized-editor">
+      <p style={{ fontSize:11, color:'var(--text-muted)', marginBottom:10 }}>Divisez le texte en segments et cochez ceux qui contiennent une erreur.</p>
+      <div className="options-list">
+        {items.map((item, i) => (
+          <div key={item.id || i} style={{ background:'var(--bg-elevated)', padding:10, borderRadius:8, marginBottom:8 }}>
+            <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:6 }}>
+               <Toggle value={item.is_error} onChange={v => update(i, 'is_error', v)} label="Contient une erreur" />
+               <input className="cms-input" value={item.text_fr} onChange={e => update(i, 'text_fr', e.target.value)} placeholder="Texte du segment" style={{ flex: 1 }} />
+               <button type="button" className="icon-btn danger" onClick={() => remove(i)}><Trash2 size={14} /></button>
+            </div>
+            {item.is_error && (
+              <input className="cms-input" value={item.correction_fr} onChange={e => update(i, 'correction_fr', e.target.value)} placeholder="Correction suggérée" style={{ width:'100%' }} />
+            )}
+          </div>
+        ))}
+      </div>
+      <button type="button" className="btn btn-ghost" style={{ fontSize:12, marginTop:8 }} onClick={add}>
+        <Plus size={13} /> Ajouter un segment
       </button>
     </div>
   );
@@ -109,7 +303,11 @@ export default function QuestionsManager({ mission, challenge, onBack }) {
 
   const set = (key, val) => setModal(m => ({ ...m, [key]: val }));
 
-  const needsOptions = ['multiple_choice','matching','ranking'].includes(modal?.question_type);
+  const needsOptions = [
+    'qcm', 'vrai_faux', 'fill_blanks', 'matching', 'ranking',
+    'scenario_decision', 'error_detection', 'scenario_cascade',
+    'team_roles', 'scenario_dialogue', 'puzzle_riddle', 'short_answer'
+  ].includes(modal?.question_type);
 
   if (!mission) return null;
 
@@ -178,12 +376,18 @@ export default function QuestionsManager({ mission, challenge, onBack }) {
                 </div>
                 {Array.isArray(q.options) && q.options.length > 0 && (
                   <div style={{ display:'flex', gap:6, marginTop:6, flexWrap:'wrap' }}>
-                    {q.options.map((o, oi) => (
-                      <span key={oi} className={`q-option ${o.id === q.correct_answer ? 'correct' : ''}`}>
-                        {String.fromCharCode(65+oi)}. {o.label_fr}
-                        {o.id === q.correct_answer && ' ✓'}
-                      </span>
-                    ))}
+                    {q.options.map((o, oi) => {
+                      const isCorrect = q.question_type === 'multiple_choice' 
+                        ? (o.id === q.correct_answer)
+                        : (q.correct_answer || '').includes(o.text || o.label_fr || '');
+                      
+                      return (
+                        <span key={oi} className={`q-option ${isCorrect ? 'correct' : ''}`}>
+                          {o.label_fr || o.text || o.left_fr || '...'}
+                          {isCorrect && ' ✓'}
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -211,41 +415,101 @@ export default function QuestionsManager({ mission, challenge, onBack }) {
 
             <div className="form-row-2">
               <Field label="Question (FR) *">
+                <div className="textarea-tools">
+                   <button type="button" className="tool-btn" onClick={() => set('question_fr', modal.question_fr + ' ________ ')}>
+                     Insert Placeholder (________)
+                   </button>
+                </div>
                 <Textarea value={modal.question_fr} onChange={v => set('question_fr', v)} placeholder="Quelle est la compétence principale de…" rows={3} />
               </Field>
               <Field label="Question (AR)">
+                <div className="textarea-tools">
+                   <button type="button" className="tool-btn" onClick={() => set('question_ar', modal.question_ar + ' ________ ')}>
+                     إدراج مساحة (________)
+                   </button>
+                </div>
                 <Textarea value={modal.question_ar} onChange={v => set('question_ar', v)} placeholder="ما هي الكفاءة الأساسية…" rows={3} dir="rtl" />
               </Field>
             </div>
 
-            {needsOptions && (
-              <Field label="Options de réponse" hint="La bonne réponse sera choisie via l'ID ci-dessous">
-                <OptionsEditor options={modal.options} onChange={v => set('options', v)} />
+            {modal.question_type === 'qcm' && (
+              <Field label="Options du QCM" hint="Cochez le bouton de gauche pour la bonne réponse">
+                <QcmEditor 
+                  options={modal.options} 
+                  correctAnswer={modal.correct_answer}
+                  onChange={v => set('options', v)} 
+                  onSetCorrect={id => set('correct_answer', id)}
+                />
               </Field>
             )}
 
-            {(needsOptions || modal.question_type === 'true_false') && (
-              <Field label="Bonne réponse" hint={modal.question_type === 'true_false' ? '"vrai" ou "faux"' : "ID de l'option correcte (ex: opt_xxx)"}>
-                {modal.question_type === 'true_false' ? (
-                  <select className="cms-select" value={modal.correct_answer} onChange={e => set('correct_answer', e.target.value)}>
-                    <option value="">— Choisir —</option>
-                    <option value="vrai">✅ Vrai</option>
-                    <option value="faux">❌ Faux</option>
-                  </select>
-                ) : (
-                  <select className="cms-select" value={modal.correct_answer} onChange={e => set('correct_answer', e.target.value)}>
-                    <option value="">— Sélectionner la bonne option —</option>
-                    {(modal.options || []).map((o, i) => (
-                      <option key={o.id} value={o.id}>{String.fromCharCode(65+i)}. {o.label_fr}</option>
-                    ))}
-                  </select>
-                )}
+            {modal.question_type === 'vrai_faux' && (
+              <Field label="Bonne réponse">
+                <select className="cms-select" value={modal.correct_answer} onChange={e => set('correct_answer', e.target.value)}>
+                  <option value="">— Choisir —</option>
+                  <option value="vrai">✅ Vrai</option>
+                  <option value="faux">❌ Faux</option>
+                </select>
+              </Field>
+            )}
+
+            {modal.question_type === 'puzzle_riddle' && (
+              <Field label="Réponse attendue (exacte)" hint="La réponse à l'énigme (majuscules/minuscules ignorées dans le jeu)">
+                <Input value={modal.correct_answer} onChange={v => set('correct_answer', v)} placeholder="Ex: MARS" />
               </Field>
             )}
 
             {modal.question_type === 'short_answer' && (
-              <Field label="Réponse attendue (mot-clé)">
-                <Input value={modal.correct_answer} onChange={v => set('correct_answer', v)} placeholder="Ex: négociation" />
+              <Field label="Réponse attendue">
+                <Input value={modal.correct_answer} onChange={v => set('correct_answer', v)} placeholder="Ex: Négociation" />
+              </Field>
+            )}
+
+            {modal.question_type === 'matching' && (
+              <Field label="Paires à associer">
+                <MatchingEditor options={modal.options} onChange={v => set('options', v)} />
+              </Field>
+            )}
+
+            {modal.question_type === 'ranking' && (
+              <Field label="Étapes à ordonner">
+                <RankingEditor options={modal.options} onChange={v => set('options', v)} />
+              </Field>
+            )}
+
+            {modal.question_type === 'fill_blanks' && (
+              <Field label="Puces à remplir" hint="Ajoutez les mots qui seront affichés sous forme de puces cliquables">
+                <FillBlanksEditor 
+                  options={modal.options} 
+                  correctAnswer={modal.correct_answer}
+                  onChange={v => set('options', v)}
+                  onSetCorrect={v => set('correct_answer', v)}
+                />
+              </Field>
+            )}
+
+            {modal.question_type === 'scenario_decision' && (
+              <Field label="Scénario & Choix" hint="Définissez les options du scénario et leurs impacts">
+                <ScenarioEditor options={modal.options} onChange={v => set('options', v)} />
+              </Field>
+            )}
+
+            {modal.question_type === 'error_detection' && (
+              <Field label="Segments de texte" hint="Définissez les parties du texte et celles contenant une erreur">
+                <ErrorDetectionEditor options={modal.options} onChange={v => set('options', v)} />
+              </Field>
+            )}
+
+            {['qcm', 'vrai_faux', 'fill_blanks', 'matching', 'ranking', 'scenario_decision', 'puzzle_riddle', 'error_detection', 'short_answer', 'time_attack', 'scenario_cascade', 'team_roles', 'scenario_dialogue'].includes(modal.question_type) && (
+              <Field label="Options du défi" hint="Éditeur simplifié pour ce type de défi (JSON brut)">
+                <Textarea 
+                  value={typeof modal.options === 'string' ? modal.options : JSON.stringify(modal.options, null, 2)} 
+                  onChange={v => {
+                    try { set('options', JSON.parse(v)); } catch(e) { set('options', v); }
+                  }}
+                  placeholder="[{...}]"
+                  rows={10}
+                />
               </Field>
             )}
 
@@ -281,8 +545,17 @@ export default function QuestionsManager({ mission, challenge, onBack }) {
               <Field label="💡 Indice (FR)">
                 <Input value={modal.hint_fr} onChange={v => set('hint_fr', v)} placeholder="Pense à…" />
               </Field>
-              <Field label="📖 Explication (après réponse)">
-                <Input value={modal.explanation_fr} onChange={v => set('explanation_fr', v)} placeholder="La bonne réponse est… parce que…" />
+              <Field label="💡 Indice (AR)">
+                <Input value={modal.hint_ar} onChange={v => set('hint_ar', v)} placeholder="فكر في…" dir="rtl" />
+              </Field>
+            </div>
+
+            <div className="form-row-2">
+              <Field label="📖 Explication (FR)">
+                <Textarea value={modal.explanation_fr} onChange={v => set('explanation_fr', v)} placeholder="La bonne réponse est… parce que…" rows={2} />
+              </Field>
+              <Field label="📖 Explication (AR)">
+                <Textarea value={modal.explanation_ar} onChange={v => set('explanation_ar', v)} placeholder="الجواب الصحيح هو…" rows={2} dir="rtl" />
               </Field>
             </div>
 

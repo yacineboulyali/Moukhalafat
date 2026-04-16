@@ -3,43 +3,40 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { router } from 'expo-router';
 
 const ROUTES = [
-  // --- LES PLUS RÉCENTS (Zellige Odyssey) ---
-  { name: 'Scénario 🎭', path: '/(challenges)/scenario-dialogue' },
-  { name: 'Appariement 🔗', path: '/(challenges)/matching-game' },
-  { name: 'Énigme 🧩', path: '/(challenges)/puzzle-riddle' },
-  { name: 'Vrai/Faux ✅', path: '/(challenges)/true-false' },
-  { name: 'QCM 📝', path: '/(challenges)/multiple-choice' },
-  { name: 'Trous 🕳️', path: '/(challenges)/fill-blanks' },
-  { name: 'Classement 🔢', path: '/(challenges)/ranking-challenge' },
+  // --- LES PLUS RÉCENTS ---
+  { name: '📝', path: '/(challenges)/short-answer?questionIndex=6' },
+  { name: '🔍', path: '/(challenges)/error-detection?questionIndex=7' },
+  { name: '🎭', path: '/(challenges)/scenario-cascade?questionIndex=8' },
+  { name: '🔗', path: '/(challenges)/matching?questionIndex=2' },
+  { name: '🧩', path: '/(challenges)/puzzle-riddle?questionIndex=5' },
+  { name: '✅', path: '/(challenges)/true-false?questionIndex=1' },
+  { name: '✏️', path: '/(challenges)/multiple-choice?questionIndex=0' },
+  { name: '🕳️', path: '/(challenges)/fill-blanks?questionIndex=4' },
+  { name: '🔢', path: '/(challenges)/ranking-challenge?questionIndex=3' },
+  { name: '💬', path: '/(challenges)/scenario-dialogue' },
 
   // --- MAJLIS ---
-  { name: 'Majlis Hub', path: '/majlis' },
-  { name: 'Profil Majlis', path: '/profil-classique' },
-  { name: 'Résumé Comp.', path: '/resume-competence' },
+  { name: '🧔', path: '/profil-classique' },
 
   // --- PAGES PROJET & CORE ---
-  { name: 'Badges 🏅', path: '/badges' },
-  { name: 'Certificat 🎓', path: '/certificate' },
-  { name: 'Résultat Défi', path: '/defi-resultat' },
-  { name: 'Intro Défi', path: '/intro-defi' },
-  { name: 'Coaching', path: '/coaching' },
-  { name: 'Carte 🗺️', path: '/map' },
-  { name: 'Pédago', path: '/pedago' },
-  { name: 'Portfolio', path: '/portfolio' },
-  { name: 'Profil', path: '/profil' },
-  { name: 'Leaderboard', path: '/leaderboard' },
-  { name: 'Détail Comp.', path: '/competence-detail' },
-  { name: 'Paramètres', path: '/settings' },
+  { name: '🏅', path: '/badges' },
+  { name: '🎓', path: '/certificate' },
+  { name: '🏆', path: '/defi-resultat' },
+  { name: '🎬', path: '/intro-defi' },
+  { name: '🧠', path: '/coaching' },
+  { name: '🗺️', path: '/map' },
+  { name: '📖', path: '/pedago' },
+  { name: '👤', path: '/profil' },
+  { name: '📊', path: '/leaderboard' },
+  { name: '⚙️', path: '/settings' },
+  { name: '👨‍👩‍👧‍👦', path: '/family-setup' },
   
   // --- AUTH & ONBOARDING ---
-  { name: 'Revelation', path: '/revelation' },
-  { name: 'Quiz', path: '/quiz' },
-  { name: 'Welcome', path: '/welcome' },
-  { name: 'Avatar', path: '/create-profile' },
-  { name: 'Accueil', path: '/accueil' },
-  { name: 'Login', path: '/(auth)/login' },
-  { name: 'Register', path: '/(auth)/register' },
-  { name: 'Launch 🚀', path: '/' },
+  { name: '👋', path: '/welcome' },
+  { name: '🚀', path: '/' },
+  { name: '🏠', path: '/accueil' },
+  { name: '📽️', path: '/welcome' },
+  { name: '👪', path: '/family-setup' },
 ];
 
 export default function DevQuickNav() {
@@ -71,14 +68,11 @@ export default function DevQuickNav() {
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+    position: 'relative',
+    width: '100%',
     backgroundColor: 'rgba(26, 61, 46, 0.98)', // Vert Zellige Profond
-    paddingTop: 18, // Ajouté +10px (était 8)
-    paddingBottom: 25, // Un peu plus pour les safe areas
-    zIndex: 99999,
+    paddingTop: 10, 
+    paddingBottom: 25, 
     borderTopWidth: 2,
     borderTopColor: '#D4AF37', // Or
   },
@@ -97,17 +91,15 @@ const styles = StyleSheet.create({
   },
   item: {
     backgroundColor: 'rgba(212, 175, 55, 0.15)', // Light Gold
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.4)',
-    minWidth: 80,
+    justifyContent: 'center',
     alignItems: 'center',
   },
   text: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '800',
+    fontSize: 20,
   },
 });

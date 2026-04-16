@@ -55,7 +55,10 @@ export function useMissions(challengeId) {
   useEffect(() => { fetch(); }, [fetch]);
 
   const save = async (mission) => {
-    const payload = { ...mission, challenge_id: challengeId };
+    const payload = { 
+      challenge_id: challengeId, 
+      ...mission 
+    };
     if (mission.id) {
       const { error } = await supabase.from('missions').update(payload).eq('id', mission.id);
       if (error) throw error;

@@ -16,7 +16,8 @@ import Svg, { Circle } from 'react-native-svg';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
-import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { AVATARS } from '../constants/Avatars';
+import ThemeToggle from '../components/ThemeToggle';
 
 
 const { width, height } = Dimensions.get('window');
@@ -131,12 +132,15 @@ export default function ProfilScreen() {
             <MaterialIcons name="menu" size={24} color={colors.primary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.primary }]}>Al-Musafer Profile</Text>
-          <TouchableOpacity 
-            style={styles.headerBtn}
-            onPress={() => router.push('/settings')}
-          >
-            <MaterialIcons name="settings" size={24} color={colors.primary} />
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <ThemeToggle />
+            <TouchableOpacity 
+              style={styles.headerBtn}
+              onPress={() => router.push('/settings')}
+            >
+              <MaterialIcons name="settings" size={24} color={colors.primary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -148,10 +152,8 @@ export default function ProfilScreen() {
         </View>
 
         {/* User Info Card */}
-        <TouchableOpacity 
+        <View 
           style={[styles.profileCard, { backgroundColor: colors.surface }]}
-          activeOpacity={0.9}
-          onPress={() => router.push('/portfolio')}
         >
           <View style={[styles.avatarGlow, { backgroundColor: colors.primaryLight, opacity: 0.1 }]} />
           <View style={styles.profileContent}>
@@ -161,7 +163,7 @@ export default function ProfilScreen() {
                 style={styles.avatarRing}
               >
                 <Image
-                  source={require('../assets/images/user-avatar.png')}
+                  source={AVATARS.explorer}
                   style={styles.avatar}
                 />
               </LinearGradient>
@@ -169,16 +171,12 @@ export default function ProfilScreen() {
                 <Text style={[styles.avatarLevelText, { color: colors.onSurface }]}>Niv. {level}</Text>
               </View>
             </View>
-            <View style={styles.profileContent}>
+            <View style={{ alignItems: 'center', marginTop: 12 }}>
               <Text style={[styles.userName, { color: colors.onSurface }]}>{userStats?.username || 'Yassine'}</Text>
-              <Text style={[styles.userBio, { color: colors.onSurfaceVariant }]}>L'Explorateur des Savoirs</Text>
-              <View style={[styles.viewPortfolioBtn, { backgroundColor: colors.gold + '15', borderColor: colors.gold + '30' }]}>
-                <Text style={[styles.viewPortfolioTxt, { color: colors.gold }]}>VOIR LE PORTFOLIO COMPLET</Text>
-                <MaterialIcons name="arrow-forward" size={16} color={colors.gold} />
-              </View>
+              <Text style={[styles.userBio, { color: colors.onSurfaceVariant }]}>{"L'Explorateur des Savoirs"}</Text>
             </View>
           </View>
-        </TouchableOpacity>
+        </View>
 
         {/* XP Section */}
         <View style={[styles.xpSection, { backgroundColor: colors.surfaceVariant }]}>
@@ -213,7 +211,7 @@ export default function ProfilScreen() {
             <SkillRing
               progress={75}
               icon="forum"
-              color={COLORS.primary}
+              color={colors.primary}
               label="Communication"
               arabicLabel="التواصل"
               level={2}
@@ -221,7 +219,7 @@ export default function ProfilScreen() {
             <SkillRing
               progress={40}
               icon="alt-route"
-              color={COLORS.secondary}
+              color={colors.secondaryContainer || colors.gold}
               label="Décision"
               arabicLabel="القرار"
               level={1}
@@ -229,15 +227,15 @@ export default function ProfilScreen() {
             <SkillRing
               progress={85}
               icon="groups"
-              color={COLORS.tertiary}
-              label="Travail d'équipe"
+              color={colors.gold}
+              label={"Travail d'équipe"}
               arabicLabel="العمل الجماعي"
               level={3}
             />
             <SkillRing
               progress={20}
               icon="psychology-alt"
-              color={COLORS.error}
+              color={colors.accent || '#EF4444'}
               label="Gestion Stress"
               arabicLabel="إدارة الضغط"
               level={1}
@@ -246,7 +244,6 @@ export default function ProfilScreen() {
         </View>
       </ScrollView>
 
-      <ZelligeBottomNav />
     </SafeAreaView>
   );
 }

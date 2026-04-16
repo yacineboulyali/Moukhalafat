@@ -9,17 +9,28 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { useLocalSearchParams, router } from 'expo-router';
+import { useChallenges } from '../hooks/useChallenges';
+import { useTheme } from '../hooks/useTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
 import Animated, { 
   FadeInUp, 
   FadeInDown, 
   ZoomIn, 
-  Layout 
+  Layout,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing
 } from 'react-native-reanimated';
+import { ConfettiEffect } from '../components/ConfettiEffect';
 import { BlurView } from 'expo-blur';
 import Svg, { Path, Circle } from 'react-native-svg';
+import { BadgeRewardModal } from '../components/BadgeRewardModal';
+import { BADGES } from '../constants/Badges';
 
 const { width, height } = Dimensions.get('window');
 
@@ -38,9 +49,9 @@ const COLORS = {
 };
 
 const PARTICIPANTS = [
-  { id: '1', name: 'Yassine', xp: 450, rank: 1, avatar: require('../assets/images/avatar-map-user.jpg') },
-  { id: '2', name: 'Zineb', xp: 380, rank: 2, avatar: require('../assets/images/avatar-1.jpg') },
-  { id: '3', name: 'Karim', xp: 290, rank: 3, avatar: require('../assets/images/avatar-2.jpg') },
+  { id: '1', name: 'Yassine', xp: 450, rank: 1, avatar: { uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/avatar-map-user.jpg?v=1775991607434' } },
+  { id: '2', name: 'Zineb', xp: 380, rank: 2, avatar: { uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/avatar-1.jpg?v=1775991607434' } },
+  { id: '3', name: 'Karim', xp: 290, rank: 3, avatar: { uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/avatar-2.jpg?v=1775991607434' } },
 ];
 
 const SKILLS = [
@@ -49,8 +60,78 @@ const SKILLS = [
   { name: 'Analyse', val: 0.60, color: '#ffab69' },
 ];
 
+
 export default function DefiResultatScreen() {
   const insets = useSafeAreaInsets();
+  const { cityId, nextMissionId } = useLocalSearchParams();
+  const { challenges } = useChallenges();
+  const { colors, isDark } = useTheme();
+  const styles = getStyles(colors, isDark);
+
+  const AnimatedSkillBar = ({ skill, index }: { skill: any, index: number }) => {
+    const widthVal = useSharedValue(0);
+
+    React.useEffect(() => {
+      widthVal.value = withDelay(1400 + index * 200, withTiming(skill.val * 100, {
+        duration: 1000,
+        easing: Easing.bezier(0.25, 0.1, 0.25, 1)
+      }));
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      width: `${widthVal.value}%`,
+    }));
+
+    return (
+      <View style={styles.skillRow}>
+        <View style={styles.skillInfo}>
+          <Text style={styles.skillName}>{skill.name}</Text>
+          <Text style={styles.skillPercent}>{Math.round(skill.val * 100)}%</Text>
+        </View>
+        <View style={styles.progressBg}>
+          <Animated.View style={[styles.progressFill, animatedStyle, { backgroundColor: skill.color }]} />
+        </View>
+      </View>
+    );
+  };
+  
+  const { progress, incrementMissionProgress } = usePlayerCityProgress();
+  
+  const currentCity = cityId as string || 'rabat';
+  const cityProg = progress[currentCity];
+  const missionsCompleted = cityProg?.missions_completed ?? 0;
+  const missionsTotal = cityProg?.missions_total ?? 5;
+  const hasNextMission = (missionsCompleted + 1) < missionsTotal;
+
+  const dbData = challenges[currentCity];
+  const cityTitle = dbData?.city_name_fr?.toUpperCase() || currentCity.toUpperCase();
+  const cityTitleAr = dbData?.city_name_ar || '';
+
+  const [showBadge, setShowBadge] = React.useState(false);
+  const earnedBadge = BADGES.find(b => b.id === 'explorateur_curieux') || BADGES[0];
+
+  React.useEffect(() => {
+    // Save progress as soon as the result is shown (victory)
+    incrementMissionProgress(currentCity);
+
+    // Show badge modal after victory animation
+    const timer = setTimeout(() => {
+      setShowBadge(true);
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleNextAction = () => {
+    if (hasNextMission) {
+      // Go back to intro screen which will now show the NEW current mission
+      router.replace({
+        pathname: '/intro-defi',
+        params: { city: currentCity }
+      });
+    } else {
+      router.replace('/map');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['left', 'right']}>
@@ -80,10 +161,10 @@ export default function DefiResultatScreen() {
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={styles.title}>Victoire Collective !</Text>
-          <Text style={styles.subtitle}>النتيجة النهائية للتحدي</Text>
+          <Text style={styles.subtitle}>{cityTitleAr || 'النتيجة النهائية للتحدي'}</Text>
           <View style={styles.badgeLabel}>
             <MaterialIcons name="group" size={16} color={COLORS.onPrimary} />
-            <Text style={styles.badgeLabelText}>DÉFI FÈS : ARTISANAT</Text>
+            <Text style={styles.badgeLabelText}>DÉFI {cityTitle} : TERMINÉ</Text>
           </View>
         </Animated.View>
 
@@ -143,8 +224,8 @@ export default function DefiResultatScreen() {
               <View style={[styles.iconBox, { backgroundColor: COLORS.secondaryContainer }]}>
                  <MaterialIcons name="military-tech" size={24} color="#fff" />
               </View>
-              <Text style={styles.rewardVal}>Badge Or</Text>
-              <Text style={styles.rewardLabel}>Négociateur Fès</Text>
+              <Text style={styles.rewardVal}>{earnedBadge.name}</Text>
+              <Text style={styles.rewardLabel}>Nouveau Badge Débloqué</Text>
             </BlurView>
           </View>
         </Animated.View>
@@ -154,15 +235,7 @@ export default function DefiResultatScreen() {
           <Text style={styles.sectionTitle}>Analyse des compétences <Text style={styles.sectionArabic}>تحليل المهارات</Text></Text>
           <BlurView intensity={80} tint="light" style={styles.skillsCard}>
             {SKILLS.map((skill, index) => (
-              <View key={index} style={styles.skillRow}>
-                <View style={styles.skillInfo}>
-                  <Text style={styles.skillName}>{skill.name}</Text>
-                  <Text style={styles.skillPercent}>{Math.round(skill.val * 100)}%</Text>
-                </View>
-                <View style={styles.progressBg}>
-                  <View style={[styles.progressFill, { width: `${skill.val * 100}%`, backgroundColor: skill.color }]} />
-                </View>
-              </View>
+              <AnimatedSkillBar key={index} skill={skill} index={index} />
             ))}
           </BlurView>
         </Animated.View>
@@ -171,7 +244,7 @@ export default function DefiResultatScreen() {
         <Animated.View entering={FadeInUp.delay(1400)} style={styles.actions}>
           <TouchableOpacity 
             style={styles.primaryBtn} 
-            onPress={() => router.push('/map' as any)}
+            onPress={handleNextAction}
           >
             <LinearGradient 
               colors={['#2c4e3e', '#436655']} 
@@ -179,8 +252,10 @@ export default function DefiResultatScreen() {
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
-              <Text style={styles.btnText}>Retourner à la Carte</Text>
-              <MaterialIcons name="map" size={20} color="#fff" />
+              <Text style={styles.btnText}>
+                {hasNextMission ? "Mission Suivante" : "Retourner à la Carte"}
+              </Text>
+              <MaterialIcons name={hasNextMission ? "arrow-forward" : "map"} size={20} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
 
@@ -193,54 +268,61 @@ export default function DefiResultatScreen() {
         </Animated.View>
 
       </ScrollView>
+
+      <BadgeRewardModal 
+        badge={earnedBadge} 
+        isVisible={showBadge} 
+        onClose={() => setShowBadge(false)} 
+      />
+
+      <ConfettiEffect />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.surface,
+    backgroundColor: colors.background,
   },
   patternLayer: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 0,
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingBottom: 100,
+    padding: 24,
+    paddingTop: 40,
   },
   header: {
     alignItems: 'center',
     marginBottom: 40,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
-    color: COLORS.primary,
-    fontFamily: 'Plus Jakarta Sans',
+    color: colors.primary,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.tertiaryContainer,
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.gold,
     marginTop: 4,
-    marginBottom: 16,
   },
   badgeLabel: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 16,
     gap: 8,
   },
   badgeLabelText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: '800',
+    fontWeight: '900',
     letterSpacing: 1,
   },
   podiumContainer: {
@@ -259,12 +341,12 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -20 }],
   },
   avatarRing: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 68,
+    height: 68,
+    borderRadius: 34,
     borderWidth: 3,
-    padding: 3,
-    backgroundColor: '#fff',
+    padding: 2,
+    backgroundColor: colors.surface,
     position: 'relative',
     marginBottom: 12,
   },
@@ -273,8 +355,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     borderWidth: 4,
-    padding: 4,
-    backgroundColor: '#fff',
+    padding: 3,
+    backgroundColor: colors.surface,
     position: 'relative',
     marginBottom: 12,
   },
@@ -329,22 +411,22 @@ const styles = StyleSheet.create({
   participantName: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.onSurface,
+    color: colors.onSurface,
   },
   nameMain: {
     fontSize: 18,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   participantXP: {
     fontSize: 12,
-    color: COLORS.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
     opacity: 0.7,
   },
   participantXPMain: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.tertiaryContainer,
+    color: colors.gold,
   },
   crownIcon: {
     position: 'absolute',
@@ -357,7 +439,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
     marginBottom: 16,
   },
   sectionArabic: {
@@ -376,7 +458,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   iconBox: {
     width: 48,
@@ -389,11 +472,11 @@ const styles = StyleSheet.create({
   rewardVal: {
     fontSize: 18,
     fontWeight: '900',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   rewardLabel: {
     fontSize: 12,
-    color: COLORS.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
     opacity: 0.8,
     textAlign: 'center',
     marginTop: 4,
@@ -403,7 +486,8 @@ const styles = StyleSheet.create({
     padding: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.5)',
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
   skillRow: {
     marginBottom: 16,
@@ -416,22 +500,23 @@ const styles = StyleSheet.create({
   skillName: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.onSurface,
+    color: colors.onSurface,
   },
   skillPercent: {
     fontSize: 14,
     fontWeight: '800',
-    color: COLORS.primary,
+    color: colors.primary,
   },
   progressBg: {
     height: 10,
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    backgroundColor: colors.surfaceVariant,
     borderRadius: 5,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
     borderRadius: 5,
+    backgroundColor: colors.primary,
   },
   actions: {
     gap: 12,
@@ -441,7 +526,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: 'hidden',
     elevation: 8,
-    shadowColor: COLORS.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 16,
@@ -466,7 +551,7 @@ const styles = StyleSheet.create({
   secondaryBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.onSurfaceVariant,
+    color: colors.onSurfaceVariant,
     opacity: 0.7,
   },
 });

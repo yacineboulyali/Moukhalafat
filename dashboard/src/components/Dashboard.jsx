@@ -1,12 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, Tooltip, Cell,
   LineChart, Line, CartesianGrid,
 } from 'recharts';
-import { Users, Award, Zap, TrendingUp, Search, RefreshCw, ChevronRight } from 'lucide-react';
+import { Users, Award, Zap, TrendingUp, Search, RefreshCw, ChevronRight, Plus, X } from 'lucide-react';
 import { useStats, usePlayers, useSkillDistribution, useCityStats } from '../hooks/useData';
 import PlayerPanel from './PlayerPanel';
+import ThemeToggle from './ThemeToggle';
 
 function getInitials(name) {
   return (name || 'J').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
@@ -30,25 +31,157 @@ const CustomTooltip = ({ active, payload, label }) => {
   );
 };
 
-export default function Dashboard() {
+function NewUserModal({ isOpen, onClose, onSubmit }) {
+  const [formData, setFormData] = useState({
+    username: '', password: '', fullName: '', site: '', schoolLevel: ''
+  });
+  const [loading, setLoading] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'DUPLICATE_USERNAME') {
+        alert(err.message);
+      } else {
+        alert('Erreur lors de la création de l\'utilisateur.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay z-[1000] fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="modal-content bg-bg-surface border-border-light rounded-2xl w-full max-w-md overflow-hidden relative shadow-2xl animate-slideUp">
+        <button className="absolute top-4 right-4 text-text-muted hover:text-text-primary" onClick={onClose}>
+          <X size={20} />
+        </button>
+        <div className="p-6 border-b border-border-light">
+          <h2 className="text-xl font-bold text-text-primary flex items-center gap-2">
+            <Users size={20} className="text-primary-light" />
+            Ajouter un joueur
+          </h2>
+          <p className="text-sm text-text-secondary">Créez un nouvel accès pour l'application.</p>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
+          <div className="flex gap-4">
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-text-muted uppercase">Login (nom_prenom)</label>
+              <input 
+                required
+                className="cms-input" 
+                placeholder="ex: yacine_b"
+                value={formData.username}
+                onChange={e => setFormData({...formData, username: e.target.value})}
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-text-muted uppercase">Mot de passe</label>
+              <input 
+                required
+                className="cms-input" 
+                placeholder="ex: yac.b@2010"
+                value={formData.password}
+                onChange={e => setFormData({...formData, password: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-text-muted uppercase">Nom complet</label>
+            <input 
+              className="cms-input" 
+              placeholder="Yacine B."
+              value={formData.fullName}
+              onChange={e => setFormData({...formData, fullName: e.target.value})}
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-white/50 uppercase">Site / Ville</label>
+              <input 
+                className="cms-input" 
+                placeholder="Rabat"
+                value={formData.site}
+                onChange={e => setFormData({...formData, site: e.target.value})}
+              />
+            </div>
+            <div className="flex-1 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-white/50 uppercase">Niveau scolaire</label>
+              <input 
+                className="cms-input" 
+                placeholder="3ème AC"
+                value={formData.schoolLevel}
+                onChange={e => setFormData({...formData, schoolLevel: e.target.value})}
+              />
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-white/10 flex justify-end gap-3">
+            <button type="button" className="btn-ghost" onClick={onClose}>Annuler</button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Création...' : 'Créer l\'utilisateur'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+export default function Dashboard({ setPage }) {
   const { stats, loading: statsLoading } = useStats();
-  const { players, loading: playersLoading } = usePlayers();
+  const { players, loading: playersLoading, createUser, deleteUser } = usePlayers();
   const { data: skillData } = useSkillDistribution();
   const { data: cityData } = useCityStats();
 
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [showNewUserModal, setShowNewUserModal] = useState(false);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filtered = players.filter(p =>
-    (p.display_name || '').toLowerCase().includes(search.toLowerCase()) ||
-    (p.profile_type || '').toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = players.filter(p => {
+    const s = search.toLowerCase();
+    return (
+      (p.display_name || '').toLowerCase().includes(s) ||
+      (p.username || '').toLowerCase().includes(s) ||
+      (p.site || '').toLowerCase().includes(s) ||
+      (p.school_level || '').toLowerCase().includes(s) ||
+      (p.profile_type || '').toLowerCase().includes(s)
+    );
+  });
+
+  // Calculate pagination
+  const totalItems = filtered.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedPlayers = filtered.slice(startIndex, startIndex + itemsPerPage);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   const radarData = skillData.map(s => ({ subject: s.skill, A: s.avg }));
 
   return (
     <>
-      <PlayerPanel player={selectedPlayer} onClose={() => setSelectedPlayer(null)} />
+      <NewUserModal 
+        isOpen={showNewUserModal} 
+        onClose={() => setShowNewUserModal(false)}
+        onSubmit={createUser}
+      />
+      <PlayerPanel 
+        player={selectedPlayer} 
+        onClose={() => setSelectedPlayer(null)} 
+        onDelete={deleteUser}
+      />
 
       {/* Stats Grid */}
       <div className="stats-grid fade-in">
@@ -79,7 +212,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="dashboard-grid">
+      <div className="dashboard-grid col-3">
         {/* Radar Skills */}
         <div className="card fade-in">
           <div className="card-header">
@@ -96,10 +229,10 @@ export default function Dashboard() {
                 <p>Les scores de compétences apparaîtront ici</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240}>
+              <ResponsiveContainer width="100%" height={200}>
                 <RadarChart data={radarData}>
                   <PolarGrid stroke="var(--border-light)" />
-                  <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 11 }} />
+                  <PolarAngleAxis dataKey="subject" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} />
                   <Radar name="Score" dataKey="A" stroke="#7c3aed" fill="#7c3aed" fillOpacity={0.25} />
                 </RadarChart>
               </ResponsiveContainer>
@@ -111,7 +244,7 @@ export default function Dashboard() {
         <div className="card fade-in">
           <div className="card-header">
             <div className="card-title">
-              <div className="card-icon">🗺️</div>
+              <div className="card-icon">MAP</div>
               <h3>Avancement par ville</h3>
             </div>
           </div>
@@ -123,18 +256,38 @@ export default function Dashboard() {
                 <p>Les progressions par ville apparaîtront ici</p>
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={240}>
-                <BarChart data={cityData} barSize={14} barGap={4}>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={cityData} barSize={10} barGap={4}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border-light)" vertical={false} />
-                  <XAxis dataKey="city" tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 10 }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="city" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--text-muted)', fontSize: 9 }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar dataKey="done" name="Terminé" fill="#10b981" radius={[4,4,0,0]} />
-                  <Bar dataKey="current" name="En cours" fill="#7c3aed" radius={[4,4,0,0]} />
-                  <Bar dataKey="locked" name="Verrouillé" fill="#6060a0" radius={[4,4,0,0]} opacity={0.5} />
                 </BarChart>
               </ResponsiveContainer>
             )}
+          </div>
+        </div>
+
+        {/* Badges Collection Card */}
+        <div className="card fade-in">
+          <div className="card-header">
+            <div className="card-title">
+              <div className="card-icon">🏅</div>
+              <h3>Référentiel Badges</h3>
+            </div>
+          </div>
+          <div className="card-body" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '200px', textAlign: 'center' }}>
+            <Award size={64} color="#f59e0b" style={{ marginBottom: 16, opacity: 0.8 }} />
+            <div style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)' }}>
+              {statsLoading ? '—' : 18} Badges
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
+              Collection complète définie
+            </div>
+            <button className="btn-ghost" onClick={() => setPage('badges')} style={{ width: '100%' }}>
+              Voir la collection
+            </button>
           </div>
         </div>
       </div>
@@ -156,6 +309,9 @@ export default function Dashboard() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
+            <button className="btn-primary" onClick={() => setShowNewUserModal(true)}>
+              <Plus size={16} /> Nouveau
+            </button>
           </div>
         </div>
 
@@ -173,6 +329,7 @@ export default function Dashboard() {
               <thead>
                 <tr>
                   <th>Joueur</th>
+                  <th>Identifiants</th>
                   <th>Niveau</th>
                   <th>XP</th>
                   <th>Streak</th>
@@ -182,7 +339,7 @@ export default function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((player, i) => {
+                {paginatedPlayers.map((player, i) => {
                   const xpProgress = player.xp % 100;
                   const joinDate = new Date(player.created_at).toLocaleDateString('fr-FR', {
                     day: '2-digit', month: 'short', year: 'numeric'
@@ -197,6 +354,12 @@ export default function Dashboard() {
                             <div className="player-name">{player.display_name || 'Joueur'}</div>
                             <div className="player-type">ID: {player.id.slice(0, 8)}…</div>
                           </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)' }}>{player.username || '—'}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{player.password || '—'}</span>
                         </div>
                       </td>
                       <td>
@@ -231,6 +394,54 @@ export default function Dashboard() {
             </table>
           )}
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="pagination-wrap">
+            <div className="pagination-info">
+              Affichage de {startIndex + 1} à {Math.min(startIndex + itemsPerPage, totalItems)} sur {totalItems} joueurs
+            </div>
+            <div className="pagination-controls">
+              <button 
+                className="page-btn" 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                Précédent
+              </button>
+              
+              <div className="page-numbers">
+                {[...Array(totalPages)].map((_, i) => {
+                  const p = i + 1;
+                  // Show current page, first, last, and neighbours
+                  if (p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)) {
+                    return (
+                      <button 
+                        key={p} 
+                        className={`page-btn ${currentPage === p ? 'active' : ''}`}
+                        onClick={() => setCurrentPage(p)}
+                      >
+                        {p}
+                      </button>
+                    );
+                  }
+                  if (p === currentPage - 2 || p === currentPage + 2) {
+                    return <span key={p} className="page-dots">...</span>;
+                  }
+                  return null;
+                })}
+              </div>
+
+              <button 
+                className="page-btn" 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Suivant
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

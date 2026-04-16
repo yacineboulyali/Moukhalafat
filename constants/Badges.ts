@@ -10,11 +10,26 @@ export interface Badge {
   type: 'jewel' | 'skill' | 'quest';
   city?: string;
   unlocked?: boolean;
+  pointsRequired?: number;
 }
 
 const STORAGE_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/badges';
 
 export const BADGES: Badge[] = [
+  // SPECIAL
+  {
+    id: 'explorateur_curieux',
+    name: 'Explorateur Curieux',
+    arabicName: 'مستكشف فضولي',
+    description: 'Premier pas dans l\'aventure du Voyage des Compétences.',
+    rarity: 'common',
+    icon: 'explore',
+    remoteImage: `${STORAGE_URL}/Khmissa.png`, // Using Khmissa as a welcome symbol
+    type: 'quest',
+    unlocked: false,
+    pointsRequired: 0
+  },
+
   // RABAT
   {
     id: 'mdama_rabat',
@@ -23,11 +38,11 @@ export const BADGES: Badge[] = [
     description: 'Ceinture traditionnelle symbole d\'élégance et de statut.',
     rarity: 'rare',
     icon: 'military-tech',
-    image: require('../assets/images/badge_mdama.png'),
     remoteImage: `${STORAGE_URL}/Mdama.png`,
     type: 'jewel',
     city: 'rabat',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 500
   },
   {
     id: 'sertla_rabat',
@@ -36,11 +51,11 @@ export const BADGES: Badge[] = [
     description: 'Bijou de tête royal symbolisant la sagesse administrative.',
     rarity: 'epic',
     icon: 'workspace-premium',
-    image: require('../assets/images/badge_sertla.png'),
     remoteImage: `${STORAGE_URL}/Sertla.png`,
     type: 'jewel',
     city: 'rabat',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 1000
   },
   {
     id: 'khmissa_rabat',
@@ -52,7 +67,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Khmissa.png`,
     type: 'jewel',
     city: 'rabat',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 200
   },
   
   // CHEFCHAOUEN
@@ -66,7 +82,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Chebbka.png`,
     type: 'jewel',
     city: 'chefchaouen',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 200
   },
   {
     id: 'fnous',
@@ -78,7 +95,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Fnous.png`,
     type: 'jewel',
     city: 'chefchaouen',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 600
   },
   {
     id: 'tazrabt_chef',
@@ -90,7 +108,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Tazrabt.png`,
     type: 'jewel',
     city: 'chefchaouen',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 1200
   },
 
   // FÈS
@@ -104,7 +123,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/khalkhal.png`,
     type: 'jewel',
     city: 'fes',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 700
   },
   {
     id: 'tifinagh',
@@ -116,7 +136,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Tifinagh.png`,
     type: 'jewel',
     city: 'fes',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 2500
   },
   {
     id: 'tasfift',
@@ -128,7 +149,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Tasfift.png`,
     type: 'jewel',
     city: 'fes',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 1500
   },
 
   // MARRAKECH
@@ -142,7 +164,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Tizerzai.png`,
     type: 'jewel',
     city: 'marrakech',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 800
   },
   {
     id: 'abzim',
@@ -154,7 +177,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Abzim.png`,
     type: 'jewel',
     city: 'marrakech',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 800
   },
   {
     id: 'ibzimen',
@@ -166,7 +190,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Ibzimen.png`,
     type: 'jewel',
     city: 'marrakech',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 1800
   },
 
   // LAÂYOUNE
@@ -180,7 +205,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Aghraf.png`,
     type: 'jewel',
     city: 'laayoune',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 300
   },
   {
     id: 'tazrabt_sahara',
@@ -192,7 +218,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Tazrabt%20Sahara.png`,
     type: 'jewel',
     city: 'laayoune',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 900
   },
   {
     id: 'fnous_dhahab',
@@ -201,9 +228,11 @@ export const BADGES: Badge[] = [
     description: 'Lanterne dorée sacrée.',
     rarity: 'legendary',
     icon: 'auto-awesome',
+    remoteImage: `${STORAGE_URL}/Fnous.png`,
     type: 'jewel',
     city: 'laayoune',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 3000
   },
 
   // DAKHLA
@@ -217,7 +246,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Mdama%20bahar.png`,
     type: 'jewel',
     city: 'dakhla',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 2000
   },
   {
     id: 'khalkhal_mawj',
@@ -229,7 +259,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Khalkhal%20Mawj.png`,
     type: 'jewel',
     city: 'dakhla',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 1100
   },
   {
     id: 'sertla_atlantik',
@@ -241,7 +272,8 @@ export const BADGES: Badge[] = [
     remoteImage: `${STORAGE_URL}/Sertia%20Atlantik.png`,
     type: 'jewel',
     city: 'dakhla',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 3500
   },
 
   // TABRAAT
@@ -254,6 +286,7 @@ export const BADGES: Badge[] = [
     icon: 'stars',
     remoteImage: `${STORAGE_URL}/Tabraat.png`,
     type: 'jewel',
-    unlocked: true
+    unlocked: false,
+    pointsRequired: 10000
   }
 ];

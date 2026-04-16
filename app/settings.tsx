@@ -79,7 +79,7 @@ export default function SettingsScreen() {
           <Text style={styles.headerTitle}>Zellige Odyssey</Text>
           <View style={styles.headerAvatarContainer}>
             <Image
-               source={require('../assets/images/settings-avatar.png')}
+               source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/settings-avatar.png?v=1775991607489' }}
                style={styles.headerAvatar}
             />
           </View>
@@ -92,7 +92,7 @@ export default function SettingsScreen() {
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCard}>
               <Image
-                source={require('../assets/images/settings-avatar.png')}
+                source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/settings-avatar.png?v=1775991607489' }}
                 style={styles.profileAvatar}
               />
             </View>
@@ -105,7 +105,7 @@ export default function SettingsScreen() {
           
           <View style={styles.inputCard}>
             <View style={styles.inputLabelRow}>
-              <Text style={styles.inputLabel}>Nom d'utilisateur</Text>
+              <Text style={styles.inputLabel}>Nom d’utilisateur</Text>
               <Text style={styles.inputLabelArabic}>اسم المستخدم</Text>
             </View>
             <TextInput

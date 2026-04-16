@@ -3,6 +3,9 @@ import './index.css';
 import Dashboard from './components/Dashboard';
 import BadgesPage from './components/BadgesPage';
 import ContentPage from './components/ContentPage';
+import CurriculumPreview from './components/cms/CurriculumPreview';
+import ThemeToggle from './components/ThemeToggle';
+import { useChallenges } from './hooks/useContent';
 import {
   LayoutDashboard, Users, Award, FileEdit,
 } from 'lucide-react';
@@ -33,7 +36,17 @@ const PAGE_TITLES = {
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
-  const { title, sub } = PAGE_TITLES[page] || PAGE_TITLES.dashboard;
+  const [selectedChallenge, setSelectedChallenge] = useState(null);
+  const { challenges } = useChallenges();
+
+  const handleCityClick = (challenge) => {
+    setSelectedChallenge(challenge);
+    setPage('curriculum');
+  };
+
+  const { title, sub } = page === 'curriculum' 
+    ? { title: `Aperçu : ${selectedChallenge?.city_name_fr}`, sub: 'Découvrez le programme complet et les exercices' }
+    : (PAGE_TITLES[page] || PAGE_TITLES.dashboard);
 
   return (
     <div className="app-layout">
@@ -69,9 +82,14 @@ export default function App() {
 
           <div className="divider" style={{ margin: '12px 0' }} />
           <span className="nav-section-title">Villes du jeu</span>
-          {['🏛️ Rabat', '🔵 Chefchaouen', '🕌 Fès', '🌿 Marrakech', '🌊 Laâyoune', '🏜️ Dakhla'].map(city => (
-            <div key={city} className="nav-item" style={{ fontSize: 12, opacity: 0.7, cursor: 'default' }}>
-              {city}
+          {challenges.map(c => (
+            <div 
+              key={c.id} 
+              className={`nav-item city-nav-item ${page === 'curriculum' && selectedChallenge?.id === c.id ? 'active' : ''}`} 
+              onClick={() => handleCityClick(c)}
+            >
+              <span className="city-nav-icon">📍</span>
+              {c.city_name_fr}
             </div>
           ))}
         </nav>
@@ -91,13 +109,23 @@ export default function App() {
             <h1>{title}</h1>
             <span>{sub}</span>
           </div>
+          
+          <div className="topbar-actions">
+            <ThemeToggle />
+          </div>
         </header>
 
         <main className="page-content">
-          {page === 'dashboard' && <Dashboard />}
-          {page === 'players'   && <Dashboard />}
+          {page === 'dashboard' && <Dashboard setPage={setPage} />}
+          {page === 'players'   && <Dashboard setPage={setPage} />}
           {page === 'badges'    && <BadgesPage />}
           {page === 'content'   && <ContentPage />}
+          {page === 'curriculum' && (
+            <CurriculumPreview 
+              challenge={selectedChallenge} 
+              onBack={() => setPage('dashboard')} 
+            />
+          )}
         </main>
       </div>
     </div>

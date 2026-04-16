@@ -2,12 +2,13 @@ import { useState } from 'react';
 import ChallengesManager from './cms/ChallengesManager';
 import MissionsManager from './cms/MissionsManager';
 import QuestionsManager from './cms/QuestionsManager';
+import CurriculumPreview from './cms/CurriculumPreview';
 
 /**
  * Top-level CMS page — manages navigation between challenges → missions → questions
  */
 export default function ContentPage() {
-  const [view, setView] = useState('challenges'); // 'challenges' | 'missions' | 'questions'
+  const [view, setView] = useState('challenges'); // 'challenges' | 'missions' | 'questions' | 'curriculum'
   const [selectedChallenge, setSelectedChallenge] = useState(null);
   const [selectedMission, setSelectedMission] = useState(null);
 
@@ -19,6 +20,11 @@ export default function ContentPage() {
   const goToQuestions = (mission) => {
     setSelectedMission(mission);
     setView('questions');
+  };
+
+  const goToCurriculum = (challenge) => {
+    setSelectedChallenge(challenge);
+    setView('curriculum');
   };
 
   const goBack = (target) => {
@@ -35,7 +41,10 @@ export default function ContentPage() {
   return (
     <>
       {view === 'challenges' && (
-        <ChallengesManager onSelectChallenge={goToMissions} />
+        <ChallengesManager 
+          onSelectChallenge={goToMissions} 
+          onViewCurriculum={goToCurriculum}
+        />
       )}
       {view === 'missions' && (
         <MissionsManager
@@ -49,6 +58,12 @@ export default function ContentPage() {
           mission={selectedMission}
           challenge={selectedChallenge}
           onBack={goBack}
+        />
+      )}
+      {view === 'curriculum' && (
+        <CurriculumPreview
+          challenge={selectedChallenge}
+          onBack={() => goBack('challenges')}
         />
       )}
     </>
