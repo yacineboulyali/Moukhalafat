@@ -1,10 +1,5 @@
-/**
- * hooks/useMissions.ts
- * ─────────────────────────────────────────────────────────────────
- * Fetches missions for a specific city/challenge.
- */
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { dbService } from '../services/database';
 
 export interface Mission {
   id: string;
@@ -19,57 +14,28 @@ export interface Mission {
   metadata?: any;
 }
 
-// ─── In-memory cache ──────────────────────────────────────────────
-let _missionCache: Record<string, Mission[]> = {};
-
 export function useMissions(cityId: string | null) {
-  const [missions, setMissions] = useState<Mission[]>(
-    cityId ? (_missionCache[cityId] ?? []) : []
-  );
-  const [loading, setLoading] = useState(cityId ? !_missionCache[cityId] : false);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchMissions = async (targetCityId: string) => {
-    const { data } = await supabase
-      .from('missions')
-      .select('*')
-      .eq('city_id', targetCityId)
-      .eq('is_published', true)
-      .order('sort_order');
-    
-    const result = data || [];
-    _missionCache[targetCityId] = result;
-    setMissions(result);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const result = await dbService.getMissionsByCity(targetCityId);
+      setMissions(result);
+    } catch (err: any) {
+      console.error('Failed to fetch missions from SQLite:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!cityId) return;
-    if (_missionCache[cityId]) {
-      setMissions(_missionCache[cityId]);
-      setLoading(false);
-      return;
-    }
-    
     fetchMissions(cityId);
   }, [cityId]);
 
-  return { missions, loading, refresh: () => cityId && fetchMissions(cityId) };
-}
-
-/** Preload all missions into the cache */
-export async function preloadAllMissions() {
-  const { data } = await supabase
-    .from('missions')
-    .select('*')
-    .eq('is_published', true)
-    .order('sort_order');
-
-  if (data) {
-    const newCache: Record<string, Mission[]> = {};
-    data.forEach((m: Mission) => {
-      if (!newCache[m.city_id]) newCache[m.city_id] = [];
-      newCache[m.city_id].push(m);
-    });
-    _missionCache = newCache;
-  }
+  return { missions, loading, error, refresh: () => cityId && fetchMissions(cityId) };
 }

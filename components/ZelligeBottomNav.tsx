@@ -61,7 +61,7 @@ const NavItem = ({ icon, label, path, isActive }: NavItemProps) => {
       <Animated.View style={[styles.iconWrapper, animatedStyle]}>
         <MaterialIcons 
           name={icon} 
-          size={24} 
+          size={22} 
           color={isActive ? colors.gold : (isActive ? colors.onSurface : 'rgba(169, 180, 172, 0.4)')} 
         />
         {isActive && (
@@ -87,7 +87,7 @@ export const ZelligeBottomNav = () => {
         { 
           paddingBottom: Math.max(insets.bottom, 4),
           paddingTop: 4,
-          height: 52 + Math.max(insets.bottom, 0),
+          height: 48 + Math.max(insets.bottom, 0),
           borderTopColor: colors.border
         }
       ]}
@@ -144,8 +144,8 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   iconWrapper: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',

@@ -10,6 +10,8 @@ import DevQuickNav from '../components/DevQuickNav';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { dbService } from '../services/database';
+import { syncCurriculum } from '../services/sync';
 
 export default function RootLayout() {
   const { user, loading } = useAuthStore();
@@ -17,6 +19,18 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
+    // ─── Initialize DB and Sync ───
+    const initDb = async () => {
+      try {
+        await dbService.init();
+        // Background sync if online
+        syncCurriculum();
+      } catch (err) {
+        console.error('DB Init Error:', err);
+      }
+    };
+    initDb();
+
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -24,13 +38,10 @@ export default function RootLayout() {
     const isSplashScreen = !segments.length || segments[0] === 'index';
 
     if (!user && !inOnboardingGroup && !isSplashScreen && !inAuthGroup) {
-      // Redirect to welcome if not logged in and not in onboarding or splash
       router.replace('/accueil');
     } else if (user && inOnboardingGroup) {
-      // Redirect to map if logged in but trying to access onboarding
       router.replace('/map');
     }
-    // We let SplashScreen (index) handle its own navigation
   }, [user, loading, segments]);
 
   const showZelligeNav = ['accueil', 'map', 'badges', 'profil', 'profil-classique', 'leaderboard', 'pedago'].includes(segments[0] as string);
@@ -41,10 +52,10 @@ export default function RootLayout() {
         {/* Container for everything that should be scaled -5% */}
         <View style={{ 
           flex: 1, 
-          width: '105.26%', 
-          height: '105.26%', 
+          width: '111.11%', 
+          height: '111.11%', 
           alignSelf: 'center', 
-          transform: [{ scale: 0.95 }] 
+          transform: [{ scale: 0.90 }] 
         }}>
           <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
             {/* ── Initial Loading / Splash ── */}

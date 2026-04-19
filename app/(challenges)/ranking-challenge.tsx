@@ -178,7 +178,7 @@ export default function V1RankingScreen() {
         <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
         <MissionSplash 
           isVisible={showSplash} 
-          title={qData?.title_fr || "Défi d'ordre"} 
+          title={(qData as any)?.title_fr || "Défi d'ordre"} 
           subtitle="Classez les éléments dans le bon ordre"
           onFinish={() => setShowSplash(false)} 
         />

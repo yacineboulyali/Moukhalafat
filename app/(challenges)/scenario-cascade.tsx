@@ -95,7 +95,7 @@ export default function V1ScenarioCascadeScreen() {
           <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>SCÉNARIO / DÉCISION</Text>
           <View style={styles.scenarioCard}>
             <View style={styles.scenarioHeader}>
-              <MaterialIcons name="assignment" size={24} color={colors.primary} />
+              <MaterialIcons name="assignment" size={22} color={colors.primary} />
               <Text style={styles.scenarioLabel}>SITUATION</Text>
             </View>
             <Text style={[styles.scenarioText, { color: colors.onSurface }]}>{qData.question_fr}</Text>
@@ -130,13 +130,13 @@ export default function V1ScenarioCascadeScreen() {
         <View style={styles.footerRow}>
           <View style={styles.sideActions}>
             <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+              <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelectedId(null); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+              <MaterialIcons name="refresh" size={22} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+              <MaterialIcons name="info-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -145,7 +145,7 @@ export default function V1ScenarioCascadeScreen() {
             onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+            <MaterialIcons name="fast-forward" size={22} color={colors.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -154,7 +154,7 @@ export default function V1ScenarioCascadeScreen() {
             disabled={!selectedId || isCorrect !== null}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="done-all" size={28} color="#fff" />
+            <MaterialIcons name="done-all" size={26} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -164,7 +164,7 @@ export default function V1ScenarioCascadeScreen() {
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash 
         isVisible={showSplash} 
-        title={qData?.title_fr || "Scénario Immersif"} 
+        title={(qData as any)?.title_fr || "Scénario Immersif"} 
         subtitle="Prenez la meilleure décision"
         onFinish={() => setShowSplash(false)} 
       />
@@ -175,26 +175,26 @@ export default function V1ScenarioCascadeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 24 },
-  header: { marginBottom: 30 },
-  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12, textAlign: 'center' },
-  scenarioCard: { padding: 24, backgroundColor: '#fff', borderRadius: 24, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, borderLeftWidth: 6, borderLeftColor: '#cca72f' },
-  scenarioHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
-  scenarioLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1, opacity: 0.6 },
-  scenarioText: { fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  scenarioTextAr: { fontSize: 17, textAlign: 'right', marginTop: 12, color: '#B8860B', fontWeight: '700' },
-  optionsList: { gap: 12 },
-  optionItem: { padding: 18, borderRadius: 16, borderWidth: 2, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  optionText: { fontSize: 15, fontWeight: '700' },
-  optionTextAr: { fontSize: 14, marginTop: 2, opacity: 0.8, textAlign: 'right' },
-  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
-  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  sideActions: { flexDirection: 'row', gap: 6 },
-  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.03)', justifyContent: 'center', alignItems: 'center' },
+  scroll: { padding: 20 },
+  header: { marginBottom: 24 },
+  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5, marginBottom: 10, textAlign: 'center' },
+  scenarioCard: { padding: 20, backgroundColor: '#fff', borderRadius: 20, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, borderLeftWidth: 6, borderLeftColor: '#cca72f' },
+  scenarioHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, gap: 8 },
+  scenarioLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 1, opacity: 0.6 },
+  scenarioText: { fontSize: 17, fontWeight: '700', lineHeight: 24 },
+  scenarioTextAr: { fontSize: 16, textAlign: 'right', marginTop: 10, color: '#B8860B', fontWeight: '700' },
+  optionsList: { gap: 10 },
+  optionItem: { padding: 16, borderRadius: 14, borderWidth: 2, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  optionText: { fontSize: 14, fontWeight: '700' },
+  optionTextAr: { fontSize: 13, marginTop: 2, opacity: 0.8, textAlign: 'right' },
+  footer: { padding: 20, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: 4 },
+  iconBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.03)', justifyContent: 'center', alignItems: 'center' },
   primaryActionBtn: {
-    paddingHorizontal: 32,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: 28,
+    height: 54,
+    borderRadius: 27,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -204,9 +204,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   skipIconBtn: {
-    paddingHorizontal: 24,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: 20,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',

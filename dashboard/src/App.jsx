@@ -3,11 +3,13 @@ import './index.css';
 import Dashboard from './components/Dashboard';
 import BadgesPage from './components/BadgesPage';
 import ContentPage from './components/ContentPage';
+import MediaLibrary from './components/MediaLibrary';
+import DatabaseExplorer from './components/DatabaseExplorer';
 import CurriculumPreview from './components/cms/CurriculumPreview';
 import ThemeToggle from './components/ThemeToggle';
 import { useChallenges } from './hooks/useContent';
 import {
-  LayoutDashboard, Users, Award, FileEdit,
+  LayoutDashboard, Users, Award, FileEdit, Image as ImageIcon, Database
 } from 'lucide-react';
 
 const NAV = [
@@ -22,7 +24,9 @@ const NAV = [
   {
     section: 'Gestion de contenu',
     items: [
-      { id: 'content', icon: FileEdit, label: 'Défis & Missions', badge: 'CMS' },
+      { id: 'content',   icon: FileEdit,  label: 'Défis & Missions', badge: 'CMS' },
+      { id: 'media',     icon: ImageIcon, label: 'Médiathèque' },
+      { id: 'database',  icon: Database,  label: 'Base de données' },
     ]
   }
 ];
@@ -32,6 +36,8 @@ const PAGE_TITLES = {
   players:   { title: 'Joueurs',                  sub: 'Liste et profils détaillés des joueurs' },
   badges:    { title: 'Badges & Récompenses',     sub: 'Analyse des badges obtenus par les joueurs' },
   content:   { title: 'Gestion de contenu',       sub: 'Créer et modifier les défis, missions et questions du jeu' },
+  media:     { title: 'Médiathèque',              sub: 'Explorateur de ressources et téléchargement groupé' },
+  database:  { title: 'Base de données',          sub: 'Exploration SQL et structure des tables publiques' },
 };
 
 export default function App() {
@@ -120,6 +126,8 @@ export default function App() {
           {page === 'players'   && <Dashboard setPage={setPage} />}
           {page === 'badges'    && <BadgesPage />}
           {page === 'content'   && <ContentPage />}
+          {page === 'media'     && <MediaLibrary />}
+          {page === 'database'  && <DatabaseExplorer />}
           {page === 'curriculum' && (
             <CurriculumPreview 
               challenge={selectedChallenge} 

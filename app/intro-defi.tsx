@@ -198,13 +198,17 @@ export default function IntroDefiScreen() {
       </Animated.View>
 
       {/* ── Fixed Bottom Block ("Rideau") ────────────────────────── */}
-      <Animated.View 
-        entering={FadeInUp.springify().damping(15)} 
-        style={[styles.bottomSheet, { bottom: -20 }]} 
-      >
+      <GestureDetector gesture={gesture}>
+        <Animated.View 
+          entering={FadeInUp.springify().damping(15)} 
+          style={[styles.bottomSheet, rBottomSheetStyle]} 
+        >
           <BlurView intensity={95} tint="light" style={[styles.blurContainer, { paddingBottom: insets.bottom + 40 }]}>
-
-            {/* Removed the drag handle container to keep it "attached" in a fixed-like manner */}
+            
+            {/* Drag Handle */}
+            <View style={styles.dragHandleContainer}>
+              <View style={styles.dragHandle} />
+            </View>
 
 
             {/* City badge */}
@@ -297,7 +301,8 @@ export default function IntroDefiScreen() {
             )}
 
           </BlurView>
-      </Animated.View>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
@@ -390,12 +395,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   title: {
-    fontSize: 24,
+    fontSize: 21,
     fontWeight: '900',
     color: '#1A1A2E',
     textAlign: 'center',
-    lineHeight: 30,
-    marginBottom: 8,
+    lineHeight: 28,
+    marginBottom: 6,
   },
   description: {
     fontSize: 14,
@@ -496,10 +501,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   missionChipText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   missionNumber: {
     width: 20,
