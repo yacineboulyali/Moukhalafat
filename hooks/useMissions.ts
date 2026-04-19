@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { dbService } from '../services/database';
+import { syncMissions } from '../services/sync';
+
+export const preloadAllMissions = syncMissions;
 
 export interface Mission {
   id: string;

@@ -164,7 +164,7 @@ export default function V1ScenarioCascadeScreen() {
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash 
         isVisible={showSplash} 
-        title={(qData as any)?.title_fr || "Scénario Immersif"} 
+        title={qData?.title_fr || "Scénario Immersif"} 
         subtitle="Prenez la meilleure décision"
         onFinish={() => setShowSplash(false)} 
       />

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { dbService } from '../services/database';
-import { syncCurriculum } from '../services/sync';
+import { syncCurriculum, syncChallenges } from '../services/sync';
+
+export const preloadAllChallenges = syncChallenges;
 
 // ─── Type ─────────────────────────────────────────────────────────
 export interface Challenge {

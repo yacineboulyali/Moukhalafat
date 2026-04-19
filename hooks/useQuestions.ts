@@ -1,5 +1,8 @@
 import { useEffect, useState } from 'react';
 import { dbService } from '../services/database';
+import { syncQuestions } from '../services/sync';
+
+export const preloadAllQuestions = syncQuestions;
 
 export interface Question {
   id: string;
