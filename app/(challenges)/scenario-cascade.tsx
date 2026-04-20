@@ -101,7 +101,7 @@ export default function V1ScenarioCascadeScreen() {
           <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>SCÉNARIO / DÉCISION</Text>
           <View style={styles.scenarioCard}>
             <View style={styles.scenarioHeader}>
-              <MaterialIcons name="assignment" size={24} color={colors.primary} />
+              <MaterialIcons name="assignment" size={22} color={colors.primary} />
               <Text style={styles.scenarioLabel}>SITUATION</Text>
             </View>
             <Text style={[styles.scenarioText, { color: colors.onSurface }]}>{qData.question_fr}</Text>
@@ -142,13 +142,13 @@ export default function V1ScenarioCascadeScreen() {
         <View style={styles.footerRow}>
           <View style={styles.sideActions}>
             <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+              <MaterialIcons name="arrow-back" size={22} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelectedId(null); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+              <MaterialIcons name="refresh" size={22} color={colors.primary} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+              <MaterialIcons name="info-outline" size={22} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
@@ -157,7 +157,7 @@ export default function V1ScenarioCascadeScreen() {
             onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+            <MaterialIcons name="fast-forward" size={22} color={colors.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -166,7 +166,7 @@ export default function V1ScenarioCascadeScreen() {
             disabled={!selectedId || isCorrect !== null}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="done-all" size={28} color="#fff" />
+            <MaterialIcons name="done-all" size={26} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -206,9 +206,9 @@ const styles = StyleSheet.create({
   sideActions: { flexDirection: 'row', gap: 6 },
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.03)', justifyContent: 'center', alignItems: 'center' },
   primaryActionBtn: {
-    paddingHorizontal: 32,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: 28,
+    height: 54,
+    borderRadius: 27,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   skipIconBtn: {
-    paddingHorizontal: 24,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: 20,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',

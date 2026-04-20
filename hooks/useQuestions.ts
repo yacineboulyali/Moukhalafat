@@ -1,10 +1,5 @@
-/**
- * hooks/useQuestions.ts
- * ─────────────────────────────────────────────────────────────────
- * Fetches questions for a specific mission from Supabase.
- */
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { dbService } from '../services/database';
 
 export interface Question {
   id: string;
@@ -41,54 +36,36 @@ export interface Question {
   soft_skills_impact?: any;
 }
 
-// ─── In-memory cache ──────────────────────────────────────────────
-let _questionCache: Record<string, Question[]> = {};
-
-export function _injectQuestionsCache(cache: Record<string, Question[]>) {
-  _questionCache = cache;
-}
-
 export function useQuestions(missionId: string | null) {
-  const [questions, setQuestions] = useState<Question[]>(
-    missionId ? (_questionCache[missionId] ?? []) : []
-  );
-  const [loading, setLoading] = useState(missionId ? !_questionCache[missionId] : false);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchQuestions = async (targetMissionId: string) => {
     setLoading(true);
-    const { data, error: err } = await supabase
-      .from('questions')
-      .select('*')
-      .eq('mission_id', targetMissionId)
-      .eq('is_published', true)
-      .order('sort_order');
-
-    if (err) {
+    try {
+      const result = await dbService.getQuestionsByMission(targetMissionId);
+      setQuestions(result as Question[]);
+    } catch (err: any) {
+      console.error('Failed to fetch questions from SQLite:', err);
       setError(err.message);
-    } else {
-      const result = data || [];
-      _questionCache[targetMissionId] = result;
-      setQuestions(result);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     if (!missionId) return;
-    if (_questionCache[missionId]) {
-      setQuestions(_questionCache[missionId]);
-      setLoading(false);
-      return;
-    }
-    
     fetchQuestions(missionId);
   }, [missionId]);
 
   return { questions, loading, error, refresh: () => missionId && fetchQuestions(missionId) };
 }
 
-/** Preload all questions into the cache */
+/** 
+ * Preload helper (now no-op as the background sync populates SQLite)
+ * Kept for compatibility with SplashScreen
+ */
 export async function preloadAllQuestions() {
-  // No-op: Data is now synced via syncMissions
+  return Promise.resolve();
 }

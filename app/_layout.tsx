@@ -9,6 +9,8 @@ import { useGameStore } from '../stores/gameStore';
 
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ZelligeBottomNav } from '../components/ZelligeBottomNav';
+import { dbService } from '../services/database';
+import { syncCurriculum } from '../services/sync';
 
 export default function RootLayout() {
   const { user, loading } = useAuthStore();
@@ -16,6 +18,18 @@ export default function RootLayout() {
   const router = useRouter();
 
   useEffect(() => {
+    // ─── Initialize DB and Sync ───
+    const initDb = async () => {
+      try {
+        await dbService.init();
+        // Background sync if online
+        syncCurriculum();
+      } catch (err) {
+        console.error('DB Init Error:', err);
+      }
+    };
+    initDb();
+
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -34,7 +48,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        {/* Removed the global scale: 0.95 wrapper — it caused misaligned touch targets on Android */}
+        {/* REMOVED scaling hack for Android touch alignment fixes */}
         <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
           {/* ── Initial Loading / Splash ── */}
           <Stack.Screen name="index"          options={{ animation: 'none' }} />

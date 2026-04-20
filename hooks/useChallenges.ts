@@ -1,12 +1,8 @@
-/**
- * hooks/useChallenges.ts
- * ─────────────────────────────────────────────────────────────────
- * Fetches all challenges from Supabase and exposes them as a
- * map keyed by city_id.  Results are cached in-memory for the
- * session so subsequent navigations are instant.
- */
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { dbService } from '../services/database';
+import { syncCurriculum, syncChallenges } from '../services/sync';
+
+export const preloadAllChallenges = syncChallenges;
 
 // ─── Type ─────────────────────────────────────────────────────────
 export interface Challenge {
@@ -29,60 +25,50 @@ export interface Challenge {
   missions_title_ar: string | null;
 }
 
-// ─── In-memory cache ──────────────────────────────────────────────
-let _cache: Record<string, Challenge> | null = null;
-
 // ─── Hook ─────────────────────────────────────────────────────────
 export function useChallenges() {
-  const [challenges, setChallenges] = useState<Record<string, Challenge>>(
-    _cache ?? {}
-  );
-  const [loading, setLoading] = useState(_cache === null);
+  const [challenges, setChallenges] = useState<Record<string, Challenge>>({});
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    refresh();
+    loadChallenges();
   }, []);
 
-  const refresh = async () => {
+  const loadChallenges = async () => {
     setLoading(true);
-    const { data, error: err } = await supabase
-      .from('challenges')
-      .select('*')
-      .order('sort_order');
+    try {
+      let data = await dbService.getChallenges();
+      
+      // If no data in SQLite, try to sync once
+      if (data.length === 0) {
+        console.log('No challenges in SQLite, attempting initial sync...');
+        await syncCurriculum();
+        data = await dbService.getChallenges();
+      }
 
-    if (err) {
-      console.warn('Supabase fetch failed:', err.message);
+      const finalMap: Record<string, Challenge> = {};
+      data.forEach((c: any) => {
+        finalMap[c.city_id] = {
+          ...c,
+          is_published: c.is_published === 1
+        };
+      });
+
+      setChallenges(finalMap);
+    } catch (err: any) {
+      console.error('Failed to load challenges from SQLite:', err);
       setError(err.message);
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    const finalMap: Record<string, Challenge> = {};
-    (data ?? []).forEach((c: Challenge) => {
-      finalMap[c.city_id] = c;
-    });
-
-    _cache = finalMap;
-    setChallenges(finalMap);
-    setLoading(false);
+  const refresh = async () => {
+    // Force sync from remote then reload
+    await syncCurriculum();
+    await loadChallenges();
   };
 
   return { challenges, loading, error, refresh };
-}
-
-/** Preload all challenges into the cache */
-export async function preloadAllChallenges() {
-  const { data } = await supabase
-    .from('challenges')
-    .select('*')
-    .order('sort_order');
-
-  if (data) {
-    const map: Record<string, Challenge> = {};
-    data.forEach((c: Challenge) => {
-      map[c.city_id] = c;
-    });
-    _cache = map;
-  }
 }
