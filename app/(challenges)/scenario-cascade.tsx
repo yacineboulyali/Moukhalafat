@@ -25,7 +25,7 @@ export default function V1ScenarioCascadeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
@@ -53,7 +53,7 @@ export default function V1ScenarioCascadeScreen() {
 
   const handleValidation = () => {
     if (!qData || !selectedId) return;
-    const correct = selectedId === qData.correct_answer;
+    const correct = String(selectedId) === String(qData.correct_answer);
     setIsCorrect(correct);
     setShowFeedback(true);
     playSound(correct ? 'correct' : 'wrong');
@@ -86,11 +86,17 @@ export default function V1ScenarioCascadeScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {!!qData.presentation_fr && (
+          <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
+            <MaterialIcons name="person" size={18} color={colors.primary} style={{ marginBottom: 6 }} />
+            <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+          </Animated.View>
+        )}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>SCÉNARIO / DÉCISION</Text>
           <View style={styles.scenarioCard}>
@@ -104,25 +110,31 @@ export default function V1ScenarioCascadeScreen() {
         </Animated.View>
 
         <View style={styles.optionsList}>
-          {options.map((option: any, index: number) => (
-            <Animated.View key={option.id} entering={FadeInRight.delay(400 + index * 100)}>
-              <TouchableOpacity
-                style={[
-                  styles.optionItem,
-                  { backgroundColor: colors.surface, borderColor: selectedId === option.id ? colors.primary : 'rgba(0,0,0,0.05)' },
-                  isCorrect !== null && option.id === qData.correct_answer && { borderColor: '#4CAF50', borderLeftWidth: 8 },
-                ]}
-                onPress={() => { setSelectedId(option.id); playSound('click'); }}
-                disabled={isCorrect !== null}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.optionText, { color: colors.onSurface }]}>{option.label_fr}</Text>
-                  {!!option.label_ar && <Text style={styles.optionTextAr}>{option.label_ar}</Text>}
-                </View>
-                {selectedId === option.id && <MaterialIcons name="lens" size={16} color={colors.primary} />}
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+          {options.map((option: any, index: number) => {
+            const optKey = option.value ?? option.id ?? String(index);
+            const optLabel = option.label ?? option.label_fr ?? option.text ?? '';
+            const isSelected = selectedId === optKey;
+            const isCorrectOpt = String(optKey) === String(qData.correct_answer);
+            return (
+              <Animated.View key={optKey} entering={FadeInRight.delay(400 + index * 100)}>
+                <TouchableOpacity
+                  style={[
+                    styles.optionItem,
+                    { backgroundColor: colors.surface, borderColor: isSelected ? colors.primary : 'rgba(0,0,0,0.05)' },
+                    isCorrect !== null && isCorrectOpt && { borderColor: '#4CAF50', borderLeftWidth: 8 },
+                    isCorrect === false && isSelected && !isCorrectOpt && { borderColor: '#ff5252' },
+                  ]}
+                  onPress={() => { setSelectedId(optKey); playSound('click'); }}
+                  disabled={isCorrect !== null}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.optionText, { color: colors.onSurface }]}>{optLabel}</Text>
+                  </View>
+                  {isSelected && <MaterialIcons name="lens" size={16} color={colors.primary} />}
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -175,17 +187,19 @@ export default function V1ScenarioCascadeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 24 },
-  header: { marginBottom: 30 },
-  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12, textAlign: 'center' },
-  scenarioCard: { padding: 24, backgroundColor: '#fff', borderRadius: 24, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, borderLeftWidth: 6, borderLeftColor: '#cca72f' },
+  scroll: { padding: 24, paddingBottom: 40 },
+  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 16, padding: 16, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#cca72f' },
+  presentationText: { fontSize: 14, lineHeight: 20, fontStyle: 'italic' },
+  header: { marginBottom: 24 },
+  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 10, textAlign: 'center', opacity: 0.6 },
+  scenarioCard: { padding: 22, backgroundColor: '#fff', borderRadius: 22, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, borderLeftWidth: 6, borderLeftColor: '#cca72f' },
   scenarioHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
   scenarioLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1, opacity: 0.6 },
-  scenarioText: { fontSize: 18, fontWeight: '700', lineHeight: 26 },
-  scenarioTextAr: { fontSize: 17, textAlign: 'right', marginTop: 12, color: '#B8860B', fontWeight: '700' },
+  scenarioText: { fontSize: 17, fontWeight: '700', lineHeight: 25 },
+  scenarioTextAr: { fontSize: 16, textAlign: 'right', marginTop: 12, color: '#B8860B', fontWeight: '700' },
   optionsList: { gap: 12 },
   optionItem: { padding: 18, borderRadius: 16, borderWidth: 2, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  optionText: { fontSize: 15, fontWeight: '700' },
+  optionText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
   optionTextAr: { fontSize: 14, marginTop: 2, opacity: 0.8, textAlign: 'right' },
   footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
   footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },

@@ -11,12 +11,13 @@ import Animated, {
   Easing 
 } from 'react-native-reanimated';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
-import Svg, { Path, Ellipse, Rect, Circle } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SoundService } from '../services/sounds';
 import { useTheme } from '../hooks/useTheme';
 import { BlurView } from 'expo-blur';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useChallenges, Challenge } from '../hooks/useChallenges';
 import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
@@ -24,9 +25,76 @@ import { AVATARS } from '../constants/Avatars';
 
 const { width } = Dimensions.get('window');
 
-// COLORS retiré au profit du hook useTheme
-
 const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
+
+// Mapping des IDs de ville vers leurs icônes de monuments
+const CITY_LANDMARKS: Record<string, { uri: string }> = {
+  rabat:       { uri: `${ASSETS_URL}/landmarks/rabat_tower.png` },
+  marrakech:   { uri: `${ASSETS_URL}/landmarks/marrakech_tower.png` },
+  fes:         { uri: `${ASSETS_URL}/landmarks/fes_gate.png` },
+  chefchaouen: { uri: `${ASSETS_URL}/landmarks/chefchaouen_tower.png` },
+  laayoune:    { uri: `${ASSETS_URL}/landmarks/laayoune_minaret.png` },
+  dakhla:      { uri: `${ASSETS_URL}/landmarks/dakhla_lighthouse.png` },
+};
+
+// ─── Lantern extrait comme composant mémoïsé (hors du render de MapScreen) ──
+// OPTIMISATION: Défini en dehors du composant parent pour éviter les re-créations
+// sur chaque render de MapScreen qui causaient des remontages inutiles.
+interface LanternProps {
+  delay: number;
+  style: any;
+  color: string;
+}
+
+const Lantern = React.memo(({ delay, style, color }: LanternProps) => {
+  const opacity = useSharedValue(0.4);
+  const translateY = useSharedValue(0);
+
+  useEffect(() => {
+    opacity.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(0.8, { duration: 3000 }),
+        withTiming(0.4, { duration: 3000 })
+      ), -1, true
+    ));
+    translateY.value = withDelay(delay, withRepeat(
+      withSequence(
+        withTiming(-20, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })
+      ), -1, true
+    ));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
+  return (
+    <Animated.View 
+      style={[
+        lanternStyles.lantern, 
+        { backgroundColor: color, shadowColor: color },
+        style, 
+        animatedStyle
+      ]} 
+    />
+  );
+});
+
+const lanternStyles = StyleSheet.create({
+  lantern: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+});
+// ────────────────────────────────────────────────────────────────────────────
 
 export default function MapScreen() {
   const router = useRouter();
@@ -41,16 +109,23 @@ export default function MapScreen() {
   // Convert challenges map to sorted array
   const sortedCities = Object.values(challenges).sort((a, b) => a.sort_order - b.sort_order);
   
-  // Determine active city: 
-  // 1. First city with 'current' status
-  // 2. Or the first 'locked' city (if we just finished previous)
-  // 3. Or it defaults to the first sorted city
   const activeCityProgress = Object.values(progress).find(p => p.status === 'current');
   const ACTIVE_CITY_ID = activeCityProgress?.city_id ?? 
     (sortedCities.find(c => !progress[c.city_id] || progress[c.city_id].status === 'locked')?.city_id || sortedCities[0]?.city_id || 'rabat');
   
   const [selectedCityId, setSelectedCityId] = React.useState<string | null>(null);
   const [showBottomCard, setShowBottomCard] = React.useState(false);
+
+  // Auto-select the active city and show its card after data loads
+  useEffect(() => {
+    if (!loadingChallenges && sortedCities.length > 0 && !selectedCityId) {
+      const t = setTimeout(() => {
+        setSelectedCityId(ACTIVE_CITY_ID);
+        setShowBottomCard(true);
+      }, 600);
+      return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
+    }
+  }, [loadingChallenges, sortedCities.length]);
 
   const activeChallenge = selectedCityId ? challenges[selectedCityId] : null;
   const activeColor = activeChallenge?.city_color ?? colors.gold;
@@ -64,34 +139,6 @@ export default function MapScreen() {
     setShowBottomCard(true);
     SoundService.getInstance().playSound('click');
     SoundService.getInstance().triggerHaptic('medium');
-  };
-
-  // Simple animated lantern component moved inside MapScreen to access theme
-  const Lantern = ({ delay, style }: { delay: number, style: any }) => {
-    const opacity = useSharedValue(0.4);
-    const translateY = useSharedValue(0);
-
-    useEffect(() => {
-      opacity.value = withDelay(delay, withRepeat(
-        withSequence(
-          withTiming(0.8, { duration: 3000 }),
-          withTiming(0.4, { duration: 3000 })
-        ), -1, true
-      ));
-      translateY.value = withDelay(delay, withRepeat(
-        withSequence(
-          withTiming(-20, { duration: 3000, easing: Easing.inOut(Easing.ease) }),
-          withTiming(0, { duration: 3000, easing: Easing.inOut(Easing.ease) })
-        ), -1, true
-      ));
-    }, []);
-
-    const animatedStyle = useAnimatedStyle(() => ({
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
-    }));
-
-    return <Animated.View style={[dynamics.lantern, style, animatedStyle]} />;
   };
 
   const pulseScale = useSharedValue(1);
@@ -125,10 +172,11 @@ export default function MapScreen() {
     wave1Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
     wave1Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
     
-    setTimeout(() => {
+    const t = setTimeout(() => {
       wave2Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
       wave2Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
     }, 1000);
+    return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
   }, []);
 
   const wave1Style = useAnimatedStyle(() => ({
@@ -143,9 +191,10 @@ export default function MapScreen() {
   // Auto-scroll to bottom (Rabat) on load
   useEffect(() => {
     if (!loadingChallenges && !loadingProgress) {
-      setTimeout(() => {
+      const t = setTimeout(() => {
         scrollViewRef.current?.scrollToEnd({ animated: true });
       }, 500);
+      return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
     }
   }, [loadingChallenges, loadingProgress]);
 
@@ -191,18 +240,16 @@ export default function MapScreen() {
         </TouchableOpacity>
       </BlurView>
 
-
-
       <ScrollView 
         ref={scrollViewRef}
         contentContainerStyle={dynamics.scrollContent} 
         showsVerticalScrollIndicator={false}
       >
-        {/* Floating Lanterns animées with dynamic colors */}
-        <Lantern delay={0} style={{ top: 200, left: 60 }} />
-        <Lantern delay={1000} style={{ top: 400, right: 80 }} />
-        <Lantern delay={2000} style={{ top: 600, left: 100 }} />
-        <Lantern delay={500} style={{ top: 800, right: 60 }} />
+        {/* Floating Lanterns animées — composant mémoïsé, couleur passée en prop */}
+        <Lantern delay={0}    style={{ top: 200, left: 60 }}  color={colors.gold} />
+        <Lantern delay={1000} style={{ top: 400, right: 80 }} color={colors.gold} />
+        <Lantern delay={2000} style={{ top: 600, left: 100 }} color={colors.gold} />
+        <Lantern delay={500}  style={{ top: 800, right: 60 }} color={colors.gold} />
 
         {loadingChallenges || loadingProgress ? (
           <View style={{ marginTop: 200 }}>
@@ -215,7 +262,6 @@ export default function MapScreen() {
               <Svg width={width} height={sortedCities.length * 150 + 400}>
                 {sortedCities.map((city, index) => {
                   if (index === 0) return null;
-                  const prevCity = sortedCities[index - 1];
                   const startY = 1050 - (index - 1) * 160;
                   const endY = 1050 - index * 160;
                   const isRight = index % 2 === 1;
@@ -245,7 +291,6 @@ export default function MapScreen() {
               const cityProgress = progress[city.city_id];
               let status = cityProgress?.status ?? 'locked';
               
-              // Rabat should be unlocked by default
               if (city.city_id === 'rabat' && status === 'locked') {
                 status = 'current';
               }
@@ -260,7 +305,6 @@ export default function MapScreen() {
                   onPress={() => handleCityPress(city.city_id)} 
                   activeOpacity={0.8}
                 >
-                  {/* Wave effect for the first active/suggested city */}
                   {isFirstActive && (
                     <>
                       <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave1Style]} />
@@ -281,13 +325,29 @@ export default function MapScreen() {
                         <MaterialIcons name="landscape" size={32} color={colors.onSurfaceVariant} />
                       ) : status === 'done' ? (
                         <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                           <MaterialIcons name="check" size={40} color={city.city_color || colors.gold} />
+                           {CITY_LANDMARKS[city.city_id] ? (
+                             <Image 
+                               source={CITY_LANDMARKS[city.city_id]} 
+                               style={dynamics.nodeLandmarkIcon} 
+                               tintColor={city.city_color || colors.gold}
+                             />
+                           ) : (
+                             <MaterialIcons name="check" size={40} color={city.city_color || colors.gold} />
+                           )}
                            <View style={dynamics.checkBadge}>
                              <MaterialIcons name="verified" size={16} color={city.city_color || colors.gold} />
                            </View>
                         </View>
                       ) : (
-                        <MaterialIcons name="location-city" size={40} color={city.city_color || colors.gold} />
+                        CITY_LANDMARKS[city.city_id] ? (
+                          <Image 
+                            source={CITY_LANDMARKS[city.city_id]} 
+                            style={dynamics.nodeLandmarkIcon} 
+                            tintColor={city.city_color || colors.gold}
+                          />
+                        ) : (
+                          <MaterialIcons name="location-city" size={40} color={city.city_color || colors.gold} />
+                        )
                       )}
                     </View>
                     
@@ -319,7 +379,7 @@ export default function MapScreen() {
         )}
       </ScrollView>
 
-      {/* Bottom info card — Pop-up vibrant et réduit de 20% */}
+      {/* Bottom info card */}
       {showBottomCard && activeChallenge && (
         <Animated.View 
           entering={FadeInDown.springify()}
@@ -355,9 +415,8 @@ export default function MapScreen() {
             onPress={async () => {
               SoundService.getInstance().triggerHaptic('medium');
               
-              // Check if pedago has been seen
+              // AsyncStorage est importé en tête de fichier (plus d'import dynamique)
               try {
-                const { default: AsyncStorage } = await import('@react-native-async-storage/async-storage');
                 const hasSeen = await AsyncStorage.getItem(`pedago_seen_${selectedCityId}`);
                 if (!hasSeen) {
                   router.push({ pathname: '/pedago' as any, params: { cityId: selectedCityId } });
@@ -375,8 +434,6 @@ export default function MapScreen() {
           </TouchableOpacity>
         </Animated.View>
       )}
-
-
     </View>
   );
 }
@@ -440,18 +497,6 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     paddingTop: 100,
     paddingBottom: 240,
   },
-  lantern: {
-    position: 'absolute',
-    width: 6,
-    height: 6,
-    backgroundColor: colors.gold,
-    borderRadius: 3,
-    shadowColor: colors.gold,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 5,
-  },
   nodeContainer: {
     alignItems: 'center',
     zIndex: 10,
@@ -488,6 +533,11 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 60,
     backgroundColor: isDark ? 'rgba(212,168,67,0.1)' : 'rgba(212,168,67,0.15)',
     top: -15,
+  },
+  nodeLandmarkIcon: {
+    width: 54,
+    height: 54,
+    resizeMode: 'contain',
   },
   activePill: {
     position: 'absolute',
@@ -554,20 +604,11 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 14,
   },
-  nodeTitleCompleted: {
-    fontWeight: 'bold',
-    fontSize: 14,
-    color: colors.onSurface,
-  },
-  nodeSubtitleCompleted: {
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
   bottomCard: {
     position: 'absolute',
     bottom: 120,
-    left: width * 0.1, // Adjusted for 20% total reduction (center 80%)
-    right: width * 0.1,
+    left: width * 0.05,
+    right: width * 0.05,
     borderRadius: 32,
     padding: 20,
     borderWidth: 1.5,
@@ -601,12 +642,10 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: colors.gold,
     alignSelf: 'flex-start',
     marginBottom: 8,
   },
   cardTagText: {
-    color: colors.gold,
     fontSize: 10,
     fontWeight: 'bold',
   },
@@ -625,7 +664,6 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: colors.gold,
     minWidth: 64,
   },
   pointsLabel: {
@@ -645,7 +683,6 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     opacity: 0.8,
   },
   primaryButton: {
-    backgroundColor: colors.gold,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -657,43 +694,5 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     fontSize: 16,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'flex-end',
-    paddingBottom: 24,
-    zIndex: 50,
-    overflow: 'hidden',
-  },
-  navItem: {
-    alignItems: 'center',
-    padding: 8,
-    marginBottom: 8,
-  },
-  navItemActive: {
-    backgroundColor: colors.gold,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-    borderWidth: 4,
-    borderColor: colors.surface,
-  },
-  navText: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginTop: 4,
-    color: colors.onSurfaceVariant,
   },
 });

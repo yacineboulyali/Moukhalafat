@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, Image } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Image, Platform } from 'react-native';
 import { router } from 'expo-router';
 import Animated, {
   useSharedValue,
@@ -18,11 +18,13 @@ import { preloadAllChallenges } from '../hooks/useChallenges';
 import { preloadAllMissions } from '../hooks/useMissions';
 import { preloadAllQuestions } from '../hooks/useQuestions';
 import { useAuthStore } from '../stores/authStore';
+import { SoundService } from '../services/sounds';
 
 const { width, height } = Dimensions.get('window');
-
-// On utilise explicitement le thème clair
 const COLORS = THEME.light;
+
+// Nombre réduit de confettis sur Android pour les performances
+const IS_ANDROID = Platform.OS === 'android';
 
 export default function SplashScreen() {
   const logoScale = useSharedValue(0.5);
@@ -38,52 +40,82 @@ export default function SplashScreen() {
     // Initial animations
     logoScale.value = withSpring(1, { damping: 12, stiffness: 90 });
     logoOpacity.value = withTiming(1, { duration: 800 });
-
     textOpacity.value = withDelay(400, withTiming(1, { duration: 800 }));
     textTranslateY.value = withDelay(400, withSpring(0, { damping: 12, stiffness: 90 }));
 
-    // continuous rotation for the outer ring
+    // Continuous rotation for the outer ring
     ringRotation.value = withRepeat(
       withTiming(360, { duration: 15000, easing: Easing.linear }),
       -1,
       false
     );
+  }, []);
 
-    // Initialisation
+  // ─── Pré-chargement des sons + données ──────────────────────────────────
+  useEffect(() => {
+    let cancelled = false;
+
     const initApp = async () => {
       try {
+        // Pré-charger les sons en parallèle du reste
+        SoundService.getInstance().preloadAll();
+
         // Step 1: Challenges
         await preloadAllChallenges();
+        if (cancelled) return;
         progressWidth.value = withTiming(33, { duration: 500 });
         setLoadPercentage(33);
 
         // Step 2: Missions 
         await preloadAllMissions();
+        if (cancelled) return;
         progressWidth.value = withTiming(66, { duration: 500 });
         setLoadPercentage(66);
 
-        // Step 3: Questions
+        // Step 3: Questions (no-op actuellement, futur use)
         await preloadAllQuestions();
+        if (cancelled) return;
         progressWidth.value = withTiming(100, { duration: 500 });
         setLoadPercentage(100);
 
-        // Attendre l'auth si nécessaire
-        while (authLoading) {
-           await new Promise(r => setTimeout(r, 100));
-        }
+        // Timeout de sécurité — on navigue dans tous les cas après 5 secondes
+        // OPTIMISATION: remplace le busy-wait `while (authLoading)` qui bloquait le thread
+        const NAVIGATION_TIMEOUT = 5000;
+        const navTimer = setTimeout(() => {
+          if (!cancelled) {
+            router.replace('/map');
+          }
+        }, NAVIGATION_TIMEOUT);
 
-        // Navigation finale directe vers la carte
-        setTimeout(() => {
-          router.replace('/map');
-        }, 800);
+        // Navigation immédiate si l'auth est déjà résolue
+        if (!authLoading) {
+          clearTimeout(navTimer);
+          setTimeout(() => {
+            if (!cancelled) router.replace('/map');
+          }, 800);
+        }
+        // Sinon, le useEffect sur [authLoading] ci-dessous prend le relais
+
       } catch (err) {
         console.error("Erreur d'initialisation:", err);
-        router.replace('/accueil');
+        if (!cancelled) router.replace('/accueil');
       }
     };
-    
+
     initApp();
-  }, [authLoading, user]);
+
+    return () => { cancelled = true; };
+  }, []);
+
+  // ─── Réagit dès que l'état auth se résout ────────────────────────────────
+  useEffect(() => {
+    if (!authLoading && loadPercentage === 100) {
+      const t = setTimeout(() => {
+        router.replace('/map');
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [authLoading, loadPercentage]);
 
   const logoAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: logoScale.value }],

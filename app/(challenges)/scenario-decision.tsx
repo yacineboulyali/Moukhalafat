@@ -30,7 +30,7 @@ const SCENARIO = {
 
 export default function ScenarioDecisionScreen() {
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
@@ -139,7 +139,7 @@ export default function ScenarioDecisionScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
 
       <View style={styles.topSection}>

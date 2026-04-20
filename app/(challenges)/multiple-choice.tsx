@@ -28,7 +28,7 @@ export default function V1MultipleChoiceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
@@ -57,7 +57,7 @@ export default function V1MultipleChoiceScreen() {
 
   const handleValidation = () => {
     if (!qData || !selectedId) return;
-    const correct = selectedId === qData.correct_answer;
+    const correct = String(selectedId) === String(qData.correct_answer);
     setIsCorrect(correct);
     setShowFeedback(true);
     playSound(correct ? 'correct' : 'wrong');
@@ -96,11 +96,17 @@ export default function V1MultipleChoiceScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {!!qData.presentation_fr && (
+          <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
+            <MaterialIcons name="person" size={18} color={colors.primary} style={{ marginBottom: 6 }} />
+            <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+          </Animated.View>
+        )}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>CHOIX MULTIPLE</Text>
           <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
@@ -108,31 +114,36 @@ export default function V1MultipleChoiceScreen() {
         </Animated.View>
 
         <View style={styles.optionsContainer}>
-          {options.map((option: any, index: number) => (
-            <Animated.View key={option.id} entering={FadeInUp.delay(400 + index * 100)}>
-              <TouchableOpacity
-                style={[
-                  styles.optionCard,
-                  { backgroundColor: colors.surface, borderColor: selectedId === option.id ? colors.primary : 'transparent' },
-                  isCorrect !== null && option.id === qData.correct_answer && { borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.05)' },
-                  isCorrect === false && selectedId === option.id && option.id !== qData.correct_answer && { borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,0.05)' }
-                ]}
-                onPress={() => { setSelectedId(option.id); playSound('click'); }}
-                disabled={isCorrect !== null}
-                hitSlop={{ top: 10, bottom: 10, left: 20, right: 20 }}
-              >
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.optionText, { color: colors.onSurface }]}>{option.label_fr}</Text>
-                  {!!option.label_ar && <Text style={styles.optionTextAr}>{option.label_ar}</Text>}
-                </View>
-                <MaterialIcons 
-                  name={selectedId === option.id ? "radio-button-checked" : "radio-button-unchecked"} 
-                  size={24} 
-                  color={selectedId === option.id ? colors.primary : colors.border} 
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+          {options.map((option: any, index: number) => {
+            const optKey = option.value ?? option.id ?? String(index);
+            const optLabel = option.label ?? option.label_fr ?? option.text ?? '';
+            const isSelected = selectedId === optKey;
+            const isCorrectOpt = optKey === qData.correct_answer;
+            return (
+              <Animated.View key={optKey} entering={FadeInUp.delay(400 + index * 100)}>
+                <TouchableOpacity
+                  style={[
+                    styles.optionCard,
+                    { backgroundColor: colors.surface, borderColor: isSelected ? colors.primary : 'transparent' },
+                    isCorrect !== null && isCorrectOpt && { borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.08)' },
+                    isCorrect === false && isSelected && !isCorrectOpt && { borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,0.08)' }
+                  ]}
+                  onPress={() => { setSelectedId(optKey); playSound('click'); }}
+                  disabled={isCorrect !== null}
+                  hitSlop={{ top: 10, bottom: 10, left: 20, right: 20 }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.optionText, { color: colors.onSurface }]}>{optLabel}</Text>
+                  </View>
+                  <MaterialIcons 
+                    name={isSelected ? "radio-button-checked" : "radio-button-unchecked"} 
+                    size={24} 
+                    color={isSelected ? colors.primary : colors.border} 
+                  />
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -191,15 +202,17 @@ export default function V1MultipleChoiceScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 24 },
-  header: { marginBottom: 30, alignItems: 'center' },
-  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
-  questionText: { fontSize: 22, fontWeight: '800', textAlign: 'center' },
-  arabicHeader: { fontSize: 20, textAlign: 'center', marginTop: 8, color: '#B8860B', fontWeight: '700' },
-  optionsContainer: { gap: 16 },
-  optionCard: { padding: 20, borderRadius: 20, borderWidth: 2, flexDirection: 'row', alignItems: 'center', elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
-  optionText: { fontSize: 16, fontWeight: '700' },
-  optionTextAr: { fontSize: 15, marginTop: 4, opacity: 0.8 },
+  scroll: { padding: 24, paddingBottom: 40 },
+  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 16, padding: 16, marginBottom: 20, borderLeftWidth: 4, borderLeftColor: '#cca72f', alignItems: 'flex-start' },
+  presentationText: { fontSize: 14, lineHeight: 20, fontStyle: 'italic' },
+  header: { marginBottom: 24, alignItems: 'center' },
+  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 10, opacity: 0.6 },
+  questionText: { fontSize: 20, fontWeight: '800', textAlign: 'center', lineHeight: 28 },
+  arabicHeader: { fontSize: 18, textAlign: 'center', marginTop: 8, color: '#B8860B', fontWeight: '700' },
+  optionsContainer: { gap: 14 },
+  optionCard: { padding: 18, borderRadius: 18, borderWidth: 2.5, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
+  optionText: { fontSize: 15, fontWeight: '600', lineHeight: 22, flex: 1 },
+  optionTextAr: { fontSize: 14, marginTop: 4, opacity: 0.8 },
   footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
   footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   sideActions: { flexDirection: 'row', gap: 6 },

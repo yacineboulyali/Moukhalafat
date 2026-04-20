@@ -1,118 +1,128 @@
+/**
+ * scenario-dialogue.tsx
+ * Format données : options = [{label, score, value}]
+ * correct_answer = value de la meilleure réponse (ex: "C")
+ * presentation_fr = contexte de la situation (texte du mentor)
+ */
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Dimensions, Image, ActivityIndicator } from 'react-native';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp, FadeIn } from 'react-native-reanimated';
+import {
+  View, Text, StyleSheet, TouchableOpacity,
+  ScrollView, Dimensions, ActivityIndicator
+} from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import Animated, { FadeInDown, FadeInUp, FadeIn, SlideInRight } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
-import { SoundService } from '../../services/sounds';
+import { playSound } from '../../utils/SoundManager';
 import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
 import { ImmediateFeedback } from '../../components/ImmediateFeedback';
 import { useMissionStore } from '../../stores/missionStore';
 import { ChallengeHeader } from '../../components/ChallengeHeader';
+import ChallengeProgressBar from '../../components/ChallengeProgressBar';
 import { useQuestions } from '../../hooks/useQuestions';
+import { useMissions } from '../../hooks/useMissions';
+import { BadgeRewardModal } from '../../components/BadgeRewardModal';
+import { ConfettiEffect } from '../../components/ConfettiEffect';
+import { useBadges } from '../../hooks/useBadges';
 
 const { width } = Dimensions.get('window');
 
-const SCENARIO_DATA = {
-  narrator: "Capitaine Amine",
-  dialogue: "Félicitations aventurier ! Tu as surmonté les épreuves de l'espace. Nous approchons maintenant de notre destination finale. Quelle est ta première action à l'atterrissage ?",
-  dialogueAr: "تهانينا أيها المغامر! لقد تغلبت على اختبارات الفضاء. نحن الآن نقترب من وجهتنا النهائية. ما هو إجراءك الأول عند الهبوط؟",
-  choices: [
-    { id: '1', text: "Sécuriser le périmètre du vaisseau", textAr: "تأمين محيط السفينة" },
-    { id: '2', text: "Déployer les panneaux solaires", textAr: "نشر الألواح الشمسية" },
-    { id: '3', text: "Établir un signal de communication", textAr: "إرسال إشارة اتصال" }
-  ]
-};
+// Score color
+function scoreColor(score: number) {
+  if (score >= 150) return '#22c55e';
+  if (score >= 80)  return '#f59e0b';
+  return '#ef4444';
+}
 
 export default function ScenarioDialogueScreen() {
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  
-  const missionId = params.missionId as string;
-  const cityId = params.cityId as string;
-  const questionIndex = params.questionIndex || '0';
 
+  const missionId   = params.missionId as string;
+  const cityId      = params.cityId as string;
+  const questionIndex = params.questionIndex || '0';
+  const currentIdx  = parseInt(questionIndex as string) || 0;
+
+  const { loading: loadingMissions } = useMissions(cityId);
   const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId);
   const questions = dbQuestions || [];
-  
-  const qData = questions[parseInt(questionIndex as string)];
-  const [selectedChoice, setSelectedChoice] = useState<string | null>(null);
+  const qData = questions[currentIdx];
+
+  const { awardBadge, showReward, lastAwardedBadge, dismissReward } = useBadges();
+  const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [revealed, setRevealed] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
-  const [runtimeError, setRuntimeError] = useState<any>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  React.useEffect(() => {
-    try {
-      if (questions && questions.length > 0 && missionId) {
-        initQueue(missionId, questions);
-      }
-    } catch (err) {
-      console.error("Queue initialization error:", err);
-      setRuntimeError(err);
-    }
-  }, [questions, missionId, initQueue]);
+  useEffect(() => {
+    if (questions.length > 0 && missionId) initQueue(missionId, questions);
+  }, [questions, missionId]);
 
-  // Transform DB options to dialogue data
-  const dialogueLines = Array.isArray(qData?.options) ? qData.options : [];
-  const firstLine = dialogueLines[0] || { speaker: 'Personnage', text: qData?.question_fr || '...' };
+  // Reset on question change
+  useEffect(() => {
+    setSelectedValue(null);
+    setRevealed(false);
+  }, [currentIdx]);
 
-  const handleSelect = (id: string) => {
-    setSelectedChoice(id);
-    SoundService.getInstance().playSound('click');
-    SoundService.getInstance().triggerHaptic('light');
+  const options: any[] = Array.isArray(qData?.options) ? qData.options : [];
+  const correctValue = qData?.correct_answer;
+  const selectedOption = options.find(o => (o.value ?? o.id) === selectedValue);
+  const isCorrect = selectedValue !== null && (selectedValue === correctValue || (selectedOption?.score ?? 0) >= 150);
+
+  const handleSelect = (val: string) => {
+    if (revealed) return;
+    setSelectedValue(val);
+    playSound('click');
   };
 
-  const onConfirmResult = () => {
-    try {
-      if (!selectedChoice) return;
-      setShowFeedback(true);
-      SoundService.getInstance().triggerHaptic('medium');
-      
-      markComplete(missionId, parseInt(questionIndex as string));
-      
-      setTimeout(() => {
-        setShowFeedback(false);
-        const queue = getQueue(missionId);
+  const handleValidate = () => {
+    if (!selectedValue || revealed) return;
+    setRevealed(true);
+    setShowFeedback(true);
+    playSound(isCorrect ? 'correct' : 'wrong');
 
-        if (queue.length > 0) {
-          navigateToNext({ missionId, cityId });
-        } else {
-          navigateToNext({ missionId, cityId, isMissionComplete: true });
-        }
-      }, 2000);
-    } catch (err) {
-      console.error("Confirmation error:", err);
-      setRuntimeError(err);
+    if (isCorrect && currentIdx + 1 === questions.length) {
+      setShowConfetti(true);
+      awardBadge('diplomate_du_dialogue');
     }
+
+    markComplete(missionId, currentIdx);
+
+    setTimeout(() => {
+      setShowFeedback(false);
+      navigateToNext({
+        missionId,
+        cityId,
+        isMissionComplete: currentIdx + 1 === questions.length,
+      });
+    }, 2500);
   };
 
-  if (loadingQuestions) {
+  if (loadingMissions || loadingQuestions) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement du dialogue...</Text>
+        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement...</Text>
       </View>
     );
   }
 
-  if (runtimeError || !qData) {
+  if (!qData) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 40 }]}>
         <MaterialIcons name="error-outline" size={64} color="#EF4444" />
-        <Text style={{ fontSize: 20, fontWeight: '900', color: colors.primary, marginTop: 24, textAlign: 'center' }}>
-          Oups ! Une erreur est survenue
+        <Text style={{ fontSize: 18, fontWeight: '800', color: colors.primary, marginTop: 20, textAlign: 'center' }}>
+          Exercice introuvable
         </Text>
-        <Text style={{ fontSize: 14, color: colors.onSurfaceVariant, marginTop: 12, textAlign: 'center', lineHeight: 20 }}>
-          Nous ne pouvons pas charger ce défi pour le moment.
-        </Text>
-        <TouchableOpacity 
-          style={{ marginTop: 32, backgroundColor: colors.primary, paddingHorizontal: 32, paddingVertical: 16, borderRadius: 16 }}
+        <TouchableOpacity
+          style={{ marginTop: 24, backgroundColor: colors.primary, paddingHorizontal: 32, paddingVertical: 14, borderRadius: 16 }}
           onPress={() => skipQuestion({ missionId, cityId })}
         >
-          <Text style={{ color: '#fff', fontWeight: '800' }}>Passer au défi suivant</Text>
+          <Text style={{ color: '#fff', fontWeight: '800' }}>Passer au suivant</Text>
         </TouchableOpacity>
       </View>
     );
@@ -120,130 +130,169 @@ export default function ScenarioDialogueScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ChallengeHeader 
-        cityId={params.cityId as string} 
-        onBack={() => router.back()}
-      />
-      
+      <ChallengeHeader cityId={cityId} onClose={() => goToIntro(cityId)} />
+      <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
+
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}>
-        <Animated.View entering={FadeIn.duration(800)} style={styles.avatarContainer}>
-          <View style={[styles.avatarCircle, { borderColor: colors.gold }]}>
-             <MaterialIcons name="account-circle" size={100} color={colors.primary} />
+
+        {/* Mentor Context */}
+        {!!qData.presentation_fr && (
+          <Animated.View entering={FadeInDown.delay(100)} style={[styles.contextBubble, { backgroundColor: colors.surface, borderColor: colors.primary + '20' }]}>
+            <View style={[styles.contextHeader, { backgroundColor: colors.primary + '15' }]}>
+              <MaterialIcons name="movie" size={16} color={colors.primary} />
+              <Text style={[styles.contextLabel, { color: colors.primary }]}>SITUATION</Text>
+            </View>
+            <Text style={[styles.contextText, { color: colors.onSurface }]}>{qData.presentation_fr}</Text>
+          </Animated.View>
+        )}
+
+        {/* Question Bubble */}
+        <Animated.View entering={FadeInDown.delay(200)} style={[styles.questionCard, { backgroundColor: colors.surface, borderColor: '#cca72f' + '40' }]}>
+          <View style={styles.qIcon}>
+            <MaterialIcons name="chat" size={22} color={colors.primary} />
           </View>
-          <View style={[styles.nameTag, { backgroundColor: colors.gold }]}>
-            <Text style={styles.nameText}>{firstLine.speaker}</Text>
-          </View>
+          <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
+          {!!qData.question_ar && <Text style={styles.questionAr}>{qData.question_ar}</Text>}
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(300)} style={[styles.bubble, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-          <Text style={[styles.bubbleText, { color: colors.primary }]}>{firstLine.text}</Text>
-          {!!firstLine.text_ar && <Text style={[styles.bubbleTextAr, { color: colors.primary + '80' }]}>{firstLine.text_ar}</Text>}
-          <View style={[styles.bubbleTail, { borderTopColor: colors.surface }]} />
-        </Animated.View>
+        {/* Options */}
+        <View style={styles.optionsList}>
+          {options.map((opt: any, idx: number) => {
+            const val = opt.value ?? opt.id ?? String(idx);
+            const label = opt.label ?? opt.label_fr ?? opt.text ?? '';
+            const score = opt.score ?? 0;
+            const isSelected = selectedValue === val;
+            const isCorrectOpt = String(val) === String(correctValue);
 
-        <View style={styles.choicesContainer}>
-          {dialogueLines.slice(1).map((choice: any, idx: number) => (
-            <Animated.View key={choice.id || idx} entering={FadeInUp.delay(600 + idx * 100)}>
-              <TouchableOpacity
-                onPress={() => handleSelect(choice.id)}
-                style={[
-                  styles.choiceCard,
-                  { backgroundColor: colors.surface, borderColor: colors.border },
-                  selectedChoice === choice.id && { borderColor: colors.primary, borderWidth: 2, backgroundColor: colors.primary + '05' }
-                ]}
-              >
-                <View style={styles.choiceInfo}>
-                  <Text style={[styles.choiceText, { color: colors.primary }]}>{choice.text}</Text>
-                  {!!choice.text_ar && <Text style={[styles.choiceTextAr, { color: colors.onSurfaceVariant }]}>{choice.text_ar}</Text>}
-                </View>
-                <MaterialIcons 
-                  name={selectedChoice === choice.id ? "radio-button-checked" : "radio-button-unchecked"} 
-                  size={24} 
-                  color={selectedChoice === choice.id ? colors.primary : colors.border} 
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          ))}
+            let cardBg = colors.surface;
+            let cardBorder = 'rgba(0,0,0,0.07)';
+            if (isSelected && !revealed) { cardBg = colors.primary + '10'; cardBorder = colors.primary; }
+            if (revealed && isSelected && isCorrectOpt) { cardBg = 'rgba(34,197,94,0.10)'; cardBorder = '#22c55e'; }
+            if (revealed && isSelected && !isCorrectOpt) { cardBg = 'rgba(239,68,68,0.08)'; cardBorder = '#ef4444'; }
+            if (revealed && !isSelected && isCorrectOpt) { cardBg = 'rgba(34,197,94,0.06)'; cardBorder = '#22c55e'; }
+
+            return (
+              <Animated.View key={val} entering={SlideInRight.delay(300 + idx * 80)}>
+                <TouchableOpacity
+                  style={[styles.optionCard, { backgroundColor: cardBg, borderColor: cardBorder }]}
+                  onPress={() => handleSelect(val)}
+                  disabled={revealed}
+                  activeOpacity={0.75}
+                >
+                  {/* Letter badge */}
+                  <View style={[styles.letterBadge, { backgroundColor: isSelected ? colors.primary : 'rgba(0,0,0,0.06)' }]}>
+                    <Text style={[styles.letterText, { color: isSelected ? '#fff' : colors.onSurfaceVariant }]}>{val}</Text>
+                  </View>
+
+                  <Text style={[styles.optionLabel, { color: colors.onSurface, flex: 1 }]}>{label}</Text>
+
+                  {/* Score pill (shown after reveal) */}
+                  {revealed && (
+                    <View style={[styles.scorePill, { backgroundColor: scoreColor(score) }]}>
+                      <Text style={styles.scoreText}>{score > 0 ? `+${score}` : score}</Text>
+                    </View>
+                  )}
+
+                  {/* Selection indicator */}
+                  {!revealed && (
+                    <MaterialIcons
+                      name={isSelected ? 'radio-button-checked' : 'radio-button-unchecked'}
+                      size={22}
+                      color={isSelected ? colors.primary : colors.border}
+                    />
+                  )}
+
+                  {/* Correct/wrong icon post-reveal */}
+                  {revealed && isCorrectOpt && (
+                    <MaterialIcons name="check-circle" size={22} color="#22c55e" />
+                  )}
+                  {revealed && isSelected && !isCorrectOpt && (
+                    <MaterialIcons name="cancel" size={22} color="#ef4444" />
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          })}
         </View>
+
+        {/* Explanation post-reveal */}
+        {revealed && !!qData.explanation_fr && (
+          <Animated.View entering={FadeInUp.delay(200)} style={styles.explanationBox}>
+            <MaterialIcons name="lightbulb" size={20} color="#f59e0b" />
+            <Text style={styles.explanationText}>{qData.explanation_fr}</Text>
+          </Animated.View>
+        )}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10, backgroundColor: colors.surface }]}>
+      {/* Footer */}
+      <View style={[styles.footer, { paddingBottom: (insets.bottom || 16) + 8, backgroundColor: colors.surface }]}>
         <View style={styles.footerRow}>
           <View style={styles.sideActions}>
             <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelectedChoice(null); SoundService.getInstance().playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelectedValue(null); setRevealed(false); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
               <MaterialIcons name="refresh" size={24} color={colors.primary} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity
-            style={[styles.skipButton, { borderColor: colors.primary + '40' }]}
+            style={[styles.skipBtn, { borderColor: colors.primary + '40' }]}
             onPress={() => skipQuestion({ missionId, cityId })}
           >
-            <Text style={[styles.skipButtonText, { color: colors.primary }]}>IGNORER</Text>
+            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.validateButton, 
-              { backgroundColor: colors.primary }, 
-              !selectedChoice && { backgroundColor: '#ccc', opacity: 0.6 }
-            ]}
-            onPress={onConfirmResult}
-            disabled={!selectedChoice || showFeedback}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            style={[styles.validateBtn, { backgroundColor: colors.primary }, (!selectedValue || revealed) && { opacity: 0.45 }]}
+            onPress={handleValidate}
+            disabled={!selectedValue || revealed}
           >
-            <Text style={styles.validateButtonText}>VALIDER</Text>
+            <MaterialIcons name="done-all" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
 
-      <ImmediateFeedback 
-        isVisible={showFeedback} 
-        isCorrect={true} 
-      />
+      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect} />
+      {showConfetti && <ConfettiEffect />}
+      <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  content: { padding: 24 },
-  avatarContainer: { alignItems: 'center', marginBottom: 40, marginTop: 20 },
-  avatarCircle: { width: 140, height: 140, borderRadius: 70, borderWidth: 4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  nameTag: { paddingHorizontal: 20, paddingVertical: 6, borderRadius: 15, marginTop: -20, elevation: 4 },
-  nameText: { color: '#fff', fontWeight: '900', fontSize: 12, letterSpacing: 1 },
-  bubble: { padding: 24, borderRadius: 32, borderWidth: 1, marginBottom: 40, position: 'relative', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
-  bubbleText: { fontSize: 16, fontWeight: '700', lineHeight: 24, textAlign: 'center', marginBottom: 12 },
-  bubbleTextAr: { fontSize: 18, textAlign: 'center', lineHeight: 28 },
-  bubbleTail: { position: 'absolute', bottom: -15, alignSelf: 'center', width: 0, height: 0, borderLeftWidth: 15, borderLeftColor: 'transparent', borderRightWidth: 15, borderRightColor: 'transparent', borderTopWidth: 15 },
-  choicesContainer: { gap: 12 },
-  choiceCard: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 24, borderWidth: 1.5, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 5 },
-  choiceInfo: { flex: 1 },
-  choiceText: { fontSize: 14, fontWeight: '800', marginBottom: 4 },
-  choiceTextAr: { fontSize: 13, fontWeight: '600' },
-  footer: {
-    padding: 24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
+  content: { padding: 20 },
+  // Context bubble
+  contextBubble: { borderRadius: 18, borderWidth: 1, marginBottom: 18, overflow: 'hidden', elevation: 2 },
+  contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10 },
+  contextLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
+  contextText: { fontSize: 14, lineHeight: 21, padding: 16, paddingTop: 4, fontStyle: 'italic' },
+  // Question card
+  questionCard: { borderRadius: 20, borderWidth: 1.5, borderLeftWidth: 5, borderLeftColor: '#cca72f', padding: 20, marginBottom: 22, elevation: 2 },
+  qIcon: { marginBottom: 10 },
+  questionText: { fontSize: 17, fontWeight: '800', lineHeight: 25 },
+  questionAr: { fontSize: 16, textAlign: 'right', marginTop: 10, color: '#B8860B', fontWeight: '700' },
+  // Options
+  optionsList: { gap: 12 },
+  optionCard: {
+    flexDirection: 'row', alignItems: 'center', padding: 16,
+    borderRadius: 18, borderWidth: 2, gap: 14,
+    elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4,
   },
+  letterBadge: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  letterText: { fontSize: 14, fontWeight: '900' },
+  optionLabel: { fontSize: 14, fontWeight: '600', lineHeight: 20 },
+  scorePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  scoreText: { color: '#fff', fontSize: 13, fontWeight: '900' },
+  // Explanation
+  explanationBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginTop: 20, backgroundColor: '#fffbeb', padding: 16, borderRadius: 14, borderWidth: 1, borderColor: '#fde68a' },
+  explanationText: { flex: 1, color: '#92400e', fontSize: 13, lineHeight: 19, fontWeight: '600' },
+  // Footer
+  footer: { padding: 18, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.06)' },
   footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  sideActions: { flexDirection: 'row', gap: 6 },
-  iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.03)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  validateButton: { flex: 1.8, height: 60, borderRadius: 30, justifyContent: 'center', alignItems: 'center' },
-  skipButton: { flex: 1, height: 60, borderRadius: 30, borderWidth: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)' },
-  skipButtonText: { fontSize: 14, fontWeight: '800', letterSpacing: 1 },
-  validateButtonText: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 1 },
+  sideActions: { flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.03)', justifyContent: 'center', alignItems: 'center' },
+  skipBtn: { paddingHorizontal: 22, height: 56, borderRadius: 28, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  validateBtn: { paddingHorizontal: 32, height: 56, borderRadius: 28, justifyContent: 'center', alignItems: 'center', elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6 },
 });

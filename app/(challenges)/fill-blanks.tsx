@@ -25,7 +25,7 @@ export default function V1FillBlanksScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
@@ -123,7 +123,7 @@ export default function V1FillBlanksScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 

@@ -27,7 +27,7 @@ export default function V1RankingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
@@ -62,8 +62,12 @@ export default function V1RankingScreen() {
 
   const handleValidation = () => {
     if (!qData) return;
-    const correctOrder = qData.options.map((o: any) => o.id).join(',');
-    const currentOrder = data.map(o => o.id).join(',');
+    // Correct order is by increasing value ("1", "2", "3"...)
+    const correctOrder = [...(qData.options || [])]
+      .sort((a: any, b: any) => Number(a.value) - Number(b.value))
+      .map((o: any) => o.value ?? o.id)
+      .join(',');
+    const currentOrder = data.map((o: any) => o.value ?? o.id).join(',');
     const correct = currentOrder === correctOrder;
 
     setIsCorrect(correct);
@@ -89,6 +93,7 @@ export default function V1RankingScreen() {
   };
 
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<any>) => {
+    const itemLabel = item.label ?? item.label_fr ?? item.text ?? '';
     return (
       <ScaleDecorator>
         <TouchableOpacity
@@ -103,8 +108,7 @@ export default function V1RankingScreen() {
         >
           <MaterialIcons name="drag-handle" size={24} color={colors.onSurfaceVariant} style={{ marginRight: 16 }} />
           <View style={{ flex: 1 }}>
-            <Text style={[styles.itemText, { color: colors.onSurface }]}>{item.label_fr}</Text>
-            {!!item.label_ar && <Text style={styles.itemTextAr}>{item.label_ar}</Text>}
+            <Text style={[styles.itemText, { color: colors.onSurface }]}>{itemLabel}</Text>
           </View>
         </TouchableOpacity>
       </ScaleDecorator>
@@ -119,11 +123,16 @@ export default function V1RankingScreen() {
       <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
         <ChallengeHeader 
           cityId={cityId} 
-          onBack={() => router.back()}
+          onClose={() => goToIntro(cityId)}
         />
         <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
         <View style={styles.header}>
+          {!!qData.presentation_fr && (
+            <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
+              <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+            </Animated.View>
+          )}
           <Animated.View entering={FadeInDown.delay(200)} style={{ alignItems: 'center' }}>
             <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>CLASSEMENT / ORDRE</Text>
             <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
@@ -135,7 +144,7 @@ export default function V1RankingScreen() {
           data={data}
           onDragBegin={() => playSound('click')}
           onDragEnd={({ data }) => { setData(data); playSound('click'); }}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.value ?? item.id ?? Math.random())}
           renderItem={renderItem}
           containerStyle={styles.listContainer}
         />
@@ -191,13 +200,15 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: { padding: 24, paddingBottom: 10 },
-  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 8 },
-  questionText: { fontSize: 20, fontWeight: '800', textAlign: 'center' },
-  arabicHeader: { fontSize: 18, textAlign: 'center', marginTop: 4, color: '#B8860B', fontWeight: '700' },
+  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 14, padding: 14, marginBottom: 16, borderLeftWidth: 4, borderLeftColor: '#cca72f' },
+  presentationText: { fontSize: 13, lineHeight: 19, fontStyle: 'italic' },
+  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 8, opacity: 0.6 },
+  questionText: { fontSize: 18, fontWeight: '800', textAlign: 'center', lineHeight: 26 },
+  arabicHeader: { fontSize: 17, textAlign: 'center', marginTop: 6, color: '#B8860B', fontWeight: '700' },
   listContainer: { flex: 1, paddingHorizontal: 24 },
-  rowItem: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 20, borderWidth: 2, marginBottom: 12, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
-  itemText: { fontSize: 16, fontWeight: '700' },
-  itemTextAr: { fontSize: 15, marginTop: 2, opacity: 0.7 },
+  rowItem: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 18, borderWidth: 2, marginBottom: 12, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
+  itemText: { fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  itemTextAr: { fontSize: 14, marginTop: 2, opacity: 0.7 },
   footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
   footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
   sideActions: { flexDirection: 'row', gap: 6 },

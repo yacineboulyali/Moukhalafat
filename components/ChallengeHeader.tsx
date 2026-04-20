@@ -18,6 +18,9 @@ interface ChallengeHeaderProps {
   onReset?: () => void;
   onPrevious?: () => void;
   onRestart?: () => void;
+  /** Called when the X (close) button is pressed. Defaults to router.back(). */
+  onClose?: () => void;
+  /** @deprecated use onClose instead */
   onBack?: () => void;
 }
 
@@ -32,6 +35,7 @@ export const ChallengeHeader = ({
   onReset,
   onPrevious,
   onRestart,
+  onClose,
   onBack
 }: ChallengeHeaderProps) => {
   const router = useRouter();
@@ -43,18 +47,24 @@ export const ChallengeHeader = ({
   const calculatedIndex = missions?.findIndex(m => m.id === missionId);
   const finalMissionIndex = propMissionIndex !== undefined ? propMissionIndex : Math.max(0, calculatedIndex);
 
+  // Effective close handler: onClose > onBack > router.back()
+  const handleClose = onClose ?? onBack ?? (() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/map');
+  });
+
   return (
     <View style={styles.container}>
       <View style={styles.topHeader}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
-          {onBack && (
-            <TouchableOpacity 
-              style={styles.headerBtn}
-              onPress={onBack}
-            >
-              <MaterialIcons name="close" size={24} color={colors.primary} />
-            </TouchableOpacity>
-          )}
+          {/* Always show Close / X button */}
+          <TouchableOpacity 
+            style={styles.headerBtn}
+            onPress={handleClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialIcons name="close" size={24} color={colors.primary} />
+          </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
             <Text style={[styles.missionLabel, { color: colors.onSurfaceVariant }]}>
@@ -87,7 +97,7 @@ export const ChallengeHeader = ({
         </View>
       </View>
       
-      <View style={{ marginTop: 10 }}>
+      <View style={{ marginTop: 4 }}>
         <MissionStepper currentMissionIndex={finalMissionIndex} totalMissions={totalMissions} />
       </View>
     </View>

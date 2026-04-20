@@ -19,7 +19,7 @@ const { width } = Dimensions.get('window');
 export default function ZelligeV2Screen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
@@ -74,7 +74,7 @@ export default function ZelligeV2Screen() {
     <View style={styles.container}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
 
       <ScrollView contentContainerStyle={styles.content}>

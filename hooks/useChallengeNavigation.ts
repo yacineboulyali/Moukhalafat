@@ -17,6 +17,14 @@ export const useChallengeNavigation = () => {
   const router = useRouter();
   const missionStore = useMissionStore();
 
+  // ─── Navigate back to the challenge intro page for a given city ─────
+  const goToIntro = useCallback((cityId: string) => {
+    router.push({
+      pathname: '/intro-defi' as any,
+      params: { city: cityId },
+    });
+  }, [router]);
+
   const navigateToNext = useCallback(({
     missionId,
     cityId,
@@ -84,5 +92,5 @@ export const useChallengeNavigation = () => {
     });
   }, [router]);
 
-  return { navigateToNext, skipQuestion, goBack, restartMission };
+  return { navigateToNext, skipQuestion, goBack, goToIntro, restartMission };
 };

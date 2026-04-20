@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, View, Dimensions } from 'react-native';
+import { StyleSheet, View, Dimensions, Platform } from 'react-native';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -8,12 +8,14 @@ import Animated, {
   withSequence, 
   withDelay,
   Easing,
-  runOnJS
 } from 'react-native-reanimated';
 
 const { width, height } = Dimensions.get('window');
 
-const CONFETTI_COUNT = 40;
+// OPTIMISATION ANDROID : 
+// - 20 pièces sur Android (mid-range) vs 30 sur iOS
+// - Moins d'animations withRepeat simultanées pour réduire la charge du thread UI
+const CONFETTI_COUNT = Platform.OS === 'android' ? 20 : 30;
 const COLORS = ['#FFD700', '#FFA500', '#FF4500', '#4CAF50', '#2196F3', '#9C27B0'];
 
 interface ConfettiPieceProps {
@@ -21,11 +23,13 @@ interface ConfettiPieceProps {
 }
 
 const ConfettiPiece: React.FC<ConfettiPieceProps> = ({ index }) => {
+  const startX = React.useMemo(() => Math.random() * width, []);
+  const color = React.useMemo(() => COLORS[Math.floor(Math.random() * COLORS.length)], []);
+  
   const translateY = useSharedValue(-20);
-  const translateX = useSharedValue(Math.random() * width);
+  const translateX = useSharedValue(startX);
   const rotation = useSharedValue(Math.random() * 360);
   const opacity = useSharedValue(1);
-  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
 
   useEffect(() => {
     const duration = 2500 + Math.random() * 2000;
@@ -36,14 +40,19 @@ const ConfettiPiece: React.FC<ConfettiPieceProps> = ({ index }) => {
       easing: Easing.bezier(0.41, 0, 0.58, 1) 
     }));
 
-    translateX.value = withDelay(delay, withRepeat(
-      withSequence(
-        withTiming(translateX.value + 20, { duration: 500 }),
-        withTiming(translateX.value - 20, { duration: 500 })
-      ),
-      -1,
-      true
-    ));
+    // OPTIMISATION: Sur Android, on réduit les withRepeat pour alléger le thread UI
+    // On utilise une oscillation simple au lieu d'un withRepeat infini
+    translateX.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(startX + 20, { duration: 500 }),
+          withTiming(startX - 20, { duration: 500 })
+        ),
+        Math.ceil(duration / 1000), // Nombre fini d'itérations basé sur la durée
+        true
+      )
+    );
 
     rotation.value = withDelay(delay, withTiming(rotation.value + 720, { duration }));
     opacity.value = withDelay(delay + duration - 500, withTiming(0, { duration: 500 }));
@@ -74,7 +83,6 @@ export const ConfettiEffect = () => {
 
 const styles = StyleSheet.create({
   confetti: {
-    paddingHorizontal: 1, // Fix blank file issue
     position: 'absolute',
     top: 0,
     width: 8,

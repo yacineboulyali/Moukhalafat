@@ -9,6 +9,10 @@ import { supabase } from '../lib/supabase';
 export interface Question {
   id: string;
   mission_id: string;
+  title_fr?: string | null;
+  title_ar?: string | null;
+  presentation_fr?: string | null;
+  presentation_ar?: string | null;
   question_fr: string;
   question_ar: string | null;
   question_type: string;
@@ -23,13 +27,26 @@ export interface Question {
   hint_ar: string | null;
   explanation_fr: string | null;
   explanation_ar: string | null;
+  audio_url?: string | null;
+  character_id?: string | null;
+  feedback_positive_fr?: string | null;
+  feedback_positive_ar?: string | null;
+  feedback_negative_fr?: string | null;
+  feedback_negative_ar?: string | null;
   sort_order: number;
+  is_published?: boolean;
+  created_at?: string;
+  updated_at?: string;
   context_dialogue?: any;
   soft_skills_impact?: any;
 }
 
 // ─── In-memory cache ──────────────────────────────────────────────
 let _questionCache: Record<string, Question[]> = {};
+
+export function _injectQuestionsCache(cache: Record<string, Question[]>) {
+  _questionCache = cache;
+}
 
 export function useQuestions(missionId: string | null) {
   const [questions, setQuestions] = useState<Question[]>(
@@ -73,18 +90,5 @@ export function useQuestions(missionId: string | null) {
 
 /** Preload all questions into the cache */
 export async function preloadAllQuestions() {
-  const { data } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('is_published', true)
-    .order('sort_order');
-
-  if (data) {
-    const newCache: Record<string, Question[]> = {};
-    data.forEach((q: Question) => {
-      if (!newCache[q.mission_id]) newCache[q.mission_id] = [];
-      newCache[q.mission_id].push(q);
-    });
-    _questionCache = newCache;
-  }
+  // No-op: Data is now synced via syncMissions
 }

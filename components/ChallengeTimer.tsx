@@ -90,7 +90,7 @@ export default function ChallengeTimer({ duration, onTimeUp }: ChallengeTimerPro
           styles.timerText,
           timeLeft <= 10 && styles.criticalText
         ]}>
-          Temps restant : {formatTime(timeLeft)}
+          {formatTime(timeLeft)}
         </Text>
       </View>
       <View style={styles.track}>
@@ -102,15 +102,15 @@ export default function ChallengeTimer({ duration, onTimeUp }: ChallengeTimerPro
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    width: '100%',
+    paddingHorizontal: 8, // Reduced from 20
+    paddingVertical: 4,   // Reduced from 10
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 4, // Reduced from 8
+    marginBottom: 4, // Reduced from 8
   },
   timerText: {
     fontSize: 14,

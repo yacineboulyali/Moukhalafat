@@ -25,7 +25,7 @@ export default function V1TrueFalseScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const { navigateToNext, skipQuestion, goBack, restartMission } = useChallengeNavigation();
+  const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
@@ -90,11 +90,17 @@ export default function V1TrueFalseScreen() {
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
-        onBack={() => router.back()}
+        onClose={() => goToIntro(cityId)}
       />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
+        {!!qData.presentation_fr && (
+          <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
+            <MaterialIcons name="person" size={18} color={colors.primary} style={{ marginBottom: 6 }} />
+            <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+          </Animated.View>
+        )}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
           <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>VRAI OU FAUX</Text>
           <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
@@ -184,11 +190,13 @@ export default function V1TrueFalseScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 24 },
-  header: { marginBottom: 40, alignItems: 'center' },
-  instruction: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
-  questionText: { fontSize: 24, fontWeight: '800', textAlign: 'center' },
-  arabicHeader: { fontSize: 22, textAlign: 'center', marginTop: 12, color: '#B8860B', fontWeight: '700' },
+  scroll: { padding: 24, paddingBottom: 40 },
+  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 16, padding: 16, marginBottom: 20, borderLeftWidth: 4, borderLeftColor: '#cca72f' },
+  presentationText: { fontSize: 14, lineHeight: 20, fontStyle: 'italic' },
+  header: { marginBottom: 36, alignItems: 'center' },
+  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 14, opacity: 0.6 },
+  questionText: { fontSize: 22, fontWeight: '800', textAlign: 'center', lineHeight: 30 },
+  arabicHeader: { fontSize: 20, textAlign: 'center', marginTop: 12, color: '#B8860B', fontWeight: '700' },
   optionsWrapper: { flexDirection: 'row', gap: 20, justifyContent: 'center' },
   choiceBtn: { flex: 1, height: 180, borderRadius: 24, borderWidth: 2, borderColor: 'rgba(0,0,0,0.05)', backgroundColor: 'rgba(0,0,0,0.01)', alignItems: 'center', justifyContent: 'center', elevation: 2 },
   iconCircle: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },

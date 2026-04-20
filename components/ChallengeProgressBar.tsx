@@ -44,13 +44,13 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     paddingHorizontal: 24,
-    marginVertical: 12,
+    marginVertical: 4, // Reduced from 12
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4, // Reduced from 8
   },
   label: {
     fontSize: 12,
