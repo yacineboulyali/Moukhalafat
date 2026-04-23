@@ -92,12 +92,16 @@ export default function ScenarioDialogueScreen() {
 
     markComplete(missionId, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId, currentIdx, isCorrect);
+
     setTimeout(() => {
       setShowFeedback(false);
       navigateToNext({
         missionId,
         cityId,
-        isMissionComplete: currentIdx + 1 === questions.length,
+        isMissionComplete: getQueue(missionId).length === 0,
       });
     }, 2500);
   };
@@ -129,7 +133,7 @@ export default function ScenarioDialogueScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <ChallengeHeader cityId={cityId} onClose={() => goToIntro(cityId)} />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
@@ -146,6 +150,26 @@ export default function ScenarioDialogueScreen() {
           </Animated.View>
         )}
 
+        {/* Dialogue History */}
+        {qData?.options?.dialogue && Array.isArray(qData.options.dialogue) && (
+          <View style={styles.dialogueContainer}>
+            {qData.options.dialogue.map((d: any, idx: number) => (
+              <Animated.View 
+                key={idx} 
+                entering={FadeInDown.delay(100 + idx * 50)}
+                style={[
+                  styles.dialogueBubble, 
+                  d.character === 'Ishaq' ? styles.ishaqBubble : styles.otherBubble,
+                  { backgroundColor: d.character === 'Ishaq' ? colors.primary + '15' : colors.surface }
+                ]}
+              >
+                <Text style={[styles.characterName, { color: colors.primary }]}>{d.character}</Text>
+                <Text style={[styles.dialogueText, { color: colors.onSurface }]}>{d.text || d.text_fr}</Text>
+              </Animated.View>
+            ))}
+          </View>
+        )}
+
         {/* Question Bubble */}
         <Animated.View entering={FadeInDown.delay(200)} style={[styles.questionCard, { backgroundColor: colors.surface, borderColor: '#cca72f' + '40' }]}>
           <View style={styles.qIcon}>
@@ -157,9 +181,9 @@ export default function ScenarioDialogueScreen() {
 
         {/* Options */}
         <View style={styles.optionsList}>
-          {options.map((opt: any, idx: number) => {
+          {(Array.isArray(qData?.options) ? qData.options : (qData?.options?.responses || qData?.options?.options || [])).map((opt: any, idx: number) => {
             const val = opt.value ?? opt.id ?? String(idx);
-            const label = opt.label ?? opt.label_fr ?? opt.text ?? '';
+            const label = opt.label ?? opt.label_fr ?? opt.text_fr ?? opt.text ?? opt.texte ?? '';
             const score = opt.score ?? 0;
             const isSelected = selectedValue === val;
             const isCorrectOpt = String(val) === String(correctValue);
@@ -268,6 +292,13 @@ const styles = StyleSheet.create({
   contextHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 10 },
   contextLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 1.5 },
   contextText: { fontSize: 14, lineHeight: 21, padding: 16, paddingTop: 4, fontStyle: 'italic' },
+  // Dialogue
+  dialogueContainer: { marginBottom: 20, gap: 12 },
+  dialogueBubble: { padding: 14, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)', maxWidth: '85%' },
+  ishaqBubble: { alignSelf: 'flex-end', borderBottomRightRadius: 4 },
+  otherBubble: { alignSelf: 'flex-start', borderBottomLeftRadius: 4 },
+  characterName: { fontSize: 11, fontWeight: '900', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 1 },
+  dialogueText: { fontSize: 14, lineHeight: 20 },
   // Question card
   questionCard: { borderRadius: 20, borderWidth: 1.5, borderLeftWidth: 5, borderLeftColor: '#cca72f', padding: 20, marginBottom: 22, elevation: 2 },
   qIcon: { marginBottom: 10 },
@@ -276,7 +307,7 @@ const styles = StyleSheet.create({
   // Options
   optionsList: { gap: 12 },
   optionCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 16,
+    flexDirection: 'row', alignItems: 'flex-start', padding: 16,
     borderRadius: 18, borderWidth: 2, gap: 14,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4,
   },

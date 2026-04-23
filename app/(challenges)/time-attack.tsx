@@ -54,19 +54,32 @@ export default function TimeAttackScreen() {
   const [isFinished, setIsFinished] = useState(false);
   const [runtimeError, setRuntimeError] = useState<any>(null);
 
-  const containerStyle = useAnimatedStyle(() => ({
-    backgroundColor: interpolateColor(
-      stressLevel.value,
-      [0, 1],
-      [colors.background, '#fee2e2']
-    ),
-    transform: [{ translateX: shakeX.value }]
-  }));
+  const shakeX = useSharedValue(0);
+  const stressLevel = useSharedValue(0); // 0 to 1
 
-  const timerStyle = useAnimatedStyle(() => ({
-    color: stressLevel.value > 0.5 ? '#ef4444' : colors.primary,
-    transform: [{ scale: withSpring(1 + stressLevel.value * 0.2) }]
-  }));
+  const containerStyle = useAnimatedStyle(() => {
+    const bg = colors?.background ?? '#FDF9F3';
+    const sValue = stressLevel?.value ?? 0;
+    const xValue = shakeX?.value ?? 0;
+    
+    return {
+      backgroundColor: interpolateColor(
+        sValue,
+        [0, 1],
+        [bg, '#FEE2E2']
+      ),
+      transform: [{ translateX: xValue }]
+    };
+  });
+
+  const timerStyle = useAnimatedStyle(() => {
+    const primary = colors?.primary ?? '#1A1A2E';
+    const level = stressLevel?.value ?? 0;
+    return {
+      color: level > 0.5 ? '#EF4444' : primary,
+      transform: [{ scale: withSpring(1 + level * 0.2) }]
+    };
+  });
 
   useEffect(() => {
     try {
@@ -79,9 +92,6 @@ export default function TimeAttackScreen() {
     }
   }, [questions, missionId, initQueue]);
 
-
-  const shakeX = useSharedValue(0);
-  const stressLevel = useSharedValue(0); // 0 to 1
 
   const generateRound = useCallback(() => {
     if (PATTERNS.length === 0) return;
@@ -206,11 +216,6 @@ export default function TimeAttackScreen() {
         onRestart={() => restartMission({ missionId, cityId, firstQuestionType: questions[0].question_type })}
       />
       <View style={styles.header}>
-        <MissionTracker 
-          totalMissions={4} 
-          currentMissionIndex={0} 
-          cityColor={colors.primary} 
-        />
         <ChallengeProgressBar progress={timeLeft / 30} />
       </View>
 

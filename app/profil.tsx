@@ -1,250 +1,165 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  Image,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
-import { MaterialIcons } from '@expo/vector-icons';
-import Svg, { Circle } from 'react-native-svg';
-import { BlurView } from 'expo-blur';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, Dimensions, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import Animated, { FadeInUp, FadeInDown } from 'react-native-reanimated';
+import { Image } from 'expo-image';
+import { CompetencyRadar } from '../components/CompetencyRadar';
 import { AVATARS } from '../constants/Avatars';
-import ThemeToggle from '../components/ThemeToggle';
+import { BADGES } from '../constants/Badges';
+import { useAuthStore } from '../stores/authStore';
+import { MainBottomNav } from '../components/MainBottomNav';
+
+const { width } = Dimensions.get('window');
 
 
-const { width, height } = Dimensions.get('window');
 
-const COLORS = {
-  primary: '#1A3D2E', // Vert Zellige profond
-  secondary: '#8e4e14',
-  tertiary: '#CCA72F', // Or brillant
-  surface: '#141D17',  // Mode Sombre
-  onSurface: '#E6E2DC',
-  onSurfaceVariant: '#A9B4AC',
-  outlineVariant: '#344037',
-  primaryFixed: '#c4ebd6',
-  secondaryFixed: '#ffdcc4',
-  tertiaryFixed: '#ffe088',
-  error: '#ba1a1a',
-  errorContainer: '#ffdad6',
-  onPrimary: '#ffffff',
-  gold: '#cca72f',
-};
-
-interface SkillRingProps {
-  progress: number;
-  icon: any;
-  color: string;
-  label: string;
-  level: number;
-  arabicLabel: string;
-}
-
-const SkillRing = ({ progress, icon, color, label, level, arabicLabel }: SkillRingProps) => {
-  const radius = 16;
-  const stroke = 3;
-  const normalizedRadius = radius - stroke * 2;
-  const circumference = normalizedRadius * 2 * Math.PI;
-  const strokeDashoffset = circumference - (progress / 100) * circumference;
+export default function ProfilClassiqueScreen() {
+  const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
+  const { colors: COLORS } = useTheme();
 
   return (
-    <View style={styles.skillCard}>
-      <View style={styles.ringContainer}>
-        <Svg height="64" width="64" viewBox="0 0 36 36">
-          <Circle
-            cx="18"
-            cy="18"
-            r="16"
-            stroke="#e6e2dc"
-            strokeWidth="3"
-            fill="none"
+    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: COLORS.background }]}>
+      {/* TopAppBar */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <MaterialIcons name="menu" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { color: COLORS.primary }]}>Le Voyage</Text>
+        </View>
+        <View style={[styles.headerAvatarContainer, { borderColor: COLORS.primaryLight }]}>
+          <Image 
+            source={AVATARS.explorer} 
+            style={styles.headerAvatar} 
+            contentFit="cover" 
           />
-          <Circle
-            cx="18"
-            cy="18"
-            r="16"
-            stroke={color}
-            strokeWidth="3"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            fill="none"
-            transform="rotate(-90 18 18)"
-          />
-        </Svg>
-        <View style={styles.iconOverlay}>
-          <MaterialIcons name={icon} size={24} color={color} />
         </View>
       </View>
-      <View style={styles.skillTextContainer}>
-        <Text style={styles.skillLabel}>{label}</Text>
-        <Text style={styles.skillArabic}>{arabicLabel}</Text>
-      </View>
-      <View style={[styles.levelBadge, { backgroundColor: color + '20' }]}>
-        <Text style={[styles.levelText, { color: color }]}>Niv. {level}</Text>
-      </View>
-    </View>
-  );
-};
 
-export default function ProfilScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const [userStats, setUserStats] = React.useState<any>(null);
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        {/* Profile Header Section */}
+        <Animated.View entering={FadeInDown.delay(100)} style={styles.profileSection}>
+          <View style={styles.mainAvatarWrapper}>
+            <View style={[styles.mainAvatarBorder, { backgroundColor: COLORS.primary }]}>
+              <Image 
+                source={AVATARS.explorer} 
+                style={[styles.mainAvatar, { borderColor: COLORS.background }]} 
+                contentFit="cover" 
+              />
+            </View>
+            <View style={[styles.levelBadge, { backgroundColor: COLORS.gold, borderColor: COLORS.background }]}>
+              <Text style={[styles.levelBadgeText, { color: COLORS.white }]}>NIVEAU 12</Text>
+            </View>
+          </View>
+          <Text style={[styles.profileName, { color: COLORS.primary }]}>Amine Mansouri</Text>
+          <Text style={[styles.profileRole, { color: COLORS.onSurfaceVariant }]}>Explorateur de Savoir</Text>
+        </Animated.View>
 
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const { dbService } = require('../services/database');
-        const stats = await dbService.getUserStats();
-        setUserStats(stats);
-      } catch (err) {
-        console.error("Failed to load user stats from SQLite:", err);
-      }
-    };
-    fetchData();
-  }, []);
+        {/* Soft Skills Radar Card */}
+        <Animated.View entering={FadeInUp.delay(200)} style={styles.radarSection}>
+          <View style={[styles.radarCard, { backgroundColor: COLORS.surfaceVariant }]}>
+            <MaterialIcons name="architecture" size={60} color={COLORS.primary} style={styles.bgIcon} />
+            <View style={styles.cardTitleRow}>
+              <MaterialIcons name="psychology" size={24} color={COLORS.primary} />
+              <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Majlis des Soft Skills</Text>
+            </View>
 
-  const xpProgress = userStats ? (userStats.xp % 1000) / 1000 : 0.725;
-  const xpCurrent = userStats ? userStats.xp % 1000 : 1450;
-  const level = userStats ? userStats.level : 4;
+            {/* Animated 3-axis radar */}
+            <CompetencyRadar />
+          </View>
+        </Animated.View>
 
-  return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['left', 'right', 'bottom']}>
-      {/* Background based on theme if needed, or simple background */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: colors.background }]} />
-
-      {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
-        <View style={styles.headerContent}>
-          <TouchableOpacity 
-            style={styles.headerBtn}
-            onPress={() => router.back()}
-          >
-            <MaterialIcons name="menu" size={24} color={colors.primary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.primary }]}>Al-Musafer Profile</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <ThemeToggle />
-            <TouchableOpacity 
-              style={styles.headerBtn}
-              onPress={() => router.push('/settings')}
-            >
-              <MaterialIcons name="settings" size={24} color={colors.primary} />
+        {/* Horizontal Badge Gallery */}
+        <Animated.View entering={FadeInUp.delay(300)} style={styles.badgesSection}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: COLORS.primary }]}>Coffre aux Bijoux</Text>
+            <TouchableOpacity onPress={() => router.push('/badges')}>
+              <Text style={[styles.seeAllText, { color: COLORS.accent }]}>VOIR TOUT</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.badgesScroll}>
+            {BADGES.slice(0, 6).map((badge) => {
+              const unlocked = user?.badges?.includes(badge.id);
+              return (
+                <TouchableOpacity 
+                  key={badge.id} 
+                  style={[styles.badgeCard, { backgroundColor: COLORS.surface }, !unlocked && { opacity: 0.5 }]}
+                  onPress={() => router.push('/badges')}
+                >
+                  <View style={[styles.badgeIconBg, { backgroundColor: unlocked ? COLORS.primaryLight : COLORS.surfaceVariant }]}>
+                    {badge.remoteImage ? (
+                      <Image 
+                        source={badge.remoteImage} 
+                        style={{ width: 44, height: 44 }}
+                        contentFit="contain"
+                      />
+                    ) : (
+                      <MaterialIcons name={badge.icon as any} size={32} color={unlocked ? COLORS.primary : COLORS.outline} />
+                    )}
+                  </View>
+                  <Text style={[styles.badgeName, { color: COLORS.onSurface }]}>{badge.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Section Title */}
-        <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: colors.primary }]}>Profil de Voyageur</Text>
-          <Text style={[styles.sectionArabic, { color: colors.gold }]}>ملف المسافر</Text>
-        </View>
+        {/* Family Leaderboard */}
+        <Animated.View entering={FadeInUp.delay(400)} style={styles.leaderboardSection}>
+          <View style={[styles.leaderboardCard, { backgroundColor: COLORS.surfaceVariant }]}>
+            <View style={styles.cardTitleRow}>
+              <MaterialIcons name="groups" size={24} color={COLORS.primary} />
+              <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Cercle Familial</Text>
+            </View>
 
-        {/* User Info Card */}
-        <View 
-          style={[styles.profileCard, { backgroundColor: colors.surface }]}
-        >
-          <View style={[styles.avatarGlow, { backgroundColor: colors.primaryLight, opacity: 0.1 }]} />
-          <View style={styles.profileContent}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={[colors.primary, colors.gold]}
-                style={styles.avatarRing}
-              >
-                <Image
-                  source={AVATARS.explorer}
-                  style={styles.avatar}
-                />
-              </LinearGradient>
-              <View style={[styles.avatarLevelBadge, { backgroundColor: colors.surfaceVariant, borderColor: colors.border }]}>
-                <Text style={[styles.avatarLevelText, { color: colors.onSurface }]}>Niv. {level}</Text>
+            <View style={styles.leaderboardList}>
+              <View style={[styles.lbItem, { backgroundColor: COLORS.surface }]}>
+                <View style={styles.lbItemLeft}>
+                  <Text style={[styles.lbRankTertiary, { color: COLORS.gold }]}>1</Text>
+                  <Image source={AVATARS.mentor} style={[styles.lbAvatar, { borderColor: COLORS.gold }]} />
+                  <View>
+                    <Text style={[styles.lbName, { color: COLORS.onSurface }]}>Oncle Youssef</Text>
+                    <Text style={[styles.lbRole, { color: COLORS.onSurfaceVariant }]}>Savant de la Famille</Text>
+                  </View>
+                </View>
+                <Text style={[styles.lbScorePrimary, { color: COLORS.primary }]}>4850 XP</Text>
+              </View>
+
+              <View style={[styles.lbItemActive, { backgroundColor: COLORS.primary }]}>
+                <View style={styles.lbItemLeft}>
+                  <Text style={[styles.lbRankActive, { color: COLORS.primaryLight }]}>2</Text>
+                  <Image source={AVATARS.explorer} style={[styles.lbAvatar, { borderColor: COLORS.primaryLight }]} />
+                  <View>
+                    <Text style={[styles.lbNameActive, { color: COLORS.white }]}>Moi (Amine)</Text>
+                    <Text style={[styles.lbRoleActive, { color: COLORS.primaryLight }]}>En pleine ascension</Text>
+                  </View>
+                </View>
+                <Text style={[styles.lbScoreActive, { color: COLORS.white }]}>4210 XP</Text>
+              </View>
+
+              <View style={[styles.lbItem, { backgroundColor: COLORS.surface }]}>
+                <View style={styles.lbItemLeft}>
+                  <Text style={[styles.lbRankOutline, { color: COLORS.outline }]}>3</Text>
+                  <Image source={AVATARS.girl} style={[styles.lbAvatar, { borderColor: COLORS.outline }]}/>
+                  <View>
+                    <Text style={[styles.lbName, { color: COLORS.onSurface }]}>Cousin Amira</Text>
+                    <Text style={[styles.lbRole, { color: COLORS.onSurfaceVariant }]}>Voyageuse Curieuse</Text>
+                  </View>
+                </View>
+                <Text style={[styles.lbScorePrimary, { color: COLORS.primary }]}>3980 XP</Text>
               </View>
             </View>
-            <View style={{ alignItems: 'center', marginTop: 12 }}>
-              <Text style={[styles.userName, { color: colors.onSurface }]}>{userStats?.username || 'Yassine'}</Text>
-              <Text style={[styles.userBio, { color: colors.onSurfaceVariant }]}>{"L'Explorateur des Savoirs"}</Text>
-            </View>
           </View>
-        </View>
-
-        {/* XP Section */}
-        <View style={[styles.xpSection, { backgroundColor: colors.surfaceVariant }]}>
-          <View style={styles.xpHeader}>
-            <View>
-              <Text style={[styles.xpLabel, { color: colors.primary }]}>PROGRESSION XP</Text>
-              <Text style={[styles.xpValue, { color: colors.onSurface }]}>⭐ {userStats?.xp || 1450} / {(level) * 1000} XP</Text>
-            </View>
-            <Text style={[styles.xpNextLevel, { color: colors.gold }]}>Prochain Niveau: {level + 1}</Text>
-          </View>
-          <View style={[styles.progressBarContainer, { backgroundColor: colors.border }]}>
-            <LinearGradient
-              colors={[colors.primary, colors.gold]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={[styles.progressBar, { width: `${xpProgress * 100}%` }]}
-            />
-          </View>
-        </View>
-
-        {/* Skills Grid */}
-        <View style={styles.skillsSection}>
-          <View style={styles.skillsHeader}>
-            <Text style={[styles.skillsTitle, { color: colors.primary }]}>
-              Compétences <Text style={[styles.skillsArabicInline, { color: colors.gold }]}>المهارات</Text>
-            </Text>
-            <TouchableOpacity onPress={() => router.push('/badges')}>
-              <Text style={[styles.viewAll, { color: colors.primary }]}>Voir les Badges</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.skillsGrid}>
-            <SkillRing
-              progress={75}
-              icon="forum"
-              color={colors.primary}
-              label="Communication"
-              arabicLabel="التواصل"
-              level={2}
-            />
-            <SkillRing
-              progress={40}
-              icon="alt-route"
-              color={colors.secondaryContainer || colors.gold}
-              label="Décision"
-              arabicLabel="القرار"
-              level={1}
-            />
-            <SkillRing
-              progress={85}
-              icon="groups"
-              color={colors.gold}
-              label={"Travail d'équipe"}
-              arabicLabel="العمل الجماعي"
-              level={3}
-            />
-            <SkillRing
-              progress={20}
-              icon="psychology-alt"
-              color={colors.accent || '#EF4444'}
-              label="Gestion Stress"
-              arabicLabel="إدارة الضغط"
-              level={1}
-            />
-          </View>
-        </View>
+        </Animated.View>
+        
       </ScrollView>
-
-    </SafeAreaView>
+      <MainBottomNav />
+    </View>
   );
 }
 
@@ -253,296 +168,250 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: '#fdf9f3',
-    zIndex: 50,
-  },
-  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
     height: 64,
+  },
+  headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
+    gap: 16,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.primary,
-    fontFamily: 'Plus Jakarta Sans',
+    fontSize: 20,
+    fontWeight: '900',
   },
-  headerBtn: {
-    padding: 8,
-    borderRadius: 99,
+  headerAvatarContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    overflow: 'hidden',
+  },
+  headerAvatar: {
+    width: '100%',
+    height: '100%',
   },
   scrollContent: {
+    paddingHorizontal: 24,
+    paddingTop: 16,
     paddingBottom: 120,
-    paddingHorizontal: 20,
   },
-  sectionHeader: {
+  profileSection: {
     alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 10,
+    marginBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.primary,
-    fontFamily: 'Plus Jakarta Sans',
-  },
-  sectionArabic: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.tertiary,
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginTop: 4,
-  },
-  profileCard: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    padding: 24,
-    marginBottom: 20,
-    shadowColor: '#1c1c18',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.04,
-    shadowRadius: 32,
-    elevation: 4,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  avatarGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 120,
-    height: 120,
-    backgroundColor: COLORS.primaryFixed,
-    borderRadius: 60,
-    opacity: 0.2,
-  },
-  profileContent: {
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  avatarContainer: {
+  mainAvatarWrapper: {
     position: 'relative',
     marginBottom: 16,
   },
-  avatarRing: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    padding: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
+  mainAvatarBorder: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    padding: 4,
   },
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 2,
-    borderColor: '#fff',
+  mainAvatar: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
+    borderWidth: 4,
   },
-  avatarLevelBadge: {
+  levelBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: COLORS.tertiaryFixed,
+    bottom: -8,
+    right: 0,
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 50,
     borderWidth: 2,
-    borderColor: '#fff',
   },
-  avatarLevelText: {
+  levelBadgeText: {
     fontSize: 12,
-    fontWeight: '800',
-    color: COLORS.onSurface,
+    fontWeight: 'bold',
   },
-  userName: {
+  profileName: {
     fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.onSurface,
-    textAlign: 'center',
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
-  userBio: {
+  profileRole: {
     fontSize: 14,
-    color: COLORS.onSurfaceVariant,
     fontWeight: '500',
-    textAlign: 'center',
+    marginTop: 4,
   },
-  xpSection: {
-    backgroundColor: '#f7f3ed',
+  radarSection: {
+    marginBottom: 32,
+  },
+  radarCard: {
     borderRadius: 24,
     padding: 24,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  bgIcon: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    opacity: 0.1,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 24,
   },
-  xpHeader: {
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  radarVisualization: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    position: 'relative',
+    height: 200,
+  },
+  radarSvg: {
+    width: 180,
+    height: 180,
+    transform: [{ rotate: '-18deg' }],
+  },
+  radarLabel: {
+    position: 'absolute',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  badgesSection: {
+    marginBottom: 40,
+  },
+  sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     marginBottom: 16,
   },
-  xpLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: COLORS.primary,
-    opacity: 0.7,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  xpValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.onSurface,
-    marginTop: 2,
+  badgesScroll: {
+    gap: 16,
   },
-  xpNextLevel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: COLORS.tertiary,
-  },
-  progressBarContainer: {
-    height: 16,
-    backgroundColor: '#e6e2dc',
-    borderRadius: 8,
-    padding: 2,
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 6,
-  },
-  skillsSection: {
-    marginBottom: 20,
-  },
-  skillsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    marginBottom: 16,
-  },
-  skillsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  skillsArabicInline: {
-    fontSize: 14,
-    color: COLORS.tertiary,
-    marginLeft: 8,
-  },
-  viewAll: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  skillsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  skillCard: {
-    width: (width - 60) / 2,
-    backgroundColor: '#fff',
-    borderRadius: 20,
+  badgeCard: {
+    width: 112,
+    borderRadius: 24,
     padding: 16,
-    marginBottom: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#f1ede7',
   },
-  ringContainer: {
+  badgeIconBg: {
     width: 64,
     height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  iconOverlay: {
-    position: 'absolute',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  skillTextContainer: {
-    alignItems: 'center',
     marginBottom: 8,
   },
-  skillLabel: {
+  badgeName: {
+    fontSize: 10,
+    fontWeight: '900',
+    textAlign: 'center',
+  },
+  leaderboardSection: {
+    marginBottom: 16,
+  },
+  leaderboardCard: {
+    borderRadius: 24,
+    padding: 24,
+  },
+  leaderboardList: {
+    gap: 12,
+  },
+  lbItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 16,
+  },
+  lbItemActive: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    transform: [{ scale: 1.02 }],
+  },
+  lbItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  lbRankTertiary: {
+    width: 16,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lbRankActive: {
+    width: 16,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lbRankOutline: {
+    width: 16,
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  lbAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+  },
+  lbName: {
     fontSize: 14,
-    fontWeight: '700',
-    color: COLORS.onSurface,
+    fontWeight: 'bold',
   },
-  skillArabic: {
+  lbNameActive: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  lbRole: {
     fontSize: 10,
-    fontWeight: '700',
-    color: COLORS.onSurfaceVariant,
-    opacity: 0.6,
-    textTransform: 'uppercase',
   },
-  levelBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-  },
-  levelText: {
+  lbRoleActive: {
     fontSize: 10,
-    fontWeight: '800',
+    opacity: 0.8,
   },
-  bottomNav: {
+  lbScorePrimary: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  lbScoreActive: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  navContainer: {
     position: 'absolute',
     bottom: 0,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingBottom: 40,
-    paddingTop: 16,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(191, 201, 193, 0.1)',
-  },
-  navItem: {
-    alignItems: 'center',
-    padding: 8,
-  },
-  navItemActive: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 30,
-    paddingHorizontal: 24,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    transform: [{ scale: 1.1 }],
-  },
-  navText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#a8a29e',
-    marginTop: 4,
-  },
-  navTextActive: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#fff',
-    marginLeft: 8,
-  },
-  viewPortfolioBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(204, 167, 47, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(204, 167, 47, 0.2)',
-  },
-  viewPortfolioTxt: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#cca72f',
-    marginRight: 6,
-    letterSpacing: 0.5,
+    left: 0,
+    right: 0,
+    zIndex: 50,
   },
 });

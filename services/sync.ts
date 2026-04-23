@@ -49,6 +49,19 @@ export async function syncQuestions() {
   return questions;
 }
 
+export async function syncAppSettings() {
+  const { data: settings, error: sErr } = await supabase
+    .from('app_settings')
+    .select('*');
+  
+  if (sErr) throw sErr;
+  if (settings) {
+    await dbService.saveAppSettings(settings);
+    console.log(`✅ ${settings.length} app settings synced.`);
+  }
+  return settings;
+}
+
 /** 
  * Main curriculum sync entry point.
  * Populates SQLite with challenges, missions, and questions.
@@ -56,10 +69,15 @@ export async function syncQuestions() {
 export async function syncCurriculum() {
   console.log('🔄 Starting curriculum sync...');
   try {
-    // Run in sequence to preserve relational order
-    await syncChallenges();
-    await syncMissions();
-    await syncQuestions();
+    // Run in parallel for maximum speed
+    // These tables are mostly independent during INSERT OR REPLACE
+    await Promise.all([
+      syncAppSettings(),
+      syncChallenges(),
+      syncMissions(),
+      syncQuestions()
+    ]);
+    
     console.log('🎉 Curriculum sync complete!');
     return true;
   } catch (error) {

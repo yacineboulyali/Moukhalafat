@@ -10,7 +10,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
-} from 'react-native';
+ ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -18,7 +18,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { THEME } from '../../constants/theme';
 import { useAuthStore } from '../../stores/authStore';
 import { useGameStore } from '../../stores/gameStore';
-import { ScrollView } from 'react-native';
+
 import { supabase } from '../../lib/supabase';
 
 const TEST_ACCOUNTS = [
@@ -189,20 +189,7 @@ export default function LoginScreen() {
       </ScrollView>
     </KeyboardAvoidingView>
 
-    {/* DevQuickNav: Only visible in dev for quick testing */}
-    {__DEV__ && (
-      <View style={styles.devNav}>
-        <Text style={styles.devNavTitle}>DEV NAV</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {['/map', '/welcome', '/revelation', '/settings', '/leaderboard'].map(route => (
-            <TouchableOpacity key={route} onPress={() => router.push(route as any)} style={styles.devNavItem}>
-              <Text style={styles.devNavText}>{route.replace('/', '')}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-    )}
-  </SafeAreaView>
+    </SafeAreaView>
   );
 }
 
@@ -335,32 +322,5 @@ const styles = StyleSheet.create({
     color: THEME.light.primary,
     fontWeight: '700',
     fontSize: 14,
-  },
-  devNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    padding: 10,
-    flexDirection: 'column',
-    zIndex: 999,
-  },
-  devNavTitle: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  devNavItem: {
-    backgroundColor: '#333',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  devNavText: {
-    color: '#fff',
-    fontSize: 12,
   },
 });

@@ -12,6 +12,8 @@ export interface Mission {
   title_ar: string | null;
   description_fr: string | null;
   mission_type: 'challenge' | 'dialogue' | 'minigame' | 'scenario';
+  soft_skill_dominant: string | null;
+  bloom_level: number | null;
   narration?: any;
   profils?: any;
   metadata?: any;

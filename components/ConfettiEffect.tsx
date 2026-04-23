@@ -63,7 +63,7 @@ const ConfettiPiece: React.FC<ConfettiPieceProps> = ({ index }) => {
       { translateY: translateY.value },
       { translateX: translateX.value },
       { rotate: `${rotation.value}deg` }
-    ],
+    ] as any,
     opacity: opacity.value,
     backgroundColor: color,
   }));

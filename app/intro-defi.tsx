@@ -7,6 +7,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -63,7 +64,6 @@ export default function IntroDefiScreen() {
     : cityName.charAt(0).toUpperCase() + cityName.slice(1);
   const headline   = dbData?.headline_fr   ?? '...';
   const desc       = dbData?.description_fr ?? '...';
-  const focus      = dbData?.focus_fr       ?? '';
   const stepLabel  = dbData?.step_label     ?? '';
   const uiProgress = dbData?.progress       ?? 0.25;
 
@@ -71,16 +71,13 @@ export default function IntroDefiScreen() {
   const translateY   = useSharedValue(height);
   const context      = useSharedValue({ y: 0 });
   const isExpanded   = useSharedValue(true);
-  const expandedY    = 0;
-  const collapsedY   = height * 0.4;
+  const expandedY    = height * 0.15; // Raised slightly to feel more attached
+  const collapsedY   = height * 0.55; // Lowered to leave more space for background
 
   useEffect(() => {
-    // Animation punchy de bas vers le haut (Light speed feel)
-    translateY.value = withSpring(expandedY, { 
-      damping: 14, 
-      stiffness: 140, 
-      mass: 0.5,
-      velocity: -10
+    // Animation de bas vers le haut plus lente et fluide
+    translateY.value = withTiming(expandedY, { 
+      duration: 2000,
     });
   }, []);
 
@@ -98,7 +95,10 @@ export default function IntroDefiScreen() {
     .onStart(() => { context.value = { y: translateY.value }; })
     .onUpdate((event) => {
       let y = event.translationY + context.value.y;
-      if (y < 0) y = y / 3;
+      // Add resistance when pulling above expanded limit
+      if (y < expandedY) {
+        y = expandedY - Math.pow(expandedY - y, 0.7); 
+      }
       translateY.value = y;
     })
     .onEnd((event) => {
@@ -130,22 +130,26 @@ export default function IntroDefiScreen() {
   const { questions, loading: loadingQuestions } = useQuestions(primaryMissionId);
   const firstQuestion = questions[0];
 
-  // ── Navigate to challenge ─────────────────────────────────────
+  // ── Navigate to Pedago first (as requested by user) ──────────
   const handleStart = () => {
     SoundService.getInstance().playSound('click');
+    if (loadingQuestions) return;
+
     if (!primaryMissionId || !firstQuestion) {
       console.log('Aucune mission ou question trouvée pour', cityName);
-      router.back();
+      // Au lieu de faire un back(), on peut rester ici et proposer de synchroniser
       return;
     }
 
     const targetPath = getChallengePath(firstQuestion.question_type);
 
+    // Now navigating to Pedago first
     router.push({
-      pathname: targetPath as any,
+      pathname: '/pedago' as any,
       params: { 
-        missionId: primaryMissionId,
-        cityId: cityName 
+        cityId: cityName,
+        nextPath: targetPath,
+        nextMissionId: primaryMissionId
       }
     });
   };
@@ -172,13 +176,11 @@ export default function IntroDefiScreen() {
         resizeMode="cover"
       />
 
-
-
       {/* Dark overlay */}
       <View style={styles.overlay} />
 
       {/* ── Top App Bar ──────────────────────────────────────── */}
-      <Animated.View entering={FadeInUp.delay(300).duration(500)} style={styles.topBar}>
+      <Animated.View entering={FadeInUp.delay(300).duration(500)} style={[styles.topBar, { top: insets.top + 10 }]}>
         <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
           <MaterialIcons name="close" size={24} color="#fff" />
         </TouchableOpacity>
@@ -200,10 +202,9 @@ export default function IntroDefiScreen() {
       {/* ── Fixed Bottom Block ("Rideau") ────────────────────────── */}
       <GestureDetector gesture={gesture}>
         <Animated.View 
-          entering={FadeInUp.springify().damping(15)} 
           style={[styles.bottomSheet, rBottomSheetStyle]} 
         >
-          <BlurView intensity={95} tint="light" style={[styles.blurContainer, { paddingBottom: insets.bottom + 40 }]}>
+          <BlurView intensity={95} tint="light" style={[styles.blurContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
             
             {/* Drag Handle */}
             <View style={styles.dragHandleContainer}>
@@ -218,6 +219,12 @@ export default function IntroDefiScreen() {
                 <Text style={[styles.cityBadgeText, { color: cityColor }]}>{cityTitle}</Text>
               </View>
             </Animated.View>
+            {/* Acte Title from DB */}
+            {dbData?.acte_title && (
+              <Animated.Text entering={FadeInUp.delay(450)} style={[styles.acteTitle, { color: cityColor }]}>
+                {dbData.acte_title.toUpperCase()}
+              </Animated.Text>
+            )}
 
             {/* Headline from DB */}
             <Animated.Text entering={FadeInUp.delay(500)} style={styles.title}>
@@ -228,6 +235,19 @@ export default function IntroDefiScreen() {
             <Animated.Text entering={FadeInUp.delay(600)} style={styles.description}>
               {desc}
             </Animated.Text>
+
+            {/* Learning Outcomes Section */}
+            {dbData?.learning_outcomes && dbData.learning_outcomes.length > 0 && (
+              <Animated.View entering={FadeInUp.delay(650)} style={styles.outcomesContainer}>
+                <Text style={styles.outcomesTitle}>🎯 CE QUE VOUS ALLEZ APPRENDRE :</Text>
+                {dbData.learning_outcomes.map((outcome, idx) => (
+                  <View key={idx} style={styles.outcomeRow}>
+                    <MaterialIcons name="check" size={14} color={cityColor} />
+                    <Text style={styles.outcomeText}>{outcome}</Text>
+                  </View>
+                ))}
+              </Animated.View>
+            )}
 
             {/* Missions list — Refined Grid */}
             {missions.length > 0 && (
@@ -255,9 +275,16 @@ export default function IntroDefiScreen() {
                             <Text style={styles.missionNumberText}>{idx + 1}</Text>
                           </View>
                         )}
-                        <Text style={[styles.missionChipText, { color: isCurrent ? cityColor : isDone ? '#2E7D32' : '#757575' }]}>
-                          {m.title_fr}
-                        </Text>
+                        <View>
+                          <Text style={[styles.missionChipText, { color: isCurrent ? cityColor : isDone ? '#2E7D32' : '#757575' }]}>
+                            {m.title_fr}
+                          </Text>
+                          {isCurrent && m.soft_skill_dominant && (
+                            <Text style={[styles.softSkillText, { color: cityColor }]}>
+                              {m.soft_skill_dominant}
+                            </Text>
+                          )}
+                        </View>
                       </View>
                     );
                   })}
@@ -271,14 +298,38 @@ export default function IntroDefiScreen() {
             {/* CTA Button */}
             <Animated.View entering={FadeInUp.delay(800)} style={{ width: '100%', marginTop: 16 }}>
                 <TouchableOpacity
-                style={[styles.primaryBtn, { backgroundColor: cityColor }]}
-                onPress={handleStart}
-                activeOpacity={0.7}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Text style={styles.primaryBtnText}>POURSUIVRE LE DÉFI</Text>
-                <MaterialIcons name="arrow-forward" size={20} color="#fff" />
-              </TouchableOpacity>
+                  style={[
+                    styles.primaryBtn, 
+                    { backgroundColor: cityColor },
+                    (loadingQuestions || !firstQuestion) && { opacity: 0.5 }
+                  ]}
+                  onPress={handleStart}
+                  disabled={loadingQuestions || !firstQuestion}
+                >
+                  {loadingQuestions ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Text style={styles.primaryBtnText}>POURSUIVRE LE DÉFI</Text>
+                      <MaterialIcons name="play-arrow" size={24} color="#fff" />
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                {(!firstQuestion && !loadingQuestions) && (
+                  <TouchableOpacity 
+                    style={[styles.primaryBtn, { backgroundColor: '#444', marginTop: 12 }]}
+                    onPress={async () => {
+                      const { syncCurriculum } = await import('../services/sync');
+                      await syncCurriculum();
+                      // On pourrait forcer un re-mount ou refresh ici
+                      router.replace({ pathname: '/intro-defi' as any, params: { city: cityName } });
+                    }}
+                  >
+                    <Text style={styles.primaryBtnText}>SYNCHRONISER LES DONNÉES</Text>
+                    <MaterialIcons name="sync" size={24} color="#fff" />
+                  </TouchableOpacity>
+                )}
 
               <View style={styles.socialProof}>
                 <View style={styles.avatarsRow}>
@@ -292,13 +343,6 @@ export default function IntroDefiScreen() {
               </View>
             </Animated.View>
 
-            {/* Focus chip from DB */}
-            {!!focus && (
-              <Animated.View entering={FadeIn.delay(900)} style={styles.focusChip}>
-                <MaterialIcons name="menu-book" size={14} color="rgba(26,26,46,0.6)" />
-                <Text style={styles.focusText}>Focus: {focus}</Text>
-              </Animated.View>
-            )}
 
           </BlurView>
         </Animated.View>
@@ -350,6 +394,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
+    height: height,
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     overflow: 'hidden',
@@ -371,14 +416,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.2)',
   },
   blurContainer: {
-    padding: 32,
-    paddingTop: 36,
-    paddingBottom: 48,
+    padding: 12,
+    paddingTop: 16,
+    paddingBottom: 24,
     alignItems: 'center',
     backgroundColor: 'rgba(255,255,255,0.85)',
   },
   badgeContainer: {
-    marginBottom: 8,
+    marginBottom: 4,
     marginTop: 0,
   },
   cityBadge: {
@@ -392,35 +437,73 @@ const styles = StyleSheet.create({
   },
   cityBadgeText: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 13,
   },
   title: {
-    fontSize: 21,
+    fontSize: 18,
     fontWeight: '900',
     color: '#1A1A2E',
     textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 6,
+    lineHeight: 24,
+    marginBottom: 4,
   },
   description: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#616161',
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 18,
     paddingHorizontal: 10,
+    marginBottom: 12,
+  },
+  acteTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1.5,
+    marginBottom: 4,
+  },
+  outcomesContainer: {
+    width: '100%',
+    paddingHorizontal: 20,
+    marginBottom: 16,
+    alignItems: 'flex-start',
+  },
+  outcomesTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#1A1A2E',
+    marginBottom: 8,
+    opacity: 0.6,
+  },
+  outcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  outcomeText: {
+    fontSize: 11,
+    color: '#424242',
+    fontWeight: '500',
+  },
+  softSkillText: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginTop: 2,
+    opacity: 0.8,
   },
   primaryBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 14,
     borderRadius: 16,
     gap: 12,
   },
   primaryBtnText: {
     color: '#fff',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 15,
   },
   socialProof: {
     flexDirection: 'row',
@@ -458,27 +541,13 @@ const styles = StyleSheet.create({
     color: 'rgba(26,26,46,0.5)',
     fontWeight: '600',
   },
-  focusChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 12,
-    gap: 6,
-  },
-  focusText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: 'rgba(26,26,46,0.6)',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
   missionsContainer: {
     width: '100%',
     marginTop: 12,
     alignItems: 'center',
   },
   missionsTitle: {
-    fontSize: 11,
+    fontSize: 10.5,
     fontWeight: 'bold',
     color: '#1A1A2E',
     marginBottom: 10,
@@ -501,7 +570,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   missionChipText: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.2,

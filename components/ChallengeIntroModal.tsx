@@ -4,7 +4,8 @@ import Animated, {
   FadeIn, 
   FadeOut, 
   FadeInDown,
-  ScaleInCenter,
+  FadeInUp,
+  ZoomIn,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
@@ -29,9 +30,9 @@ export const ChallengeIntroModal: React.FC<ChallengeIntroModalProps> = ({
   onStart,
   cityColor = '#D4AF37'
 }) => {
-  if (!isVisible || !dialogue) return null;
-
   const { colors } = useTheme();
+
+  if (!isVisible || !dialogue) return null;
 
   return (
     <Animated.View 
@@ -49,8 +50,8 @@ export const ChallengeIntroModal: React.FC<ChallengeIntroModalProps> = ({
           </View>
           <Text style={styles.contextText}>{dialogue.contexte}</Text>
         </Animated.View>
-
-        <Animated.View entering={ScaleInCenter.delay(400)} style={styles.avatarRow}>
+        
+        <Animated.View entering={ZoomIn.delay(400)} style={styles.avatarRow}>
           <View style={[styles.avatarCircle, { borderColor: cityColor }]}>
             <MaterialIcons name="account-circle" size={80} color="#fff" />
           </View>
@@ -60,7 +61,7 @@ export const ChallengeIntroModal: React.FC<ChallengeIntroModalProps> = ({
         </Animated.View>
 
         <Animated.View entering={FadeInUp.delay(600)} style={styles.bubble}>
-          <Text style={styles.bubbleText}>"{dialogue.text}"</Text>
+          <Text style={styles.bubbleText}>&quot;{dialogue.text}&quot;</Text>
           <View style={[styles.bubbleTail, { borderTopColor: 'rgba(255,255,255,0.1)' }]} />
         </Animated.View>
 

@@ -53,7 +53,7 @@ export default function V1TrueFalseScreen() {
 
   const handleValidation = () => {
     if (!qData || !selected) return;
-    const correct = selected.toLowerCase() === qData.correct_answer.toLowerCase();
+    const correct = String(selected).toLowerCase() === String(qData.correct_answer || '').toLowerCase();
     setIsCorrect(correct);
     setShowFeedback(true);
     playSound(correct ? 'correct' : 'wrong');
@@ -71,10 +71,18 @@ export default function V1TrueFalseScreen() {
 
     markComplete(missionId as string, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
+
     setTimeout(() => {
       setShowFeedback(false);
       if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        navigateToNext({ 
+          missionId: missionId as string, 
+          cityId, 
+          isMissionComplete: getQueue(missionId as string).length === 0 
+        });
         setSelected(null);
         setIsCorrect(null);
       } else {
@@ -174,7 +182,11 @@ export default function V1TrueFalseScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        message={isCorrect ? qData.feedback_positive_fr || undefined : qData.feedback_negative_fr || undefined}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash 

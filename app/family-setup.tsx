@@ -151,7 +151,7 @@ export default function FamilySetupScreen() {
 
             <Animated.View entering={FadeInDown.delay(400).duration(600)} style={styles.section}>
               <View style={styles.labelRow}>
-                <Text style={[styles.label, { color: colors.primary }]}>Ton Rôle dans l'Aventure</Text>
+                <Text style={[styles.label, { color: colors.primary }]}>Ton Rôle dans l&apos;Aventure</Text>
                 <Text style={styles.arabicLabel}>دورك في المغامرة</Text>
               </View>
               <View style={styles.rolesGrid}>

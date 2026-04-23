@@ -62,13 +62,21 @@ export default function V1RankingScreen() {
 
   const handleValidation = () => {
     if (!qData) return;
-    // Correct order is by increasing value ("1", "2", "3"...)
-    const correctOrder = [...(qData.options || [])]
-      .sort((a: any, b: any) => Number(a.value) - Number(b.value))
-      .map((o: any) => o.value ?? o.id)
-      .join(',');
+    let correctOrder = '';
+    
+    if (qData.correct_answer && typeof qData.correct_answer === 'string' && qData.correct_answer.includes(',')) {
+      // Use the comma-separated sequence from DB
+      correctOrder = qData.correct_answer.trim();
+    } else {
+      // Fallback: Correct order is by increasing value ("1", "2", "3"...)
+      correctOrder = [...(qData.options || [])]
+        .sort((a: any, b: any) => Number(a.value || 0) - Number(b.value || 0))
+        .map((o: any) => o.value ?? o.id)
+        .join(',');
+    }
+
     const currentOrder = data.map((o: any) => o.value ?? o.id).join(',');
-    const correct = currentOrder === correctOrder;
+    const correct = currentOrder.replace(/\s/g, '') === correctOrder.replace(/\s/g, '');
 
     setIsCorrect(correct);
     setShowFeedback(true);
@@ -81,10 +89,18 @@ export default function V1RankingScreen() {
 
     markComplete(missionId as string, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
+
     setTimeout(() => {
       setShowFeedback(false);
       if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        navigateToNext({ 
+          missionId: missionId as string, 
+          cityId, 
+          isMissionComplete: getQueue(missionId as string).length === 0 
+        });
         setIsCorrect(null);
       } else {
         setIsCorrect(null);
@@ -93,7 +109,7 @@ export default function V1RankingScreen() {
   };
 
   const renderItem = useCallback(({ item, drag, isActive }: RenderItemParams<any>) => {
-    const itemLabel = item.label ?? item.label_fr ?? item.text ?? '';
+    const itemLabel = item.label ?? item.label_fr ?? item.text_fr ?? item.text ?? item.texte ?? '';
     return (
       <ScaleDecorator>
         <TouchableOpacity

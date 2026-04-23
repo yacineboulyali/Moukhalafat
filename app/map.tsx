@@ -22,20 +22,66 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useChallenges, Challenge } from '../hooks/useChallenges';
 import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
 import { AVATARS } from '../constants/Avatars';
+import { MainBottomNav } from '../components/MainBottomNav';
 
 const { width } = Dimensions.get('window');
 
 const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
 
 // Mapping des IDs de ville vers leurs icônes de monuments
-const CITY_LANDMARKS: Record<string, { uri: string }> = {
-  rabat:       { uri: `${ASSETS_URL}/landmarks/rabat_tower.png` },
-  marrakech:   { uri: `${ASSETS_URL}/landmarks/marrakech_tower.png` },
-  fes:         { uri: `${ASSETS_URL}/landmarks/fes_gate.png` },
-  chefchaouen: { uri: `${ASSETS_URL}/landmarks/chefchaouen_tower.png` },
-  laayoune:    { uri: `${ASSETS_URL}/landmarks/laayoune_minaret.png` },
-  dakhla:      { uri: `${ASSETS_URL}/landmarks/dakhla_lighthouse.png` },
+const CITY_LANDMARKS: Record<string, any> = {
+  rabat:       require('../assets/images/landmarks/rabat.png'),
+  marrakech:   require('../assets/images/landmarks/marrakech.png'),
+  fes:         require('../assets/images/landmarks/fes.png'),
+  chefchaouen: require('../assets/images/landmarks/chefchaouen.png'),
+  laayoune:    require('../assets/images/landmarks/laayoune.png'),
+  dakhla:      require('../assets/images/landmarks/dakhla.png'),
 };
+
+// ─── Composant CityIcon pour gérer les différents types d'icônes ─────────────
+const CityIcon = ({ iconName, cityId, size = 40, color }: { iconName?: string | null, cityId: string, size?: number, color: string }) => {
+  const icon = iconName || cityId;
+
+  // 1. Image distante (URL Supabase/HTTP)
+  if (icon.startsWith('http')) {
+    return (
+      <Image 
+        source={{ uri: icon }} 
+        style={{ width: size, height: size, borderRadius: size / 8 }} 
+        resizeMode="contain"
+        tintColor={color.includes('rgba') || color === 'transparent' ? undefined : color}
+      />
+    );
+  }
+
+  // 2. Landmark (Image PNG locale)
+  if (CITY_LANDMARKS[icon]) {
+    return (
+      <Image 
+        source={CITY_LANDMARKS[icon]} 
+        style={{ width: size * 1.35, height: size * 1.35, resizeMode: 'contain' }} 
+        tintColor={color}
+      />
+    );
+  }
+
+  // 3. Emoji (préfixe dashboard 'emoji:')
+  if (icon.startsWith('emoji:')) {
+    const emoji = icon.split(':')[1];
+    return <Text style={{ fontSize: size * 1.1, textAlign: 'center', opacity: color === 'transparent' ? 0.4 : 1 }}>{emoji}</Text>;
+  }
+
+  // 4. MaterialIcon (préfixe dashboard 'material:')
+  if (icon.startsWith('material:')) {
+    const name = icon.split(':')[1] as any;
+    return <MaterialIcons name={name} size={size} color={color} />;
+  }
+
+  // 5. Fallback - Icône par défaut
+  return <MaterialIcons name="location-city" size={size} color={color} />;
+};
+
+
 
 // ─── Lantern extrait comme composant mémoïsé (hors du render de MapScreen) ──
 // OPTIMISATION: Défini en dehors du composant parent pour éviter les re-créations
@@ -81,6 +127,8 @@ const Lantern = React.memo(({ delay, style, color }: LanternProps) => {
     />
   );
 });
+
+Lantern.displayName = 'Lantern';
 
 const lanternStyles = StyleSheet.create({
   lantern: {
@@ -188,13 +236,15 @@ export default function MapScreen() {
     opacity: wave2Opacity.value,
   }));
 
-  // Auto-scroll to bottom (Rabat) on load
+  // Auto-scroll to bottom (Rabat) on load - Smooth and slow
   useEffect(() => {
     if (!loadingChallenges && !loadingProgress) {
+      const targetY = sortedCities.length * 150 + 200; // Approximate bottom
       const t = setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 500);
-      return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
+        // Slow scroll logic
+        scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+      }, 1500);
+      return () => clearTimeout(t);
     }
   }, [loadingChallenges, loadingProgress]);
 
@@ -320,34 +370,26 @@ export default function MapScreen() {
                     status === 'current' ? [dynamics.nodeActive, { borderColor: city.city_color || colors.gold }] : 
                     dynamics.nodeCompletedB
                   ]}>
-                    <View style={isLocked ? { opacity : 0.6 } : {}}>
-                      {isLocked ? (
-                        <MaterialIcons name="landscape" size={32} color={colors.onSurfaceVariant} />
-                      ) : status === 'done' ? (
+                    <View style={isLocked ? { opacity : 0.5 } : {}}>
+                      {status === 'done' ? (
                         <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                           {CITY_LANDMARKS[city.city_id] ? (
-                             <Image 
-                               source={CITY_LANDMARKS[city.city_id]} 
-                               style={dynamics.nodeLandmarkIcon} 
-                               tintColor={city.city_color || colors.gold}
-                             />
-                           ) : (
-                             <MaterialIcons name="check" size={40} color={city.city_color || colors.gold} />
-                           )}
+                           <CityIcon 
+                             iconName={city.icon_name} 
+                             cityId={city.city_id} 
+                             size={40} 
+                             color={city.city_color || colors.gold} 
+                           />
                            <View style={dynamics.checkBadge}>
                              <MaterialIcons name="verified" size={16} color={city.city_color || colors.gold} />
                            </View>
                         </View>
                       ) : (
-                        CITY_LANDMARKS[city.city_id] ? (
-                          <Image 
-                            source={CITY_LANDMARKS[city.city_id]} 
-                            style={dynamics.nodeLandmarkIcon} 
-                            tintColor={city.city_color || colors.gold}
-                          />
-                        ) : (
-                          <MaterialIcons name="location-city" size={40} color={city.city_color || colors.gold} />
-                        )
+                        <CityIcon 
+                          iconName={city.icon_name} 
+                          cityId={city.city_id} 
+                          size={40} 
+                          color={isLocked ? colors.onSurfaceVariant : (city.city_color || colors.gold)} 
+                        />
                       )}
                     </View>
                     
@@ -397,10 +439,17 @@ export default function MapScreen() {
           <View style={dynamics.cardHeader}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <View style={[dynamics.cardTag, { borderColor: activeColor }]}>
-                <Text style={[dynamics.cardTagText, { color: activeColor }]}>{activeStep.toUpperCase()}</Text>
+                <Text style={[dynamics.cardTagText, { color: activeColor }]}>
+                  {activeChallenge.acte_title ? activeChallenge.acte_title.toUpperCase() : activeStep.toUpperCase()}
+                </Text>
               </View>
-              <Text style={dynamics.cardTitle}>{activeTitle}</Text>
-              <Text style={[dynamics.cardSubtitle, { color: activeColor }]}>{activeTitleAr}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <CityIcon iconName={activeChallenge.icon_name} cityId={selectedCityId!} size={24} color={activeColor} />
+                <View>
+                  <Text style={dynamics.cardTitle}>{activeTitle}</Text>
+                  <Text style={[dynamics.cardSubtitle, { color: activeColor }]}>{activeTitleAr}</Text>
+                </View>
+              </View>
             </View>
             <View style={[dynamics.pointsBadge, { borderColor: activeColor }]}>
               <Text style={dynamics.pointsLabel}>Points</Text>
@@ -434,6 +483,7 @@ export default function MapScreen() {
           </TouchableOpacity>
         </Animated.View>
       )}
+      <MainBottomNav />
     </View>
   );
 }
@@ -694,5 +744,15 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     color: colors.white,
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  lantern: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 5,
   },
 });

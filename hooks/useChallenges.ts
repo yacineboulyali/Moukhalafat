@@ -23,6 +23,9 @@ export interface Challenge {
   is_published: boolean;
   missions_title_fr: string | null;
   missions_title_ar: string | null;
+  icon_name: string | null;
+  acte_title: string | null;
+  learning_outcomes: string[] | null;
 }
 
 // ─── Hook ─────────────────────────────────────────────────────────
@@ -51,7 +54,8 @@ export function useChallenges() {
       data.forEach((c: any) => {
         finalMap[c.city_id] = {
           ...c,
-          is_published: c.is_published === 1
+          is_published: c.is_published === 1,
+          learning_outcomes: c.learning_outcomes ? JSON.parse(c.learning_outcomes) : null
         };
       });
 

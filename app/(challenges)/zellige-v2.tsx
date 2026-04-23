@@ -26,10 +26,10 @@ export default function ZelligeV2Screen() {
   
   const missionId = params.missionId as string;
   const cityId = params.cityId as string;
-  const questionIndex = params.questionIndex || '0';
+  const questionIndex = (Array.isArray(params.questionIndex) ? params.questionIndex[0] : params.questionIndex) || '0';
 
   const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId);
-  const questions = dbQuestions || [];
+  const questions = Array.isArray(dbQuestions) ? dbQuestions : [];
   
   const currentIdx = parseInt(questionIndex as string) || 0;
   const qData = questions[currentIdx];
@@ -71,7 +71,7 @@ export default function ZelligeV2Screen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <ChallengeHeader 
         cityId={cityId} 
         onClose={() => goToIntro(cityId)}

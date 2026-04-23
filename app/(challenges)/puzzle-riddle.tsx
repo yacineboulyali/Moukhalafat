@@ -168,7 +168,7 @@ export default function V1PuzzleRiddleScreen() {
           <View style={styles.optionsList}>
             {rawOptions.map((option: any, index: number) => {
               const optKey = option.value ?? option.id ?? String(index);
-              const optLabel = option.label ?? option.label_fr ?? option.text ?? '';
+              const optLabel = option.label ?? option.label_fr ?? option.text_fr ?? option.text ?? option.texte ?? '';
               const isSelected = selectedId === optKey;
               const isCorrectOpt = String(optKey) === String(qData.correct_answer);
               return (
@@ -246,7 +246,11 @@ export default function V1PuzzleRiddleScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        message={isCorrect ? qData.feedback_positive_fr || undefined : qData.feedback_negative_fr || undefined}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash

@@ -5,13 +5,13 @@ import { router } from 'expo-router';
 import React from 'react';
 import {
   Dimensions,
-  SafeAreaView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import Svg from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 
 import { THEME } from '../constants/theme';
 
@@ -22,8 +22,10 @@ const COLORS = THEME.light; // Default for onboarding
 const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
 
 export default function AccueilScreen() {
+  const insets = useSafeAreaInsets();
+  
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Top 35%: Hero Illustration Section */}
       <View style={styles.heroSection}>
         <LinearGradient
@@ -36,7 +38,14 @@ export default function AccueilScreen() {
           <Svg width={width} height={353}>
             {Array.from({ length: 15 }).map((_, i) =>
               Array.from({ length: 10 }).map((_, j) => (
-                <View key={`${i}-${j}`} style={[styles.zelligeDot, { left: i * 30, top: j * 30 }]} />
+                <Circle 
+                  key={`${i}-${j}`} 
+                  cx={i * 30} 
+                  cy={j * 30} 
+                  r={1} 
+                  fill="#F4A261" 
+                  opacity={0.2} 
+                />
               ))
             )}
           </Svg>
@@ -73,13 +82,13 @@ export default function AccueilScreen() {
       </View>
 
       {/* Bottom 25%: Action Buttons */}
-      <SafeAreaView style={styles.actionSection}>
+      <View style={[styles.actionSection, { paddingBottom: Math.max(insets.bottom, 48) }]}>
         <TouchableOpacity
           style={styles.primaryButton}
           onPress={() => router.push('/welcome')}
           activeOpacity={0.8}
         >
-          <Text style={styles.primaryButtonText}>Démarrer l'Aventure</Text>
+          <Text style={styles.primaryButtonText}>Démarrer l&apos;Aventure</Text>
           <MaterialIcons name="auto-fix-high" size={24} color={COLORS.onPrimary} />
         </TouchableOpacity>
 
@@ -90,7 +99,7 @@ export default function AccueilScreen() {
         >
           <Text style={styles.secondaryButtonText}>Créer un compte</Text>
         </TouchableOpacity>
-      </SafeAreaView>
+      </View>
 
       {/* Footer */}
       <View style={styles.footer}>
@@ -104,7 +113,7 @@ export default function AccueilScreen() {
         </View>
         <Text style={styles.footerText}>© 2026 Le Voyage des Compétences</Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -118,14 +127,6 @@ const styles = StyleSheet.create({
     width: '100%',
     position: 'relative',
     overflow: 'hidden',
-  },
-  zelligeDot: {
-    position: 'absolute',
-    width: 2,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: '#F4A261',
-    opacity: 0.2,
   },
   imageContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
     lineHeight: 34,
   },
   arabicTitle: {
-    fontFamily: 'Plus Jakarta Sans', // Fallback, should use Arabic font if available
+    fontFamily: 'Plus Jakarta Sans',
     fontSize: 20,
     fontWeight: '600',
     color: COLORS.outline,

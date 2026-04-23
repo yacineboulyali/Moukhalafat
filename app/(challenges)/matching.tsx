@@ -34,7 +34,7 @@ export default function V1MatchingScreen() {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { navigateToNext, skipQuestion, goBack, goToIntro } = useChallengeNavigation();
-  const { initQueue, markComplete } = useMissionStore();
+  const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
   const currentIdx = parseInt(questionIndex as string) || 0;
@@ -68,20 +68,25 @@ export default function V1MatchingScreen() {
   }, [currentIdx]);
 
   // Parse items from options [{id, item, match, matchLabel}]
-  const rawOptions: Array<{ id: string; item: string; match: string; matchLabel: string }> =
-    useMemo(() =>
-      Array.isArray(qData?.options)
-        ? qData.options.map((o: any) => ({
-            id: String(o.id),
-            item: o.item ?? o.left_fr ?? o.label ?? '',
-            match: String(o.match ?? o.value ?? ''),
-            matchLabel: o.matchLabel ?? o.right_fr ?? o.match ?? '',
-          }))
-        : [],
-    [qData]);
+  const rawOptions: { id: string; item: string; match: string; matchLabel: string }[] =
+    useMemo(() => {
+      let base: any[] = [];
+      if (Array.isArray(qData?.options)) {
+        base = qData.options;
+      } else if (qData?.options?.pairs && Array.isArray(qData.options.pairs)) {
+        base = qData.options.pairs;
+      }
+
+      return base.map((o: any, idx: number) => ({
+        id: String(o.id ?? idx),
+        item: o.item ?? o.left_fr ?? o.left ?? o.label ?? '',
+        match: String(o.match ?? o.value ?? o.right ?? ''),
+        matchLabel: o.matchLabel ?? o.right_fr ?? o.right ?? o.match ?? '',
+      }));
+    }, [qData]);
 
   // Unique categories (right side)
-  const categories: Array<{ key: string; label: string }> = useMemo(() => {
+  const categories: { key: string; label: string }[] = useMemo(() => {
     const seen = new Map<string, string>();
     rawOptions.forEach(o => {
       if (!seen.has(o.match)) seen.set(o.match, o.matchLabel);
@@ -127,12 +132,16 @@ export default function V1MatchingScreen() {
 
     markComplete(missionId as string, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
+
     setTimeout(() => {
       setShowFeedback(false);
       navigateToNext({
         missionId: missionId as string,
         cityId,
-        isMissionComplete: currentIdx + 1 === questions.length,
+        isMissionComplete: getQueue(missionId as string).length === 0,
       });
     }, 2800);
   };
@@ -349,7 +358,7 @@ const styles = StyleSheet.create({
   // Items
   itemsList: { gap: 10 },
   itemCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 16,
+    flexDirection: 'row', alignItems: 'flex-start', padding: 16,
     borderRadius: 18, borderWidth: 2, gap: 12,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 3,
   },

@@ -12,6 +12,7 @@ interface GameState {
   updateFamilyTrust: (amount: number) => void;
   unlockCity: (cityId: CityId) => void;
   updateSkill: (skillId: string, xpGain: number) => void;
+  loadSettings: () => Promise<void>;
 }
 
 export const useGameStore = create<GameState>((set) => ({
@@ -20,17 +21,17 @@ export const useGameStore = create<GameState>((set) => ({
   totalXP: 0,
   familyTrust: 50, // Starts at neutral/medium
   skills: [],
-  setCity: (cityId) => set({ currentCity: cityId }),
-  addXP: (amount) => set((state) => ({ totalXP: state.totalXP + amount })),
-  updateFamilyTrust: (amount) => set((state) => ({ 
+  setCity: (cityId: CityId) => set({ currentCity: cityId }),
+  addXP: (amount: number) => set((state) => ({ totalXP: state.totalXP + amount })),
+  updateFamilyTrust: (amount: number) => set((state) => ({ 
     familyTrust: Math.max(0, Math.min(100, state.familyTrust + amount)) 
   })),
-  unlockCity: (cityId) => set((state) => ({
+  unlockCity: (cityId: CityId) => set((state) => ({
     unlockedCities: state.unlockedCities.includes(cityId) 
       ? state.unlockedCities 
       : [...state.unlockedCities, cityId]
   })),
-  updateSkill: (skillId, xpGain) => set((state) => {
+  updateSkill: (skillId: string, xpGain: number) => set((state) => {
     const existingSkill = state.skills.find(s => s.id === skillId);
     if (existingSkill) {
       return {
@@ -42,4 +43,12 @@ export const useGameStore = create<GameState>((set) => ({
     }
     return state;
   }),
+  loadSettings: async () => {
+    try {
+      const { dbService } = require('../services/database');
+      // No settings to load into store currently, but keeping the method for future use
+    } catch (err) {
+      console.warn("Failed to load settings in store:", err);
+    }
+  }
 }));

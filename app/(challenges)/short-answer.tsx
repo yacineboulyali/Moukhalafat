@@ -6,7 +6,6 @@ import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withS
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BadgeRewardModal } from '../../components/BadgeRewardModal';
 import ChallengeProgressBar from '../../components/ChallengeProgressBar';
-import MissionTracker from '../../components/MissionTracker';
 import { ImmediateFeedback } from '../../components/ImmediateFeedback';
 import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
@@ -58,9 +57,21 @@ export default function ShortAnswerScreen() {
   const handleValidation = () => {
     if (!qData || !answer.trim()) return;
     
-    const correctVal = qData.correct_answer.toLowerCase().trim();
     const userVal = answer.toLowerCase().trim();
-    const correct = userVal === correctVal;
+    let correct = false;
+
+    // Check against main correct_answer
+    if (qData.correct_answer && userVal === qData.correct_answer.toLowerCase().trim()) {
+      correct = true;
+    }
+
+    // Check against options array if present (synonyms)
+    if (!correct && Array.isArray(qData.options)) {
+      correct = qData.options.some((opt: any) => {
+        const val = typeof opt === 'string' ? opt : (opt.text_fr || opt.text || opt.value || '');
+        return val.toLowerCase().trim() === userVal;
+      });
+    }
 
     setIsCorrect(correct);
     setShowFeedback(true);
@@ -81,11 +92,19 @@ export default function ShortAnswerScreen() {
     }
 
     markComplete(missionId as string, currentIdx);
+    
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
 
     setTimeout(() => {
       setShowFeedback(false);
       if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        navigateToNext({ 
+          missionId: missionId as string, 
+          cityId, 
+          isMissionComplete: getQueue(missionId as string).length === 0 
+        });
         setAnswer('');
         setIsCorrect(null);
       } else {

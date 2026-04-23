@@ -25,31 +25,47 @@ const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/p
 
 const ONBOARDING_STEPS = [
   {
-    title: "Une Mission de Famille",
-    arabic: "مهمة عائلية",
-    description: "Accompagne la famille Ben Ali dans un voyage à travers le Maroc pour relever des défis professionnels réels.",
-    image: { uri: `${ASSETS_URL}/family-portrait-v3.png` },
-    color: '#1A3D2E'
+    title: "La Mission Ben Ali",
+    arabic: "مهمة عائلة بن علي",
+    description: "Rejoins la famille Ben Ali dans une aventure humaine à travers les plus belles cités du Royaume.",
+    image: require('../assets/images/onboarding/family.png'),
+    color: '#064E3B' // Vert Zellige Profond
   },
   {
-    title: "Apprentissage Ludique",
-    arabic: "تعلم ممتع",
-    description: "Développe tes Soft Skills et Hard Skills en résolvant des scénarios complexes et des mini-jeux captivants.",
-    image: { uri: `${ASSETS_URL}/character-guide.jpg` },
-    color: '#D4AF37'
+    title: "Héritage & Vision",
+    arabic: "الأصالة والرؤية",
+    description: "De Rabat à Fès, développe ton leadership en explorant l'équilibre entre tradition séculaire et modernité.",
+    image: require('../assets/images/onboarding/heritage.png'),
+    color: '#D97706' // Ambre
   },
   {
-    title: "Trace ton Chemin",
-    arabic: "ارسم مسارك",
-    description: "Chaque décision compte. Tes choix influencent ta progression et tes badges de compétences.",
+    title: "Savoir-être & Culture",
+    arabic: "المهارات الحياتية والثقافة",
+    description: "À Marrakech et Chefchaouen, maîtrise l'art de la communication et de l'intelligence émotionnelle.",
+    image: require('../assets/images/onboarding/culture.png'),
+    color: '#EA580C' // Terracotta
+  },
+  {
+    title: "Résilience & Futur",
+    arabic: "الصمود والمستقبل",
+    description: "Traverse le Sahara vers Dakhla pour forger ta détermination et préparer l'économie de demain.",
+    image: require('../assets/images/onboarding/adventure.png'),
+    color: '#0D9488' // Sarcelle
+  },
+  {
+    title: "Ton Passeport Succès",
+    arabic: "جواز سفرك للنجاح",
+    description: "Collectionne les badges et transforme ton voyage en un véritable certificat de compétences.",
     image: { uri: `${ASSETS_URL}/map-morocco.jpg` },
-    color: '#ffab69'
+    color: '#2563EB' // Bleu Majorelle
   }
 ];
 
+import { useTheme } from '../hooks/useTheme';
+
 export default function WelcomeScreen() {
   const [currentStep, setCurrentStep] = useState(0);
-  const COLORS = THEME.light;
+  const { colors: COLORS } = useTheme();
 
   const handleNext = () => {
     if (currentStep < ONBOARDING_STEPS.length - 1) {
@@ -105,10 +121,10 @@ export default function WelcomeScreen() {
           </View>
 
           <TouchableOpacity 
-            style={styles.nextButton}
+            style={[styles.nextButton, { backgroundColor: COLORS.primary }]}
             onPress={handleNext}
           >
-            <Text style={styles.nextButtonText}>
+            <Text style={[styles.nextButtonText, { color: COLORS.white }]}>
               {currentStep === ONBOARDING_STEPS.length - 1 ? "COMMENCER" : "SUIVANT"}
             </Text>
             <MaterialIcons 

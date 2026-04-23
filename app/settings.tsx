@@ -9,38 +9,24 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  Switch,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { MainBottomNav } from '../components/MainBottomNav';
 
 const { width } = Dimensions.get('window');
-
-const COLORS = {
-  primary: '#2c4e3e',
-  surface: '#fdf9f3',
-  onSurface: '#1c1c18',
-  onSurfaceVariant: '#404943',
-  primaryFixed: '#c4ebd6',
-  tertiaryContainer: '#cca72f',
-  secondaryContainer: '#ffab69',
-  onPrimary: '#ffffff',
-  surfaceContainerLowest: '#ffffff',
-  surfaceContainerLow: '#f7f3ed',
-  surfaceContainerHigh: '#ebe8e2',
-};
 
 interface SettingSectionProps {
   title: string;
   arabicTitle: string;
   color: string;
   children: React.ReactNode;
+  styles: any;
 }
 
-const SettingSection = ({ title, arabicTitle, color, children }: SettingSectionProps) => (
+const SettingSection = ({ title, arabicTitle, color, children, styles }: SettingSectionProps) => (
   <View style={styles.section}>
     <View style={styles.sectionHeader}>
       <View style={[styles.sectionIndicator, { backgroundColor: color }]} />
@@ -54,21 +40,21 @@ const SettingSection = ({ title, arabicTitle, color, children }: SettingSectionP
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { themeMode, setTheme, colors } = useTheme();
+  const { themeMode, setTheme, colors: COLORS } = useTheme();
   const [username, setUsername] = useState('Ahmed_AlMaghribi');
   const [language, setLanguage] = useState('fr');
-
-  const COLORS_DYNAMIC = colors;
+  
+  const styles = getStyles(COLORS);
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]} edges={['left', 'right', 'bottom']}>
       <LinearGradient
-        colors={[COLORS.surface, '#f1ede7']}
+        colors={[COLORS.surface, COLORS.surfaceVariant]}
         style={StyleSheet.absoluteFillObject}
       />
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+      <View style={[styles.header, { paddingTop: insets.top, backgroundColor: 'transparent' }]}>
         <View style={styles.headerContent}>
           <TouchableOpacity 
             style={styles.headerBtn}
@@ -76,8 +62,8 @@ export default function SettingsScreen() {
           >
             <MaterialIcons name="menu" size={24} color={COLORS.primary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Zellige Odyssey</Text>
-          <View style={styles.headerAvatarContainer}>
+          <Text style={[styles.headerTitle, { color: COLORS.primary }]}>Zellige Odyssey</Text>
+          <View style={[styles.headerAvatarContainer, { borderColor: COLORS.primaryLight }]}>
             <Image
                source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/settings-avatar.png?v=1775991607489' }}
                style={styles.headerAvatar}
@@ -90,26 +76,26 @@ export default function SettingsScreen() {
         {/* Profile Edit Section */}
         <View style={styles.profileEditSection}>
           <View style={styles.avatarWrapper}>
-            <View style={styles.avatarCard}>
+            <View style={[styles.avatarCard, { backgroundColor: COLORS.surface, borderColor: COLORS.surfaceVariant }]}>
               <Image
                 source={{ uri: 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets/settings-avatar.png?v=1775991607489' }}
                 style={styles.profileAvatar}
               />
             </View>
-            <TouchableOpacity style={styles.editAvatarBtn}>
-              <MaterialIcons name="edit" size={20} color={COLORS.onPrimary} />
+            <TouchableOpacity style={[styles.editAvatarBtn, { backgroundColor: COLORS.primary }]}>
+              <MaterialIcons name="edit" size={20} color={COLORS.white} />
             </TouchableOpacity>
           </View>
-          <Text style={styles.pageTitle}>Paramètres du profil</Text>
-          <Text style={styles.pageSubtitle}>إعدادات الملف الشخصي</Text>
+          <Text style={[styles.pageTitle, { color: COLORS.primary }]}>Paramètres du profil</Text>
+          <Text style={[styles.pageSubtitle, { color: COLORS.onSurfaceVariant }]}>إعدادات الملف الشخصي</Text>
           
-          <View style={styles.inputCard}>
+          <View style={[styles.inputCard, { backgroundColor: COLORS.surface }]}>
             <View style={styles.inputLabelRow}>
-              <Text style={styles.inputLabel}>Nom d’utilisateur</Text>
-              <Text style={styles.inputLabelArabic}>اسم المستخدم</Text>
+              <Text style={[styles.inputLabel, { color: COLORS.onSurfaceVariant }]}>Nom d’utilisateur</Text>
+              <Text style={[styles.inputLabelArabic, { color: COLORS.primary }]}>اسم المستخدم</Text>
             </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: COLORS.surfaceVariant, color: COLORS.onSurface }]}
               value={username}
               onChangeText={setUsername}
             />
@@ -120,60 +106,61 @@ export default function SettingsScreen() {
         <SettingSection 
           title="Mode d'affichage" 
           arabicTitle="وضع العرض" 
-          color={COLORS.tertiaryContainer}
+          color={COLORS.gold || '#cca72f'}
+          styles={styles}
         >
           <View style={styles.modeGrid}>
             <TouchableOpacity 
               style={[
                 styles.modeBtn, 
-                themeMode === 'light' && styles.modeBtnActive
+                { backgroundColor: themeMode === 'light' ? COLORS.primary : COLORS.surfaceVariant }
               ]}
               onPress={() => setTheme('light')}
             >
               <MaterialIcons 
                 name="light-mode" 
                 size={24} 
-                color={themeMode === 'light' ? colors.white : colors.onSurfaceVariant} 
+                color={themeMode === 'light' ? COLORS.white : COLORS.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, themeMode === 'light' && styles.modeTextActive]}>Clair</Text>
-                <Text style={[styles.modeTextArabic, themeMode === 'light' && styles.modeTextActive]}>مضيء</Text>
+                <Text style={[styles.modeText, { color: themeMode === 'light' ? COLORS.white : COLORS.onSurfaceVariant }]}>Clair</Text>
+                <Text style={[styles.modeTextArabic, { color: themeMode === 'light' ? COLORS.white : COLORS.onSurfaceVariant }]}>مضيء</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={[
-                styles.modeBtnInactive,
-                themeMode === 'dark' && styles.modeBtnActive
+                styles.modeBtn,
+                { backgroundColor: themeMode === 'dark' ? COLORS.primary : COLORS.surfaceVariant }
               ]}
               onPress={() => setTheme('dark')}
             >
               <MaterialIcons 
                 name="dark-mode" 
                 size={24} 
-                color={themeMode === 'dark' ? colors.white : colors.onSurfaceVariant} 
+                color={themeMode === 'dark' ? COLORS.white : COLORS.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, themeMode === 'dark' && styles.modeTextActive]}>Sombre</Text>
-                <Text style={[styles.modeTextArabic, themeMode === 'dark' && styles.modeTextActive]}>مظلم</Text>
+                <Text style={[styles.modeText, { color: themeMode === 'dark' ? COLORS.white : COLORS.onSurfaceVariant }]}>Sombre</Text>
+                <Text style={[styles.modeTextArabic, { color: themeMode === 'dark' ? COLORS.white : COLORS.onSurfaceVariant }]}>مظلم</Text>
               </View>
             </TouchableOpacity>
 
             <TouchableOpacity 
               style={[
-                styles.modeBtnInactive,
-                themeMode === 'system' && styles.modeBtnActive
+                styles.modeBtn,
+                { backgroundColor: themeMode === 'system' ? COLORS.primary : COLORS.surfaceVariant }
               ]}
               onPress={() => setTheme('system')}
             >
               <MaterialIcons 
                 name="settings-brightness" 
                 size={24} 
-                color={themeMode === 'system' ? colors.white : colors.onSurfaceVariant} 
+                color={themeMode === 'system' ? COLORS.white : COLORS.onSurfaceVariant} 
               />
               <View style={styles.modeTextContainer}>
-                <Text style={[styles.modeText, themeMode === 'system' && styles.modeTextActive]}>Système</Text>
-                <Text style={[styles.modeTextArabic, themeMode === 'system' && styles.modeTextActive]}>النظام</Text>
+                <Text style={[styles.modeText, { color: themeMode === 'system' ? COLORS.white : COLORS.onSurfaceVariant }]}>Système</Text>
+                <Text style={[styles.modeTextArabic, { color: themeMode === 'system' ? COLORS.white : COLORS.onSurfaceVariant }]}>النظام</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -183,66 +170,49 @@ export default function SettingsScreen() {
         <SettingSection 
           title="Langue d'affichage" 
           arabicTitle="لغة العرض" 
-          color={COLORS.secondaryContainer}
+          color={COLORS.secondaryContainer || '#ffab69'}
+          styles={styles}
         >
-          <View style={styles.languageCard}>
+          <View style={[styles.languageCard, { backgroundColor: COLORS.surfaceVariant }]}>
             <TouchableOpacity 
               style={[
                 styles.langBtn, 
-                language === 'fr' && styles.langBtnActive
+                { backgroundColor: language === 'fr' ? COLORS.primaryLight : 'transparent' }
               ]}
               onPress={() => setLanguage('fr')}
             >
-              <Text style={[styles.langBtnText, language === 'fr' && styles.langBtnTextActive]}>Français</Text>
+              <Text style={[styles.langBtnText, { color: language === 'fr' ? COLORS.white : COLORS.onSurfaceVariant }]}>Français</Text>
             </TouchableOpacity>
             <TouchableOpacity 
               style={[
                 styles.langBtn, 
-                language === 'ar' && styles.langBtnActive
+                { backgroundColor: language === 'ar' ? COLORS.primaryLight : 'transparent' }
               ]}
               onPress={() => setLanguage('ar')}
             >
-              <Text style={[styles.langBtnText, language === 'ar' && styles.langBtnTextActive]}>العربية</Text>
+              <Text style={[styles.langBtnText, { color: language === 'ar' ? COLORS.white : COLORS.onSurfaceVariant }]}>العربية</Text>
             </TouchableOpacity>
           </View>
         </SettingSection>
 
         {/* Save Button */}
         <View style={styles.saveContainer}>
-          <TouchableOpacity style={styles.saveBtn} activeOpacity={0.9}>
+          <TouchableOpacity style={[styles.saveBtn, { backgroundColor: COLORS.primary }]} activeOpacity={0.9}>
             <View style={styles.saveBtnContent}>
-              <Text style={styles.saveBtnText}>Enregistrer les modifications</Text>
-              <Text style={styles.saveBtnTextArabic}>حفظ التغييرات</Text>
+              <Text style={[styles.saveBtnText, { color: COLORS.white }]}>Enregistrer les modifications</Text>
+              <Text style={[styles.saveBtnTextArabic, { color: COLORS.white }]}>حفظ التغييرات</Text>
             </View>
-            <MaterialIcons name="save" size={24} color={COLORS.onPrimary} />
+            <MaterialIcons name="save" size={24} color={COLORS.white} />
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* Bottom Nav */}
-      <BlurView intensity={80} tint="light" style={[styles.bottomNav, { paddingBottom: Math.max(insets.bottom, 16), height: 60 + Math.max(insets.bottom, 16) }]}>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/leaderboard')}>
-          <MaterialIcons name="leaderboard" size={24} color="#426655" />
-          <Text style={styles.navText}>Ligue</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/map')}>
-          <MaterialIcons name="map" size={24} color="#426655" />
-          <Text style={styles.navText}>Carte</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItem} onPress={() => router.push('/profil')}>
-          <MaterialIcons name="person" size={24} color="#426655" />
-          <Text style={styles.navText}>Profil</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.navItemActive}>
-          <MaterialIcons name="settings" size={24} color="#fff" />
-          <Text style={styles.navTextActive}>RÉGLAGES</Text>
-        </TouchableOpacity>
-      </BlurView>
+      <MainBottomNav />
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (COLORS: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -273,7 +243,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: COLORS.primaryFixed,
+    borderColor: COLORS.primaryLight,
     overflow: 'hidden',
   },
   headerAvatar: {
@@ -305,7 +275,7 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
     borderWidth: 4,
-    borderColor: COLORS.surfaceContainerLowest,
+    borderColor: COLORS.surfaceVariant,
   },
   profileAvatar: {
     width: '100%',
@@ -341,7 +311,7 @@ const styles = StyleSheet.create({
   },
   inputCard: {
     width: '100%',
-    backgroundColor: COLORS.surfaceContainerLowest,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 24,
     shadowColor: '#1c1c18',
@@ -368,7 +338,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   input: {
-    backgroundColor: COLORS.surfaceContainerLow,
+    backgroundColor: COLORS.surfaceVariant,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -412,18 +382,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.surfaceContainerHigh,
-  },
-  modeBtnInactive: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.surfaceContainerHigh,
-  },
-  modeBtnActive: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: COLORS.surfaceVariant,
   },
   modeTextContainer: {
     marginTop: 8,
@@ -439,11 +398,8 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     color: COLORS.onSurfaceVariant,
   },
-  modeTextActive: {
-    color: COLORS.onPrimary,
-  },
   languageCard: {
-    backgroundColor: COLORS.surfaceContainerLowest,
+    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 8,
     flexDirection: 'row',
@@ -455,16 +411,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  langBtnActive: {
-    backgroundColor: COLORS.primaryFixed,
-  },
   langBtnText: {
     fontSize: 14,
     fontWeight: '700',
     color: COLORS.onSurfaceVariant,
-  },
-  langBtnTextActive: {
-    color: COLORS.primary,
   },
   saveContainer: {
     marginTop: 20,
@@ -490,52 +440,12 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 18,
     fontWeight: '700',
-    color: COLORS.onPrimary,
+    color: COLORS.white,
   },
   saveBtnTextArabic: {
     fontSize: 14,
-    color: COLORS.onPrimary,
+    color: COLORS.white,
     opacity: 0.8,
     marginTop: 4,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 12,
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    borderWidth: 1,
-    borderColor: 'rgba(191, 201, 193, 0.15)',
-  },
-  navItem: {
-    alignItems: 'center',
-    padding: 8,
-  },
-  navItemActive: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 30,
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    transform: [{ scale: 1.1 }],
-  },
-  navText: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#426655',
-    marginTop: 2,
-  },
-  navTextActive: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#fff',
-    marginLeft: 8,
   },
 });

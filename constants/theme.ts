@@ -1,47 +1,47 @@
 export const THEME = {
   dark: {
-    primary: '#1A3D2E',      // Vert Zellige de base
-    primaryLight: '#234D3A', // Effet de surbrillance
-    background: '#080C0A',   // Noir plus profond (Onyx)
-    surface: '#0F1612',      // Vert nuit très sombre pour les cartes
-    surfaceVariant: '#151D19', 
-    onSurface: '#E6E2DC',    // Texte blanc cassé (Antique White)
-    onSurfaceVariant: '#A9B4AC',
-    gold: '#D4AF37',         // Or pur
-    goldMuted: '#997F2B',    // Or patiné pour les détails secondaires
-    zellige: '#2D6B5A',      // Vert Zellige signature
-    locked: '#1E2A22',       // Couleur des éléments verrouillés (foncé)
-    accent: '#CCA72F',
+    primary: '#064E3B',      // Vert Zellige Profond
+    primaryLight: '#0D6B52', // Plus vibrant pour les interactions
+    background: '#0B120F',   // Onyx profond
+    surface: '#141B17',      // Surface avec une légère teinte émeraude
+    surfaceVariant: '#1E2621', 
+    onSurface: '#FDFBF7',    // Texte crème (Parchment)
+    onSurfaceVariant: '#A0AFA6',
+    gold: '#F59E0B',         // Or Solaire vibrant
+    goldMuted: '#B47B08',    // Or patiné
+    zellige: '#0D9488',      // Sarcelle Zellige pour les accents
+    locked: '#1B2420',       // Couleur des éléments verrouillés
+    accent: '#2563EB',       // Bleu Majorelle pour le voyage
     white: '#FFFFFF',
-    glass: 'rgba(15, 22, 18, 0.85)',
-    border: '#1E2A22',
-    shadow: 'rgba(0, 0, 0, 0.5)',
+    glass: 'rgba(20, 27, 23, 0.85)',
+    border: '#232E28',
+    shadow: 'rgba(0, 0, 0, 0.6)',
     outline: '#707973',
     onPrimary: '#FFFFFF',
     surfaceContainerLow: '#0D1410',
-    secondaryContainer: '#ffab69',
+    secondaryContainer: '#F59E0B',
   },
   light: {
-    primary: '#2c4e3e',
-    primaryLight: '#436655',
-    background: '#fdf9f3',
-    surface: '#ffffff',
-    surfaceVariant: '#f1ede7',
-    onSurface: '#1c1c18',
+    primary: '#064E3B',
+    primaryLight: '#0D6B52',
+    background: '#FDFBF7',   // Sable de Nacre
+    surface: '#FFFFFF',
+    surfaceVariant: '#F3F0EA',
+    onSurface: '#0B120F',
     onSurfaceVariant: '#404943',
-    gold: '#D4AF37',
-    goldMuted: '#CCA72F',
-    zellige: '#2D6B5A',
-    locked: '#bfc9c1',
-    accent: '#CCA72F',
+    gold: '#D97706',         // Ambre plus chaud pour le mode clair
+    goldMuted: '#B45309',
+    zellige: '#0D9488',
+    locked: '#E5E7EB',
+    accent: '#2563EB',
     white: '#FFFFFF',
     glass: 'rgba(255, 255, 255, 0.8)',
-    border: '#bfc9c1',
+    border: '#E5E7EB',
     shadow: 'rgba(28, 28, 24, 0.08)',
     outline: '#707973',
     onPrimary: '#FFFFFF',
-    surfaceContainerLow: '#f7f3ed',
-    secondaryContainer: '#ffab69',
+    surfaceContainerLow: '#F9F7F2',
+    secondaryContainer: '#F59E0B',
   }
 };
 

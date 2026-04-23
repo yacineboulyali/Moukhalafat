@@ -15,10 +15,10 @@ import { useTheme } from '../hooks/useTheme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
-import Animated, { 
-  FadeInUp, 
-  FadeInDown, 
-  ZoomIn, 
+import Animated, {
+  FadeInUp,
+  FadeInDown,
+  ZoomIn,
   Layout,
   useSharedValue,
   useAnimatedStyle,
@@ -31,6 +31,9 @@ import { BlurView } from 'expo-blur';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { BadgeRewardModal } from '../components/BadgeRewardModal';
 import { BADGES } from '../constants/Badges';
+import { useMissionStore } from '../stores/missionStore';
+import { useQuestions } from '../hooks/useQuestions';
+import { useChallengeNavigation } from '../hooks/useChallengeNavigation';
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,10 +66,18 @@ const SKILLS = [
 
 export default function DefiResultatScreen() {
   const insets = useSafeAreaInsets();
-  const { cityId, nextMissionId } = useLocalSearchParams();
+  const { cityId, missionId, nextMissionId } = useLocalSearchParams();
   const { challenges } = useChallenges();
   const { colors, isDark } = useTheme();
   const styles = getStyles(colors, isDark);
+  const { getResults, clearResults } = useMissionStore();
+  const { questions: allQuestions } = useQuestions(missionId as string);
+  const { retryIncorrectQuestions } = useChallengeNavigation();
+
+  const results = getResults(missionId as string);
+  const correctCount = results.filter(r => r.isCorrect).length;
+  const incorrectCount = results.filter(r => !r.isCorrect).length;
+  const totalQuestions = results.length;
 
   const AnimatedSkillBar = ({ skill, index }: { skill: any, index: number }) => {
     const widthVal = useSharedValue(0);
@@ -94,18 +105,19 @@ export default function DefiResultatScreen() {
       </View>
     );
   };
-  
+
   const { progress, incrementMissionProgress } = usePlayerCityProgress();
-  
+
   const currentCity = cityId as string || 'rabat';
   const cityProg = progress[currentCity];
   const missionsCompleted = cityProg?.missions_completed ?? 0;
   const missionsTotal = cityProg?.missions_total ?? 5;
   const hasNextMission = (missionsCompleted + 1) < missionsTotal;
 
-  const dbData = challenges[currentCity];
-  const cityTitle = dbData?.city_name_fr?.toUpperCase() || currentCity.toUpperCase();
-  const cityTitleAr = dbData?.city_name_ar || '';
+  const CITY_SEQUENCE = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
+  const nextCityIndex = CITY_SEQUENCE.indexOf(currentCity) + 1;
+  const nextCityId = nextCityIndex < CITY_SEQUENCE.length ? CITY_SEQUENCE[nextCityIndex] : null;
+  const nextCityName = nextCityId ? challenges[nextCityId]?.city_name_fr : null;
 
   const [showBadge, setShowBadge] = React.useState(false);
   const earnedBadge = BADGES.find(b => b.id === 'explorateur_curieux') || BADGES[0];
@@ -134,27 +146,27 @@ export default function DefiResultatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['left', 'right']}>
-      <LinearGradient 
-        colors={['#fdf9f3', '#f2ece4']} 
-        style={StyleSheet.absoluteFillObject} 
+    <View style={styles.container}>
+      <LinearGradient
+        colors={['#fdf9f3', '#f2ece4']}
+        style={StyleSheet.absoluteFillObject}
       />
-      
+
       {/* Zellige Background Pattern Overlay */}
       <View style={styles.patternLayer}>
         <Svg width={width} height={height} opacity={0.03}>
           {Array.from({ length: 15 }).map((_, i) => (
-             <Path 
-               key={i} 
-               d={`M${i % 2 === 0 ? 0 : 50} ${i * 100} L300 ${i * 150}`} 
-               stroke={COLORS.primary} 
-               strokeWidth="0.5" 
-             />
+            <Path
+              key={i}
+              d={`M${i % 2 === 0 ? 0 : 50} ${i * 100} L300 ${i * 150}`}
+              stroke={COLORS.primary}
+              strokeWidth="0.5"
+            />
           ))}
         </Svg>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 20 }]}
         showsVerticalScrollIndicator={false}
       >
@@ -184,7 +196,7 @@ export default function DefiResultatScreen() {
 
           {/* Rang 1 */}
           <Animated.View entering={ZoomIn.delay(400)} style={[styles.podiumItem, styles.rank1]}>
-             <MaterialIcons name="emoji-events" size={32} color={COLORS.gold} style={styles.crownIcon} />
+            <MaterialIcons name="emoji-events" size={32} color={COLORS.gold} style={styles.crownIcon} />
             <View style={[styles.avatarRingMain, { borderColor: COLORS.gold }]}>
               <Image source={PARTICIPANTS[0].avatar} style={styles.avatarMain} />
               <View style={[styles.rankBadgeMain, { backgroundColor: COLORS.gold }]}>
@@ -214,7 +226,7 @@ export default function DefiResultatScreen() {
           <View style={styles.rewardsRow}>
             <BlurView intensity={60} tint="light" style={styles.rewardCard}>
               <View style={[styles.iconBox, { backgroundColor: COLORS.tertiaryContainer }]}>
-                 <MaterialIcons name="bolt" size={24} color="#fff" />
+                <MaterialIcons name="bolt" size={24} color="#fff" />
               </View>
               <Text style={styles.rewardVal}>+450 XP</Text>
               <Text style={styles.rewardLabel}>Progrès total</Text>
@@ -222,7 +234,7 @@ export default function DefiResultatScreen() {
 
             <BlurView intensity={60} tint="light" style={styles.rewardCard}>
               <View style={[styles.iconBox, { backgroundColor: COLORS.secondaryContainer }]}>
-                 <MaterialIcons name="military-tech" size={24} color="#fff" />
+                <MaterialIcons name="military-tech" size={24} color="#fff" />
               </View>
               <Text style={styles.rewardVal}>{earnedBadge.name}</Text>
               <Text style={styles.rewardLabel}>Nouveau Badge Débloqué</Text>
@@ -240,26 +252,124 @@ export default function DefiResultatScreen() {
           </BlurView>
         </Animated.View>
 
+        {/* Results Summary Section */}
+        <Animated.View entering={FadeInUp.delay(1300)} style={styles.section}>
+          <Text style={styles.sectionTitle}>Bilan du défi <Text style={styles.sectionArabic}>نتائج التحدي</Text></Text>
+          <View style={styles.statsContainer}>
+            <View style={[styles.statBox, { borderColor: '#4CAF50' }]}>
+              <MaterialIcons name="check-circle" size={24} color="#4CAF50" />
+              <Text style={styles.statVal}>{correctCount}</Text>
+              <Text style={styles.statLabel}>Correctes</Text>
+            </View>
+            <View style={[styles.statBox, { borderColor: '#ff5252' }]}>
+              <MaterialIcons name="cancel" size={24} color="#ff5252" />
+              <Text style={styles.statVal}>{incorrectCount}</Text>
+              <Text style={styles.statLabel}>Erreurs</Text>
+            </View>
+            <View style={[styles.statBox, { borderColor: '#FFA000' }]}>
+              <MaterialIcons name="help-outline" size={24} color="#FFA000" />
+              <Text style={styles.statVal}>{allQuestions.length - results.length}</Text>
+              <Text style={styles.statLabel}>Ignorées</Text>
+            </View>
+          </View>
+
+          {incorrectCount > 0 && (
+            <TouchableOpacity
+              style={[styles.retryBtn, { borderColor: colors.primary, marginBottom: 12 }]}
+              onPress={() => retryIncorrectQuestions({
+                missionId: missionId as string,
+                cityId: cityId as string,
+                questions: allQuestions || []
+              })}
+            >
+              <MaterialIcons name="refresh" size={20} color={colors.primary} />
+              <Text style={[styles.retryBtnText, { color: colors.primary }]}>Refaire les questions fausses</Text>
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.retryBtn, { borderColor: '#FFA000', borderStyle: 'solid' }]}
+            onPress={() => {
+              if (allQuestions.length > 0) {
+                clearResults(missionId as string);
+                router.replace({
+                  pathname: ('/(challenges)/' + allQuestions[0].question_type) as any,
+                  params: { missionId, cityId, questionIndex: '0' }
+                });
+              }
+            }}
+          >
+            <MaterialIcons name="replay" size={20} color="#FFA000" />
+            <Text style={[styles.retryBtnText, { color: '#FFA000' }]}>Recommencer la mission</Text>
+          </TouchableOpacity>
+        </Animated.View>
+
+        {/* Detailed Questions List Section */}
+        <Animated.View entering={FadeInUp.delay(1350)} style={styles.section}>
+          <Text style={styles.sectionTitle}>Détails de la mission <Text style={styles.sectionArabic}>تفاصيل المهمة</Text></Text>
+          <View style={styles.questionsList}>
+            {allQuestions.map((q, idx) => {
+              const result = results.find(r => r.questionIndex === idx);
+              const status = result ? (result.isCorrect ? 'correct' : 'wrong') : 'skipped';
+              return (
+                <View key={idx} style={[styles.questionItem, idx === 0 && { borderTopWidth: 0 }]}>
+                  <View style={[styles.statusIndicator, { backgroundColor: status === 'correct' ? '#4CAF50' : status === 'wrong' ? '#ff5252' : '#FFA000' }]}>
+                    <MaterialIcons 
+                      name={status === 'correct' ? 'check' : status === 'wrong' ? 'close' : 'priority-high'} 
+                      size={12} 
+                      color="#fff" 
+                    />
+                  </View>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={[styles.questionTextItem, { color: colors.onSurface }]} numberOfLines={1}>
+                      {q.question_fr || "Question sans titre"}
+                    </Text>
+                  </View>
+                  {status === 'correct' ? (
+                    <View style={styles.doneBadge}>
+                      <Text style={styles.doneText}>Validé</Text>
+                    </View>
+                  ) : (
+                    <TouchableOpacity 
+                      onPress={() => {
+                        router.replace({
+                          pathname: ('/(challenges)/' + q.question_type) as any,
+                          params: { missionId, cityId, questionIndex: String(idx) }
+                        });
+                      }}
+                      style={[styles.retryActionBtn, { backgroundColor: status === 'wrong' ? '#ff525220' : '#FFA00020' }]}
+                    >
+                      <Text style={[styles.retryActionText, { color: status === 'wrong' ? '#ff5252' : '#FFA000' }]}>
+                        {status === 'wrong' ? 'Corriger' : 'Répondre'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        </Animated.View>
+
         {/* Actions Button */}
         <Animated.View entering={FadeInUp.delay(1400)} style={styles.actions}>
-          <TouchableOpacity 
-            style={styles.primaryBtn} 
+          <TouchableOpacity
+            style={styles.primaryBtn}
             onPress={handleNextAction}
           >
-            <LinearGradient 
-              colors={['#2c4e3e', '#436655']} 
+            <LinearGradient
+              colors={['#2c4e3e', '#436655']}
               style={styles.btnGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
             >
               <Text style={styles.btnText}>
-                {hasNextMission ? "Mission Suivante" : "Retourner à la Carte"}
+                {hasNextMission ? "Mission Suivante" : (nextCityName ? `En route vers ${nextCityName}` : "Retourner à la Carte")}
               </Text>
-              <MaterialIcons name={hasNextMission ? "arrow-forward" : "map"} size={20} color="#fff" />
+              <MaterialIcons name={hasNextMission ? "arrow-forward" : (nextCityName ? "flight-takeoff" : "map")} size={20} color="#fff" />
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.secondaryBtn}
             onPress={() => router.replace('/accueil')}
           >
@@ -269,14 +379,14 @@ export default function DefiResultatScreen() {
 
       </ScrollView>
 
-      <BadgeRewardModal 
-        badge={earnedBadge} 
-        isVisible={showBadge} 
-        onClose={() => setShowBadge(false)} 
+      <BadgeRewardModal
+        badge={earnedBadge}
+        isVisible={showBadge}
+        onClose={() => setShowBadge(false)}
       />
 
       <ConfettiEffect />
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -553,5 +663,88 @@ const getStyles = (colors: any, isDark: boolean) => StyleSheet.create({
     fontWeight: '700',
     color: colors.onSurfaceVariant,
     opacity: 0.7,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 16,
+  },
+  statBox: {
+    flex: 1,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 2,
+  },
+  statVal: {
+    fontSize: 22,
+    fontWeight: '900',
+    marginTop: 8,
+  },
+  statLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    opacity: 0.6,
+    textTransform: 'uppercase',
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  retryBtnText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  questionsList: {
+    backgroundColor: colors.surface,
+    borderRadius: 24,
+    padding: 12,
+    marginTop: 8,
+  },
+  questionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+  },
+  statusIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  questionTextItem: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  doneBadge: {
+    backgroundColor: '#4CAF5015',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  doneText: {
+    color: '#4CAF50',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  retryActionBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  retryActionText: {
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

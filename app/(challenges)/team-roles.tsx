@@ -5,7 +5,6 @@ import { Dimensions, StyleSheet, Text, TouchableOpacity, View, ActivityIndicator
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { useAuthStore } from '../../stores/authStore';
-import MissionTracker from '../../components/MissionTracker';
 import { useTheme } from '../../hooks/useTheme';
 import { ProgressService } from '../../services/progress';
 import { SoundService } from '../../services/sounds';
@@ -69,7 +68,7 @@ export default function TeamRolesScreen() {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement de l'équipe...</Text>
+        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement de l&apos;équipe...</Text>
       </View>
     );
   }
@@ -161,12 +160,6 @@ export default function TeamRolesScreen() {
         onRestart={() => restartMission({ missionId: missionId as string, cityId, firstQuestionType: questions[0].question_type })}
       />
       <View style={{ height: 20 }} />
-      <MissionTracker
-        totalMissions={missions.length || 4}
-        currentMissionIndex={missions.findIndex(m => m.id === missionId)}
-        cityColor={colors.primary}
-      />
-
       <View style={styles.content}>
         <View style={styles.sectionTitleContainer}>
           <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>{qData?.question_fr || "TRAVAIL D'ÉQUIPE"}</Text>

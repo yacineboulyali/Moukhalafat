@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../hooks/useTheme';
 import { AVATARS, getAvatarById } from '../constants/Avatars';
+import { MainBottomNav } from '../components/MainBottomNav';
 
 const { width } = Dimensions.get('window');
 
@@ -140,7 +141,7 @@ export default function LeaderboardScreen() {
       <View style={styles.listContainer}>
         <BlurView intensity={100} tint="light" style={styles.listBlur}>
           <ScrollView 
-            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.listHeader}>
@@ -179,6 +180,7 @@ export default function LeaderboardScreen() {
           </ScrollView>
         </BlurView>
       </View>
+      <MainBottomNav />
     </View>
   );
 }

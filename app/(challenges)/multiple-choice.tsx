@@ -20,7 +20,6 @@ import { useTheme } from '../../hooks/useTheme';
 import { playSound } from '../../utils/SoundManager';
 import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
 import { useMissionStore } from '../../stores/missionStore';
-import DevQuickNav from '../../components/DevQuickNav';
 
 const { width } = Dimensions.get('window');
 
@@ -75,10 +74,18 @@ export default function V1MultipleChoiceScreen() {
 
     markComplete(missionId as string, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
+
     setTimeout(() => {
       setShowFeedback(false);
       if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        navigateToNext({ 
+          missionId: missionId as string, 
+          cityId, 
+          isMissionComplete: getQueue(missionId as string).length === 0 
+        });
         setSelectedId(null);
         setIsCorrect(null);
       } else {
@@ -116,7 +123,7 @@ export default function V1MultipleChoiceScreen() {
         <View style={styles.optionsContainer}>
           {options.map((option: any, index: number) => {
             const optKey = option.value ?? option.id ?? String(index);
-            const optLabel = option.label ?? option.label_fr ?? option.text ?? '';
+            const optLabel = option.label ?? option.label_fr ?? option.text_fr ?? option.text ?? option.texte ?? '';
             const isSelected = selectedId === optKey;
             const isCorrectOpt = optKey === qData.correct_answer;
             return (
@@ -180,7 +187,11 @@ export default function V1MultipleChoiceScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        message={isCorrect ? qData.feedback_positive_fr || undefined : qData.feedback_negative_fr || undefined}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash 

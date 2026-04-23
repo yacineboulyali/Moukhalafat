@@ -23,6 +23,9 @@ import { Image } from 'expo-image';
 import { THEME } from '../constants/theme';
 import { Badge } from '../constants/Badges';
 
+import { ConfettiEffect } from './ConfettiEffect';
+import { SoundService } from '../services/sounds';
+
 const { width } = Dimensions.get('window');
 
 interface BadgeRewardModalProps {
@@ -30,9 +33,6 @@ interface BadgeRewardModalProps {
   isVisible: boolean;
   onClose: () => void;
 }
-
-import { ConfettiEffect } from './ConfettiEffect';
-import { SoundService } from '../services/sounds';
 
 export const BadgeRewardModal: React.FC<BadgeRewardModalProps> = ({ badge, isVisible, onClose }) => {
   const soundService = SoundService.getInstance();

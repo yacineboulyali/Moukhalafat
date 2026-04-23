@@ -92,5 +92,27 @@ export const useChallengeNavigation = () => {
     });
   }, [router]);
 
-  return { navigateToNext, skipQuestion, goBack, goToIntro, restartMission };
+  const retryIncorrectQuestions = useCallback(({
+    missionId,
+    cityId,
+    questions
+  }: { missionId: string, cityId: string, questions: { question_type: string }[] }) => {
+    missionStore.retryFailed(missionId, questions);
+    const queue = missionStore.getQueue(missionId);
+    
+    if (queue.length > 0) {
+      const nextItem = queue[0];
+      const nextPath = getChallengePath(nextItem.type);
+      router.replace({
+        pathname: nextPath as any,
+        params: { 
+          missionId, 
+          questionIndex: String(nextItem.index), 
+          cityId 
+        }
+      });
+    }
+  }, [router, missionStore]);
+
+  return { navigateToNext, skipQuestion, goBack, goToIntro, restartMission, retryIncorrectQuestions };
 };

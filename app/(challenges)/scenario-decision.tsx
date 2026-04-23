@@ -1,6 +1,6 @@
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View , ActivityIndicator } from 'react-native';
 import Animated, { FadeIn, SlideInRight } from 'react-native-reanimated';
 import ChallengeTimer from '../../components/ChallengeTimer';
 import { THEME } from '../../constants/theme';
@@ -12,7 +12,7 @@ import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuestions } from '../../hooks/useQuestions';
 import { ChallengeIntroModal } from '../../components/ChallengeIntroModal';
-import { ActivityIndicator } from 'react-native';
+
 import { useAuthStore } from '../../stores/authStore';
 import { ProgressService } from '../../services/progress';
 import { useMissionStore } from '../../stores/missionStore';
@@ -32,6 +32,7 @@ export default function ScenarioDecisionScreen() {
   const { colors } = useTheme();
   const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
+  const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const user = useAuthStore(state => state.user);
@@ -84,7 +85,6 @@ export default function ScenarioDecisionScreen() {
     );
   }
 
-  const router = useRouter();
   const cityId = params.cityId as string;
   const missionId = params.missionId as string;
   const currentMissionIdx = parseInt(params.questionIndex as string || '0');
@@ -136,7 +136,7 @@ export default function ScenarioDecisionScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <ChallengeHeader 
         cityId={cityId} 
         onClose={() => goToIntro(cityId)}
@@ -166,7 +166,7 @@ export default function ScenarioDecisionScreen() {
               disabled={!!selected}
             >
               <View style={{ flex: 1 }}>
-                <Text style={[styles.choiceTitle, { color: colors.primary }]}>{choice.titre || choice.text}</Text>
+                <Text style={[styles.choiceTitle, { color: colors.primary }]}>{choice.titre || choice.text_fr || choice.text || choice.texte}</Text>
                 <Text style={[styles.choiceDesc, { color: colors.onSurfaceVariant }]}>{choice.description}</Text>
               </View>
               {selected === choice.id && (

@@ -51,36 +51,64 @@ export default function V1ScenarioCascadeScreen() {
     }
   }, [questions, missionId]);
 
+  const [currentStepIdx, setCurrentStepIdx] = useState(0);
+  const steps = qData?.options?.steps || [];
+  const hasSteps = steps.length > 0;
+  
+  const currentStep = hasSteps ? steps[currentStepIdx] : null;
+  const currentQuestion = currentStep ? (currentStep.question_fr || currentStep.question) : qData?.question_fr;
+  const currentOptions = currentStep ? (currentStep.responses || currentStep.options || []) : (Array.isArray(qData?.options) ? qData.options : []);
+
   const handleValidation = () => {
     if (!qData || !selectedId) return;
+    
+    const isLastStep = !hasSteps || currentStepIdx === steps.length - 1;
+    
+    // For single-step or last-step, validate against qData.correct_answer
+    // For intermediate steps, we might just progress or check step-specific correctness if available
     const correct = String(selectedId) === String(qData.correct_answer);
-    setIsCorrect(correct);
-    setShowFeedback(true);
-    playSound(correct ? 'correct' : 'wrong');
 
-    if (correct && currentIdx + 1 === questions.length) {
-      setShowConfetti(true);
-      awardBadge('diplomate_du_voyage');
-    }
+    if (isLastStep) {
+      setIsCorrect(correct);
+      setShowFeedback(true);
+      playSound(correct ? 'correct' : 'wrong');
 
-    markComplete(missionId as string, currentIdx);
-
-    setTimeout(() => {
-      setShowFeedback(false);
-      if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
-        setSelectedId(null);
-        setIsCorrect(null);
-      } else {
-        setIsCorrect(null);
+      if (correct && currentIdx + 1 === questions.length) {
+        setShowConfetti(true);
+        awardBadge('diplomate_du_voyage');
       }
-    }, 2000);
+
+      // Record the result
+      const { recordResult } = useMissionStore.getState();
+      recordResult(missionId as string, currentIdx, correct);
+
+      markComplete(missionId as string, currentIdx);
+
+      setTimeout(() => {
+        setShowFeedback(false);
+        if (correct) {
+          navigateToNext({ 
+            missionId: missionId as string, 
+            cityId, 
+            isMissionComplete: getQueue(missionId as string).length === 0 
+          });
+          setSelectedId(null);
+          setIsCorrect(null);
+          setCurrentStepIdx(0);
+        } else {
+          setIsCorrect(null);
+        }
+      }, 2000);
+    } else {
+      // Progress to next step
+      setCurrentStepIdx(prev => prev + 1);
+      setSelectedId(null);
+      playSound('click');
+    }
   };
 
   if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
   if (!qData) return null;
-
-  const options = Array.isArray(qData.options) ? qData.options : [];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
@@ -98,23 +126,28 @@ export default function V1ScenarioCascadeScreen() {
           </Animated.View>
         )}
         <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
-          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>SCÉNARIO / DÉCISION</Text>
+          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>
+            SCÉNARIO EN CASCADE {hasSteps ? `(${currentStepIdx + 1}/${steps.length})` : ''}
+          </Text>
           <View style={styles.scenarioCard}>
             <View style={styles.scenarioHeader}>
               <MaterialIcons name="assignment" size={22} color={colors.primary} />
               <Text style={styles.scenarioLabel}>SITUATION</Text>
             </View>
-            <Text style={[styles.scenarioText, { color: colors.onSurface }]}>{qData.question_fr}</Text>
-            {!!qData.question_ar && <Text style={styles.scenarioTextAr}>{qData.question_ar}</Text>}
+            <Text style={[styles.scenarioText, { color: colors.onSurface }]}>{currentQuestion}</Text>
+            {currentStepIdx === 0 && !!qData.question_ar && <Text style={styles.scenarioTextAr}>{qData.question_ar}</Text>}
           </View>
         </Animated.View>
 
         <View style={styles.optionsList}>
-          {options.map((option: any, index: number) => {
+          {currentOptions.map((option: any, index: number) => {
             const optKey = option.value ?? option.id ?? String(index);
-            const optLabel = option.label ?? option.label_fr ?? option.text ?? '';
+            const optLabel = option.label ?? option.label_fr ?? option.text_fr ?? option.text ?? option.texte ?? '';
             const isSelected = selectedId === optKey;
-            const isCorrectOpt = String(optKey) === String(qData.correct_answer);
+            
+            const isLastStep = !hasSteps || currentStepIdx === steps.length - 1;
+            const isCorrectOpt = isLastStep && String(optKey) === String(qData.correct_answer);
+
             return (
               <Animated.View key={optKey} entering={FadeInRight.delay(400 + index * 100)}>
                 <TouchableOpacity

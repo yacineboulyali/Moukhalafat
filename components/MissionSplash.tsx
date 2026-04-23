@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, Dimensions } from 'react-native';
 import Animated, { 
   FadeIn, 
   FadeOut, 
-  ScaleInCenter,
+  ZoomIn,
   useSharedValue, 
   useAnimatedStyle, 
   withSpring,
@@ -55,7 +55,7 @@ export const MissionSplash: React.FC<MissionSplashProps> = ({
       <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
       
       <Animated.View 
-        entering={ScaleInCenter} 
+        entering={ZoomIn} 
         style={styles.content}
       >
         <View style={[styles.iconCircle, { borderColor: cityColor }]}>

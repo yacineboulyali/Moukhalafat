@@ -114,3 +114,33 @@ export function useQuestions(missionId) {
 
   return { questions, loading, refresh: fetch, save, remove };
 }
+
+export function useSettings() {
+  const [settings, setSettings] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetch = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase
+      .from('app_settings')
+      .select('*')
+      .order('key');
+    setSettings(data || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetch(); }, [fetch]);
+
+  const save = async (setting) => {
+    if (setting.id) {
+      const { error } = await supabase.from('app_settings').update(setting).eq('id', setting.id);
+      if (error) throw error;
+    } else {
+      const { error } = await supabase.from('app_settings').insert(setting);
+      if (error) throw error;
+    }
+    await fetch();
+  };
+
+  return { settings, loading, refresh: fetch, save };
+}

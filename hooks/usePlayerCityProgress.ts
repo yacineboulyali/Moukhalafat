@@ -51,10 +51,45 @@ export function usePlayerCityProgress() {
     }
   };
 
-  useEffect(() => {
-    fetchProgress();
-
+  const checkAndInitializeProgress = async () => {
     if (!user) return;
+    
+    try {
+      const { data, error: err } = await supabase
+        .from('player_city_progress')
+        .select('id')
+        .eq('player_id', user.id);
+        
+      if (err) throw err;
+      
+      if (!data || data.length === 0) {
+        // Initialize all cities
+        const CITY_SEQUENCE = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
+        const initialProgress = CITY_SEQUENCE.map((cityId, index) => ({
+          player_id: user.id,
+          city_id: cityId,
+          status: index === 0 ? 'current' : 'locked',
+          missions_completed: 0,
+          missions_total: 5 
+        }));
+        
+        const { error: insErr } = await supabase.from('player_city_progress').insert(initialProgress);
+        if (insErr) throw insErr;
+        await fetchProgress();
+      }
+    } catch (err: any) {
+      console.error('Failed to initialize progress:', err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    fetchProgress();
+    checkAndInitializeProgress();
 
     // Real-time subscription
     const channel = supabase
@@ -82,20 +117,45 @@ export function usePlayerCityProgress() {
     if (!user) return;
 
     try {
-      // Find current progress for this city
+      // 1. Define city sequence
+      const CITY_SEQUENCE = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
+      
+      // 2. Find current progress for this city
       const current = progress[cityId];
       const nextCount = (current?.missions_completed ?? 0) + 1;
+      const total = current?.missions_total ?? 5;
+      const isDone = nextCount >= total;
       
+      // 3. Update current city
       const { error: err } = await supabase
         .from('player_city_progress')
         .update({ 
           missions_completed: nextCount,
-          status: nextCount >= (current?.missions_total ?? 5) ? 'done' : 'current'
+          status: isDone ? 'done' : 'current'
         })
         .eq('player_id', user.id)
         .eq('city_id', cityId);
 
       if (err) throw err;
+
+      // 4. Unlock next city if current is done
+      if (isDone) {
+        const currentIndex = CITY_SEQUENCE.indexOf(cityId);
+        if (currentIndex !== -1 && currentIndex < CITY_SEQUENCE.length - 1) {
+          const nextCityId = CITY_SEQUENCE[currentIndex + 1];
+          const nextProgress = progress[nextCityId];
+          
+          // Only unlock if it's currently locked
+          if (!nextProgress || nextProgress.status === 'locked') {
+            await supabase
+              .from('player_city_progress')
+              .update({ status: 'current' })
+              .eq('player_id', user.id)
+              .eq('city_id', nextCityId);
+          }
+        }
+      }
+
       await fetchProgress();
     } catch (err: any) {
       console.error('Failed to increment mission progress:', err.message);

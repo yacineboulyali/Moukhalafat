@@ -41,11 +41,12 @@ export const ChallengeHeader = ({
   const router = useRouter();
   const { colors } = useTheme();
   
-  // Automate finding the active mission index if not explicitly provided
+  // Automate finding the active mission index and total count
   const { missionId } = useLocalSearchParams();
   const { missions } = useMissions(cityId);
   const calculatedIndex = missions?.findIndex(m => m.id === missionId);
   const finalMissionIndex = propMissionIndex !== undefined ? propMissionIndex : Math.max(0, calculatedIndex);
+  const finalTotalMissions = missions?.length > 0 ? missions.length : totalMissions;
 
   // Effective close handler: onClose > onBack > router.back()
   const handleClose = onClose ?? onBack ?? (() => {
@@ -67,13 +68,12 @@ export const ChallengeHeader = ({
           </TouchableOpacity>
 
           <View style={{ flex: 1 }}>
-            <Text style={[styles.missionLabel, { color: colors.onSurfaceVariant }]}>
-              MISSION {finalMissionIndex + 1} / {totalMissions}
+            <Text style={[styles.missionLabel, { color: colors.primary, opacity: 0.8 }]}>
+              MISSION {finalMissionIndex + 1} SUR {finalTotalMissions}
             </Text>
             {missions && missions[finalMissionIndex] && (
               <Text 
                 style={[styles.missionTitle, { color: colors.primary }]} 
-                numberOfLines={1}
               >
                 {missions[finalMissionIndex].title_fr}
               </Text>
@@ -98,7 +98,7 @@ export const ChallengeHeader = ({
       </View>
       
       <View style={{ marginTop: 4 }}>
-        <MissionStepper currentMissionIndex={finalMissionIndex} totalMissions={totalMissions} />
+        <MissionStepper currentMissionIndex={finalMissionIndex} totalMissions={finalTotalMissions} />
       </View>
     </View>
   );
@@ -118,14 +118,15 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   missionLabel: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '900',
-    letterSpacing: 1.2,
-    opacity: 0.6,
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   missionTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
+    lineHeight: 18,
   },
   headerBtn: {
     width: 36,

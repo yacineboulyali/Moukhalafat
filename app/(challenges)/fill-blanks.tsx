@@ -52,7 +52,7 @@ export default function V1FillBlanksScreen() {
     }
   }, [questions, missionId]);
 
-  const correctAnswers = (qData?.correct_answer || '').split(',').map((a: string) => a.trim());
+  const correctAnswers = (qData?.correct_answer || '').split(/[|,]/).map((a: string) => a.trim());
   const options = Array.isArray(qData?.options) ? qData.options : [];
 
   const handleSelect = (text: string) => {
@@ -81,10 +81,18 @@ export default function V1FillBlanksScreen() {
 
     markComplete(missionId as string, currentIdx);
 
+    // Record the result
+    const { recordResult } = useMissionStore.getState();
+    recordResult(missionId as string, currentIdx, correct);
+
     setTimeout(() => {
       setShowFeedback(false);
       if (correct) {
-        navigateToNext({ missionId: missionId as string, cityId, isMissionComplete: currentIdx + 1 === questions.length });
+        navigateToNext({ 
+          missionId: missionId as string, 
+          cityId, 
+          isMissionComplete: getQueue(missionId as string).length === 0 
+        });
         setSelections([]);
         setIsCorrect(null);
       } else {
@@ -195,7 +203,11 @@ export default function V1FillBlanksScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        message={isCorrect ? qData.feedback_positive_fr || undefined : qData.feedback_negative_fr || undefined}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash 

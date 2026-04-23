@@ -9,7 +9,7 @@
  */
 import { MaterialIcons } from '@expo/vector-icons';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator, ScrollView, StyleSheet,
   Text, TouchableOpacity, View
@@ -65,14 +65,23 @@ export default function ErrorDetectionScreen() {
   }, [currentIdx]);
 
   // Parse options: [{id, error, correct}]
-  const errorItems: Array<{ id: string; error: string; correct: boolean }> =
-    Array.isArray(qData?.options)
-      ? qData.options.map((o: any) => ({
-          id: String(o.id ?? o.value ?? Math.random()),
-          error: o.error ?? o.label ?? o.text ?? '',
-          correct: o.correct === true || o.correct === 'true',
-        }))
-      : [];
+  const errorItems: { id: string; error: string; correct: boolean }[] = useMemo(() => {
+    let base: any[] = [];
+    if (Array.isArray(qData?.options)) {
+      base = qData.options;
+    } else if (qData?.options?.errors && Array.isArray(qData.options.errors)) {
+      // If it's just an array of strings, convert to objects
+      base = qData.options.errors.map((err: any, idx: number) => 
+        typeof err === 'string' ? { id: `err-${idx}`, error: err, correct: true } : err
+      );
+    }
+
+    return base.map((o: any, idx: number) => ({
+      id: String(o.id ?? o.value ?? `item-${idx}`),
+      error: o.error ?? o.label ?? o.text_fr ?? o.text ?? (typeof o === 'string' ? o : ''),
+      correct: o.correct === true || o.correct === 'true' || (qData?.options?.errors !== undefined),
+    }));
+  }, [qData]);
 
   const correctIds = new Set(errorItems.filter(e => e.correct).map(e => e.id));
   const totalCorrect = correctIds.size;
@@ -142,7 +151,7 @@ export default function ErrorDetectionScreen() {
 
         {/* Instruction */}
         <Animated.View entering={FadeInDown.delay(150)} style={styles.header}>
-          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>DÉTECTION D'ERREURS</Text>
+          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>DÉTECTION D&apos;ERREURS</Text>
           <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
           <View style={[styles.countBadge, { backgroundColor: colors.primary + '15' }]}>
             <MaterialIcons name="search" size={14} color={colors.primary} />
@@ -269,7 +278,7 @@ const styles = StyleSheet.create({
   countText: { fontSize: 13, fontWeight: '700' },
   errorList: { gap: 12 },
   errorCard: {
-    flexDirection: 'row', alignItems: 'center', padding: 16,
+    flexDirection: 'row', alignItems: 'flex-start', padding: 16,
     borderRadius: 18, borderWidth: 2, gap: 14,
     elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4,
   },

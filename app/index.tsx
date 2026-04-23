@@ -57,47 +57,47 @@ export default function SplashScreen() {
 
     const initApp = async () => {
       try {
-        // Pré-charger les sons en parallèle du reste
+        // Start background tasks
         SoundService.getInstance().preloadAll();
+        
+        // Parallelize data checks/syncs
+        // We check if we have local data first. If we do, we can navigate faster.
+        const [challenges, missions] = await Promise.all([
+          dbService.getChallenges(),
+          dbService.getMissionsByCity('rabat'), // Use a representative city to check if seeded
+          preloadAllQuestions() // Keep this as is for now
+        ]);
 
-        // Step 1: Challenges
-        await preloadAllChallenges();
         if (cancelled) return;
-        progressWidth.value = withTiming(33, { duration: 500 });
-        setLoadPercentage(33);
+        
+        // If we have local data, we set progress to 100% immediately to allow fast entry
+        if (challenges.length > 0 && missions.length > 0) {
+          console.log('🚀 Local data found, ready for fast boot.');
+          progressWidth.value = withTiming(100, { duration: 300 });
+          setLoadPercentage(100);
+        } else {
+          // No local data, must sync from Supabase
+          console.log('📡 No local data, performing initial sync...');
+          setLoadPercentage(10);
+          progressWidth.value = withTiming(10, { duration: 300 });
 
-        // Step 2: Missions 
-        await preloadAllMissions();
-        if (cancelled) return;
-        progressWidth.value = withTiming(66, { duration: 500 });
-        setLoadPercentage(66);
+          await syncCurriculum();
+          
+          if (cancelled) return;
+          progressWidth.value = withTiming(100, { duration: 500 });
+          setLoadPercentage(100);
+        }
 
-        // Step 3: Questions (no-op actuellement, futur use)
-        await preloadAllQuestions();
-        if (cancelled) return;
-        progressWidth.value = withTiming(100, { duration: 500 });
-        setLoadPercentage(100);
-
-        // Timeout de sécurité — on navigue dans tous les cas après 5 secondes
-        // OPTIMISATION: remplace le busy-wait `while (authLoading)` qui bloquait le thread
-        const NAVIGATION_TIMEOUT = 5000;
-        const navTimer = setTimeout(() => {
-          if (!cancelled) {
-            router.replace('/map');
-          }
-        }, NAVIGATION_TIMEOUT);
-
-        // Navigation immédiate si l'auth est déjà résolue
+        // Navigation logic
         if (!authLoading) {
-          clearTimeout(navTimer);
           setTimeout(() => {
             if (!cancelled) router.replace('/map');
-          }, 800);
+          }, 500);
         }
-        // Sinon, le useEffect sur [authLoading] ci-dessous prend le relais
 
       } catch (err) {
         console.error("Erreur d'initialisation:", err);
+        // Fallback: try to navigate anyway
         if (!cancelled) router.replace('/accueil');
       }
     };
