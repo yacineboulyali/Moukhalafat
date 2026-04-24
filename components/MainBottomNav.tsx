@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from './SafeBlurView';
 import { router, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
@@ -11,7 +11,7 @@ const { width } = Dimensions.get('window');
 export const MainBottomNav = () => {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, s } = useTheme();
 
   const navItems = [
     { label: 'Ligue', icon: 'leaderboard', path: '/leaderboard' },
@@ -21,14 +21,14 @@ export const MainBottomNav = () => {
   ];
 
   return (
-    <BlurView 
+    <SafeBlurView 
       intensity={80} 
       tint={isDark ? 'dark' : 'light'} 
       style={[
         styles.bottomNav, 
         { 
-          paddingBottom: Math.max(insets.bottom, 16), 
-          height: 64 + Math.max(insets.bottom, 16) 
+          paddingBottom: Math.max(insets.bottom, s(16)), 
+          height: s(64) + Math.max(insets.bottom, s(16)) 
         }
       ]}
     >
@@ -43,29 +43,28 @@ export const MainBottomNav = () => {
           >
             <MaterialIcons 
               name={item.icon as any} 
-              size={isActive ? 22 : 24} 
+              size={isActive ? s(22) : s(24)} 
               color={isActive ? colors.white : colors.onSurfaceVariant} 
             />
             {isActive ? (
-              <Text style={[styles.navTextActive, { color: colors.white }]}>
+              <Text style={[styles.navTextActive, { color: colors.white, fontSize: s(10) }]}>
                 {item.label.toUpperCase()}
               </Text>
             ) : (
-              <Text style={[styles.navText, { color: colors.onSurfaceVariant }]}>
+              <Text style={[styles.navText, { color: colors.onSurfaceVariant, fontSize: s(10) }]}>
                 {item.label}
               </Text>
             )}
           </TouchableOpacity>
         );
       })}
-    </BlurView>
+    </SafeBlurView>
   );
 };
 
 const styles = StyleSheet.create({
   bottomNav: {
-    position: 'absolute',
-    bottom: 0,
+    position: 'relative',
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -77,6 +76,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(191, 201, 193, 0.15)',
     zIndex: 1000,
+    backgroundColor: 'transparent',
   },
   navItem: {
     alignItems: 'center',

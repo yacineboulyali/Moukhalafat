@@ -8,7 +8,7 @@ import Animated, {
   ZoomIn,
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from './SafeBlurView';
 import { useTheme } from '../hooks/useTheme';
 
 const { width, height } = Dimensions.get('window');
@@ -40,7 +40,7 @@ export const ChallengeIntroModal: React.FC<ChallengeIntroModalProps> = ({
       exiting={FadeOut} 
       style={styles.container}
     >
-      <BlurView intensity={95} tint="dark" style={StyleSheet.absoluteFill} />
+      <SafeBlurView intensity={95} tint="dark" style={StyleSheet.absoluteFill} />
       
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.delay(200)} style={styles.contextCard}>

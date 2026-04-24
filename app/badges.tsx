@@ -31,7 +31,7 @@ import { useAuthStore } from '../stores/authStore';
 import { Audio } from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
 
 const { width, height } = Dimensions.get('window');
 
@@ -386,7 +386,7 @@ export default function BadgesScreen() {
           style={styles.modalOverlay}
           onPress={() => setSelectedBadge(null)}
         >
-          <BlurView intensity={30} style={StyleSheet.absoluteFill} tint="dark" />
+          <SafeBlurView intensity={30} style={StyleSheet.absoluteFill} tint="dark" />
           
           <Animated.View 
             entering={FadeInUp.springify()}

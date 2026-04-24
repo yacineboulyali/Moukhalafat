@@ -62,28 +62,102 @@ export async function syncAppSettings() {
   return settings;
 }
 
+export async function syncPlayerProgress(userId: string) {
+  const { data: progress, error: pErr } = await supabase
+    .from('player_city_progress')
+    .select('*')
+    .eq('player_id', userId);
+  
+  if (pErr) throw pErr;
+  if (progress) {
+    await dbService.savePlayerProgress(progress);
+    console.log(`✅ ${progress.length} player city progress synced.`);
+  }
+  return progress;
+}
+
 /** 
  * Main curriculum sync entry point.
  * Populates SQLite with challenges, missions, and questions.
+ * Handles each step independently to allow partial success.
  */
-export async function syncCurriculum() {
-  console.log('🔄 Starting curriculum sync...');
-  try {
-    // Run in parallel for maximum speed
-    // These tables are mostly independent during INSERT OR REPLACE
-    await Promise.all([
-      syncAppSettings(),
-      syncChallenges(),
-      syncMissions(),
-      syncQuestions()
-    ]);
-    
-    console.log('🎉 Curriculum sync complete!');
+export async function syncCurriculum(userId?: string) {
+  console.log('🔄 Checking curriculum sync status...');
+  
+  // Anti-flooding: Only sync once every 10 minutes unless forced
+  const lastSync = await dbService.getLastSync();
+  const now = Date.now();
+  if (now - lastSync < 10 * 60 * 1000) {
+    console.log('⏳ Sync skipped: recently updated.');
     return true;
-  } catch (error) {
-    console.error('❌ Sync failed:', error);
-    return false;
   }
+
+  const stats = {
+    settings: false,
+    challenges: false,
+    missions: false,
+    questions: false,
+    playerProgress: false
+  };
+
+  // 1. Sync App Settings
+  try {
+    await syncAppSettings();
+    stats.settings = true;
+  } catch (e) {
+    console.error('⚠️ App Settings sync failed:', e);
+  }
+
+  // 2. Sync Challenges
+  try {
+    await syncChallenges();
+    stats.challenges = true;
+  } catch (e) {
+    console.error('⚠️ Challenges sync failed:', e);
+  }
+
+  // 3. Sync Missions
+  try {
+    await syncMissions();
+    stats.missions = true;
+  } catch (e) {
+    console.error('⚠️ Missions sync failed:', e);
+  }
+
+  // 4. Sync Questions
+  try {
+    await syncQuestions();
+    stats.questions = true;
+  } catch (e) {
+    console.error('⚠️ Questions sync failed:', e);
+  }
+
+  // 5. Sync Player Progress (if userId provided)
+  if (userId) {
+    try {
+      await syncPlayerProgress(userId);
+      stats.playerProgress = true;
+    } catch (e) {
+      console.error('⚠️ Player Progress sync failed:', e);
+    }
+  }
+
+  const successCount = Object.values(stats).filter(v => v).length;
+  const totalSteps = userId ? 5 : 4;
+  const isComplete = successCount === totalSteps;
+
+  if (isComplete) {
+    console.log('🎉 Curriculum sync complete!');
+    await dbService.setLastSync(now);
+  } else if (successCount > 0) {
+    console.warn(`🌗 Curriculum sync partially complete (${successCount}/${totalSteps}).`);
+    // Still update timestamp if we got some data to avoid infinite retries on small errors
+    await dbService.setLastSync(now);
+  } else {
+    console.error('❌ Curriculum sync failed completely.');
+  }
+
+  return isComplete;
 }
 
 /** Placeholder for fullSync if referenced elsewhere */

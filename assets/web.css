@@ -1,0 +1,38 @@
+/* web.css - Web-specific styles for Le Voyage des Compétences */
+
+/* Add pointer cursor to all interactive elements in React Native Web */
+[role="button"], 
+[role="link"], 
+.react-native-web-button, 
+.react-native-web-touchable,
+[data-testid*="btn"],
+[data-testid*="button"] {
+  cursor: pointer !important;
+}
+
+/* Hide scrollbars globally while maintaining scrollability */
+* {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+*::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Opera */
+}
+
+/* Base styles for the web environment */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Prevent native body scrolling */
+  background-color: #F3F0EA; /* Neutral light background for the web wrapper */
+}
+
+/* Ensure the root view fills the screen */
+#root {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}

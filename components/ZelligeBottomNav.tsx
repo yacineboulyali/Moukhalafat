@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from './SafeBlurView';
 import { router, usePathname } from 'expo-router';
 import Animated, { 
   useAnimatedStyle, 
@@ -79,7 +79,7 @@ export const ZelligeBottomNav = () => {
   const { colors, isDark } = useTheme();
 
   return (
-    <BlurView 
+    <SafeBlurView 
       intensity={isDark ? 40 : 80} 
       tint={isDark ? 'dark' : 'light'} 
       style={[
@@ -120,7 +120,7 @@ export const ZelligeBottomNav = () => {
         path="/profil-classique" 
         isActive={pathname === '/profil-classique'} 
       />
-    </BlurView>
+    </SafeBlurView>
   );
 };
 

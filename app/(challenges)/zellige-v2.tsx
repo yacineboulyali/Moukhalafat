@@ -13,6 +13,7 @@ import { useQuestions } from '../../hooks/useQuestions';
 import { MissionSplash } from '../../components/MissionSplash';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +29,7 @@ export default function ZelligeV2Screen() {
   const cityId = params.cityId as string;
   const questionIndex = (Array.isArray(params.questionIndex) ? params.questionIndex[0] : params.questionIndex) || '0';
 
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId);
   const questions = Array.isArray(dbQuestions) ? dbQuestions : [];
   
   const currentIdx = parseInt(questionIndex as string) || 0;
@@ -69,6 +70,16 @@ export default function ZelligeV2Screen() {
     SoundService.getInstance().playSound('click');
     SoundService.getInstance().triggerHaptic('light');
   };
+
+  if (loadingQuestions) {
+    return (
+      <FullScreenLoader 
+        message="Chargement..." 
+        error={errorQuestions} 
+        onRetry={() => { refreshQuestions(); }} 
+      />
+    );
+  }
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>

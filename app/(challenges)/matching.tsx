@@ -143,7 +143,7 @@ export default function V1MatchingScreen() {
         cityId,
         isMissionComplete: getQueue(missionId as string).length === 0,
       });
-    }, 2800);
+    }, 3000);
   };
 
   if (loadingMissions || loadingQuestions) {
@@ -325,7 +325,11 @@ export default function V1MatchingScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        onClose={() => setShowFeedback(false)}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash

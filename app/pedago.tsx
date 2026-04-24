@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { useMissions } from '../hooks/useMissions';
 import { useChallenges } from '../hooks/useChallenges';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
 import Animated, { 
   FadeInDown, 
   FadeInRight,
@@ -24,13 +24,13 @@ import Animated, {
 
 const { width } = Dimensions.get('window');
 
-const PrincipleItem = ({ icon, title, arabicTitle, delay, colors: COLORS, styles }: { icon: any, title: string, arabicTitle: string, delay: number, colors: any, styles: any }) => (
+const PrincipleItem = ({ icon, title, arabicTitle, delay, colors: COLORS, styles, s }: { icon: any, title: string, arabicTitle: string, delay: number, colors: any, styles: any, s: any }) => (
   <Animated.View 
     entering={FadeInRight.delay(delay).duration(600)}
     style={[styles.principleCard, { backgroundColor: COLORS.surface }]}
   >
     <View style={[styles.principleIconContainer, { backgroundColor: COLORS.surfaceVariant }]}>
-      <MaterialIcons name={icon} size={28} color={COLORS.gold || '#cca72f'} />
+      <MaterialIcons name={icon} size={s(28)} color={COLORS.gold || '#cca72f'} />
     </View>
     <View style={styles.principleTextContainer}>
       <Text style={[styles.principleTitle, { color: COLORS.primary }]}>{title}</Text>
@@ -40,7 +40,7 @@ const PrincipleItem = ({ icon, title, arabicTitle, delay, colors: COLORS, styles
 );
 
 export default function PedagoScreen() {
-  const { colors: COLORS, themeMode } = useTheme();
+  const { colors: COLORS, themeMode, s } = useTheme();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams();
   const cityId = params.cityId as string;
@@ -50,7 +50,7 @@ export default function PedagoScreen() {
   const { challenges } = useChallenges();
   const cityData = challenges[targetCity];
   const cityColor = cityData?.city_color ?? COLORS.gold;
-  const styles = getStyles(COLORS);
+  const styles = getStyles(COLORS, s);
 
   const handleContinue = async () => {
     try {
@@ -98,12 +98,12 @@ export default function PedagoScreen() {
               style={styles.imageOverlay}
             />
             <TouchableOpacity 
-              style={[styles.backButton, { top: insets.top + 10 }]}
+              style={[styles.backButton, { top: insets.top + s(10) }]}
               onPress={() => router.back()}
             >
-              <BlurView intensity={30} tint="light" style={styles.blurBtn}>
-                <Ionicons name="chevron-back" size={24} color={COLORS.white} />
-              </BlurView>
+              <SafeBlurView intensity={30} tint="light" style={styles.blurBtn}>
+                <Ionicons name="chevron-back" size={s(24)} color={COLORS.white} />
+              </SafeBlurView>
             </TouchableOpacity>
           </View>
         </Animated.View>
@@ -119,7 +119,7 @@ export default function PedagoScreen() {
             </View>
             
             <View style={[styles.quoteCard, { backgroundColor: COLORS.surface }]}>
-              <MaterialIcons name="info" size={32} color={cityColor} style={styles.quoteIcon} />
+              <MaterialIcons name="info" size={s(32)} color={cityColor} style={styles.quoteIcon} />
               <Text style={[styles.quoteText, { color: COLORS.primary }]}>
                 {cityData?.description_fr || "Découvrez les secrets de cette ville à travers des missions culturelles et professionnelles."}
               </Text>
@@ -144,7 +144,7 @@ export default function PedagoScreen() {
                       </Text>
                       {mission.soft_skill_dominant && (
                         <View style={styles.softSkillBadge}>
-                          <MaterialIcons name="star" size={12} color={cityColor} />
+                          <MaterialIcons name="star" size={s(12)} color={cityColor} />
                           <Text style={[styles.softSkillText, { color: cityColor }]}>{mission.soft_skill_dominant}</Text>
                         </View>
                       )}
@@ -154,6 +154,21 @@ export default function PedagoScreen() {
               )}
             </View>
           </Animated.View>
+          
+          {/* Learning Outcomes Section */}
+          {cityData?.learning_outcomes && cityData.learning_outcomes.length > 0 && (
+            <Animated.View entering={FadeInDown.delay(500).duration(800)} style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: cityColor }]}>🎯 CE QUE VOUS ALLEZ APPRENDRE :</Text>
+              <View style={[styles.analysisCard, { backgroundColor: 'rgba(255,255,255,0.6)', borderColor: COLORS.border }]}>
+                {cityData.learning_outcomes.map((outcome, idx) => (
+                  <View key={idx} style={[styles.outcomeRow, idx > 0 && { marginTop: s(12) }]}>
+                    <MaterialIcons name="check-circle" size={s(18)} color={cityColor} />
+                    <Text style={[styles.outcomeText, { color: COLORS.primary }]}>{outcome}</Text>
+                  </View>
+                ))}
+              </View>
+            </Animated.View>
+          )}
 
           <Animated.View entering={FadeInDown.delay(600).duration(800)} style={styles.section}>
             <Text style={[styles.sectionLabel, { color: cityColor }]}>Compétences Clés</Text>
@@ -164,6 +179,7 @@ export default function PedagoScreen() {
               delay={700}
               colors={COLORS}
               styles={styles}
+              s={s}
             />
             <PrincipleItem 
               icon="security" 
@@ -172,12 +188,13 @@ export default function PedagoScreen() {
               delay={850}
               colors={COLORS}
               styles={styles}
+              s={s}
             />
           </Animated.View>
         </View>
       </ScrollView>
 
-      <BlurView intensity={80} tint={themeMode === 'dark' ? 'dark' : 'light'} style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
+      <SafeBlurView intensity={80} tint={themeMode === 'dark' ? 'dark' : 'light'} style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 4) }]}>
         <TouchableOpacity 
           style={[styles.continueBtn, { backgroundColor: cityColor }]}
           onPress={handleContinue}
@@ -185,16 +202,16 @@ export default function PedagoScreen() {
           <Text style={[styles.continueText, { color: COLORS.white }]}>POURSUIVRE LE DÉFI</Text>
           <MaterialIcons 
             name={params.fromChallenge === 'true' ? 'assignment-return' : 'play-arrow'} 
-            size={24} 
+            size={s(24)} 
             color={COLORS.white} 
           />
         </TouchableOpacity>
-      </BlurView>
+      </SafeBlurView>
     </View>
   );
 }
 
-const getStyles = (COLORS: any) => StyleSheet.create({
+const getStyles = (COLORS: any, s: (v: number) => number) => StyleSheet.create({
   mainContainer: {
     flex: 1,
   },
@@ -203,7 +220,7 @@ const getStyles = (COLORS: any) => StyleSheet.create({
   },
   imageWrapper: {
     width: '100%',
-    height: 120,
+    height: s(120),
     position: 'relative',
   },
   heroImage: {
@@ -215,51 +232,51 @@ const getStyles = (COLORS: any) => StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    left: 20,
+    left: s(20),
     zIndex: 10,
   },
   blurBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: s(44),
+    height: s(44),
+    borderRadius: s(22),
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
     backgroundColor: 'rgba(255,255,255,0.2)',
   },
   contentPadding: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
+    paddingHorizontal: s(24),
+    paddingTop: s(16),
   },
   expertSection: {
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   expertHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   vLine: {
-    width: 4,
-    height: 40,
+    width: s(4),
+    height: s(40),
     backgroundColor: COLORS.gold || '#cca72f',
-    marginRight: 12,
-    borderRadius: 2,
+    marginRight: s(12),
+    borderRadius: s(2),
   },
   expertName: {
-    fontSize: 20,
+    fontSize: s(20),
     fontWeight: '800',
     color: COLORS.primary,
   },
   expertTitle: {
-    fontSize: 14,
+    fontSize: s(14),
     color: COLORS.onSurfaceVariant,
     fontWeight: '500',
   },
   quoteCard: {
     backgroundColor: COLORS.white,
-    borderRadius: 20,
-    padding: 24,
+    borderRadius: s(20),
+    padding: s(24),
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
@@ -269,73 +286,73 @@ const getStyles = (COLORS: any) => StyleSheet.create({
   },
   quoteIcon: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    top: s(10),
+    left: s(10),
     opacity: 0.1,
   },
   quoteText: {
-    fontSize: 18,
+    fontSize: s(18),
     fontStyle: 'italic',
     color: COLORS.primary,
-    lineHeight: 28,
+    lineHeight: s(28),
     textAlign: 'center',
     fontWeight: '600',
   },
   section: {
-    marginBottom: 32,
+    marginBottom: s(32),
   },
   sectionLabel: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: '900',
     color: COLORS.gold || '#cca72f',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   analysisCard: {
     backgroundColor: 'rgba(255,255,255,0.6)',
-    borderRadius: 24,
-    padding: 20,
+    borderRadius: s(24),
+    padding: s(20),
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },
   analysisRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: s(8),
   },
   statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 10,
+    width: s(10),
+    height: s(10),
+    borderRadius: s(5),
+    marginRight: s(10),
   },
   analysisOption: {
-    fontSize: 15,
+    fontSize: s(15),
     fontWeight: '700',
     color: COLORS.primary,
     flex: 1,
   },
   analysisResult: {
-    fontSize: 14,
+    fontSize: s(14),
     color: COLORS.onSurfaceVariant,
-    lineHeight: 22,
+    lineHeight: s(22),
     paddingLeft: 0,
-    marginTop: 4,
+    marginTop: s(4),
   },
   softSkillBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 6,
-    gap: 4,
+    marginTop: s(6),
+    gap: s(4),
     backgroundColor: 'rgba(0,0,0,0.03)',
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+    paddingHorizontal: s(8),
+    paddingVertical: s(2),
+    borderRadius: s(10),
   },
   softSkillText: {
-    fontSize: 10,
+    fontSize: s(10),
     fontWeight: 'bold',
     textTransform: 'uppercase',
   },
@@ -343,9 +360,9 @@ const getStyles = (COLORS: any) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.white,
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
+    padding: s(16),
+    borderRadius: s(16),
+    marginBottom: s(12),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
@@ -353,24 +370,24 @@ const getStyles = (COLORS: any) => StyleSheet.create({
     elevation: 2,
   },
   principleIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: s(48),
+    height: s(48),
+    borderRadius: s(24),
     backgroundColor: COLORS.surfaceVariant,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: s(16),
   },
   principleTextContainer: {
     flex: 1,
   },
   principleTitle: {
-    fontSize: 16,
+    fontSize: s(16),
     fontWeight: '700',
     color: COLORS.primary,
   },
   principleArabic: {
-    fontSize: 14,
+    fontSize: s(14),
     color: COLORS.onSurfaceVariant,
     opacity: 0.6,
   },
@@ -378,19 +395,19 @@ const getStyles = (COLORS: any) => StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
+    paddingHorizontal: s(24),
+    paddingTop: s(16),
+    borderTopLeftRadius: s(32),
+    borderTopRightRadius: s(32),
   },
   continueBtn: {
     backgroundColor: COLORS.primary,
-    height: 64,
-    borderRadius: 20,
+    height: s(64),
+    borderRadius: s(20),
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: s(12),
     shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
@@ -399,15 +416,26 @@ const getStyles = (COLORS: any) => StyleSheet.create({
   },
   continueText: {
     color: COLORS.white,
-    fontSize: 18,
+    fontSize: s(18),
     fontWeight: '800',
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: s(14),
     color: COLORS.onSurfaceVariant,
     opacity: 0.6,
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 20,
+    padding: s(20),
+  },
+  outcomeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: s(12),
+  },
+  outcomeText: {
+    fontSize: s(14),
+    fontWeight: '500',
+    lineHeight: s(20),
+    flex: 1,
   },
 });

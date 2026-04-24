@@ -22,11 +22,12 @@ import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { useMissionStore } from '../../stores/missionStore';
 import { useQuestions } from '../../hooks/useQuestions';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const PATTERNS = [
   { id: '1', icon: 'star', color: '#cca72f' },
   { id: '2', icon: 'favorite', color: '#e11d48' },
-  { id: '3', icon: 'vibrating-not-allowed', color: '#8e4e14' },
+  { id: '3', icon: 'vibration', color: '#8e4e14' },
   { id: '4', icon: 'brightness-7', color: '#2563eb' }
 ];
 
@@ -43,7 +44,7 @@ export default function TimeAttackScreen() {
   const cityId = params.cityId as string;
   const questionIndex = (Array.isArray(params.questionIndex) ? params.questionIndex[0] : params.questionIndex) || '0';
 
-  const { questions, loading: loadingQuestions } = useQuestions(missionId);
+  const { questions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId);
   const qData = questions[parseInt(questionIndex)];
 
   const [score, setScore] = useState(0);
@@ -179,10 +180,11 @@ export default function TimeAttackScreen() {
 
   if (loadingQuestions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement du défi...</Text>
-      </View>
+      <FullScreenLoader 
+        message="Chargement du défi..." 
+        error={errorQuestions} 
+        onRetry={() => { refreshQuestions(); }} 
+      />
     );
   }
 

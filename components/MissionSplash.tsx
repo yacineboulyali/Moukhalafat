@@ -12,7 +12,7 @@ import Animated, {
   withTiming
 } from 'react-native-reanimated';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from './SafeBlurView';
 
 const { width, height } = Dimensions.get('window');
 
@@ -52,7 +52,7 @@ export const MissionSplash: React.FC<MissionSplashProps> = ({
       exiting={FadeOut} 
       style={styles.container}
     >
-      <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+      <SafeBlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
       
       <Animated.View 
         entering={ZoomIn} 

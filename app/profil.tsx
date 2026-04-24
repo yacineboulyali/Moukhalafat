@@ -10,7 +10,7 @@ import { CompetencyRadar } from '../components/CompetencyRadar';
 import { AVATARS } from '../constants/Avatars';
 import { BADGES } from '../constants/Badges';
 import { useAuthStore } from '../stores/authStore';
-import { MainBottomNav } from '../components/MainBottomNav';
+import { useGameStore } from '../stores/gameStore';
 
 const { width } = Dimensions.get('window');
 
@@ -19,7 +19,10 @@ const { width } = Dimensions.get('window');
 export default function ProfilClassiqueScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
-  const { colors: COLORS } = useTheme();
+  const { colors: COLORS, uiScale, s } = useTheme();
+  const setUiScale = useGameStore((state) => state.setUiScale);
+
+  const styles = getStyles(COLORS, s);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top, backgroundColor: COLORS.background }]}>
@@ -27,7 +30,7 @@ export default function ProfilClassiqueScreen() {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <TouchableOpacity onPress={() => router.back()}>
-            <MaterialIcons name="menu" size={24} color={COLORS.primary} />
+            <MaterialIcons name="menu" size={s(24)} color={COLORS.primary} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: COLORS.primary }]}>Le Voyage</Text>
         </View>
@@ -62,9 +65,9 @@ export default function ProfilClassiqueScreen() {
         {/* Soft Skills Radar Card */}
         <Animated.View entering={FadeInUp.delay(200)} style={styles.radarSection}>
           <View style={[styles.radarCard, { backgroundColor: COLORS.surfaceVariant }]}>
-            <MaterialIcons name="architecture" size={60} color={COLORS.primary} style={styles.bgIcon} />
+            <MaterialIcons name="architecture" size={s(60)} color={COLORS.primary} style={styles.bgIcon} />
             <View style={styles.cardTitleRow}>
-              <MaterialIcons name="psychology" size={24} color={COLORS.primary} />
+              <MaterialIcons name="psychology" size={s(24)} color={COLORS.primary} />
               <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Majlis des Soft Skills</Text>
             </View>
 
@@ -95,11 +98,11 @@ export default function ProfilClassiqueScreen() {
                     {badge.remoteImage ? (
                       <Image 
                         source={badge.remoteImage} 
-                        style={{ width: 44, height: 44 }}
+                        style={{ width: s(44), height: s(44) }}
                         contentFit="contain"
                       />
                     ) : (
-                      <MaterialIcons name={badge.icon as any} size={32} color={unlocked ? COLORS.primary : COLORS.outline} />
+                      <MaterialIcons name={badge.icon as any} size={s(32)} color={unlocked ? COLORS.primary : COLORS.outline} />
                     )}
                   </View>
                   <Text style={[styles.badgeName, { color: COLORS.onSurface }]}>{badge.name}</Text>
@@ -113,7 +116,7 @@ export default function ProfilClassiqueScreen() {
         <Animated.View entering={FadeInUp.delay(400)} style={styles.leaderboardSection}>
           <View style={[styles.leaderboardCard, { backgroundColor: COLORS.surfaceVariant }]}>
             <View style={styles.cardTitleRow}>
-              <MaterialIcons name="groups" size={24} color={COLORS.primary} />
+              <MaterialIcons name="groups" size={s(24)} color={COLORS.primary} />
               <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Cercle Familial</Text>
             </View>
 
@@ -156,14 +159,43 @@ export default function ProfilClassiqueScreen() {
             </View>
           </View>
         </Animated.View>
+
+        {/* UI Scaling Control */}
+        <Animated.View entering={FadeInUp.delay(500)} style={styles.scaleSection}>
+          <View style={[styles.scaleCard, { backgroundColor: COLORS.surfaceVariant }]}>
+            <View style={styles.cardTitleRow}>
+              <MaterialIcons name="format-size" size={s(24)} color={COLORS.primary} />
+              <Text style={[styles.cardTitle, { color: COLORS.primary }]}>Taille du jeu</Text>
+            </View>
+            <View style={styles.scaleOptions}>
+              {[
+                { label: 'Petit', scale: 0.85, icon: 'text-fields' },
+                { label: 'Normal', scale: 1.0, icon: 'text-fields' },
+                { label: 'Grand', scale: 1.15, icon: 'text-fields' }
+              ].map((opt) => (
+                <TouchableOpacity
+                  key={opt.label}
+                  style={[
+                    styles.scaleBtn,
+                    { backgroundColor: uiScale === opt.scale ? COLORS.primary : COLORS.surface }
+                  ]}
+                  onPress={() => setUiScale(opt.scale)}
+                >
+                  <Text style={[styles.scaleBtnText, { color: uiScale === opt.scale ? COLORS.white : COLORS.onSurface }]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </Animated.View>
         
       </ScrollView>
-      <MainBottomNav />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (COLORS: any, s: (v: number) => number) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -171,22 +203,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    height: 64,
+    paddingHorizontal: s(24),
+    height: s(64),
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: s(16),
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: s(20),
     fontWeight: '900',
   },
   headerAvatarContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: s(40),
+    height: s(40),
+    borderRadius: s(20),
     borderWidth: 2,
     overflow: 'hidden',
   },
@@ -195,159 +227,159 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 120,
+    paddingHorizontal: s(24),
+    paddingTop: s(16),
+    paddingBottom: s(120),
   },
   profileSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: s(40),
   },
   mainAvatarWrapper: {
     position: 'relative',
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   mainAvatarBorder: {
-    width: 112,
-    height: 112,
-    borderRadius: 56,
-    padding: 4,
+    width: s(112),
+    height: s(112),
+    borderRadius: s(56),
+    padding: s(4),
   },
   mainAvatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 50,
+    borderRadius: s(50),
     borderWidth: 4,
   },
   levelBadge: {
     position: 'absolute',
-    bottom: -8,
+    bottom: s(-8),
     right: 0,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 50,
+    paddingHorizontal: s(12),
+    paddingVertical: s(4),
+    borderRadius: s(50),
     borderWidth: 2,
   },
   levelBadgeText: {
-    fontSize: 12,
+    fontSize: s(12),
     fontWeight: 'bold',
   },
   profileName: {
-    fontSize: 24,
+    fontSize: s(24),
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   profileRole: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: '500',
-    marginTop: 4,
+    marginTop: s(4),
   },
   radarSection: {
-    marginBottom: 32,
+    marginBottom: s(32),
   },
   radarCard: {
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: s(24),
+    padding: s(24),
     position: 'relative',
     overflow: 'hidden',
   },
   bgIcon: {
     position: 'absolute',
-    top: 16,
-    right: 16,
+    top: s(16),
+    right: s(16),
     opacity: 0.1,
   },
   cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 24,
+    gap: s(8),
+    marginBottom: s(24),
   },
   cardTitle: {
-    fontSize: 18,
+    fontSize: s(18),
     fontWeight: 'bold',
   },
   radarVisualization: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
+    paddingVertical: s(16),
     position: 'relative',
-    height: 200,
+    height: s(200),
   },
   radarSvg: {
-    width: 180,
-    height: 180,
+    width: s(180),
+    height: s(180),
     transform: [{ rotate: '-18deg' }],
   },
   radarLabel: {
     position: 'absolute',
-    fontSize: 10,
+    fontSize: s(10),
     fontWeight: 'bold',
   },
   badgesSection: {
-    marginBottom: 40,
+    marginBottom: s(40),
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: s(18),
     fontWeight: 'bold',
   },
   seeAllText: {
-    fontSize: 12,
+    fontSize: s(12),
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   badgesScroll: {
-    gap: 16,
+    gap: s(16),
   },
   badgeCard: {
-    width: 112,
-    borderRadius: 24,
-    padding: 16,
+    width: s(112),
+    borderRadius: s(24),
+    padding: s(16),
     alignItems: 'center',
   },
   badgeIconBg: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: s(64),
+    height: s(64),
+    borderRadius: s(32),
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    marginBottom: s(8),
   },
   badgeName: {
-    fontSize: 10,
+    fontSize: s(10),
     fontWeight: '900',
     textAlign: 'center',
   },
   leaderboardSection: {
-    marginBottom: 16,
+    marginBottom: s(16),
   },
   leaderboardCard: {
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: s(24),
+    padding: s(24),
   },
   leaderboardList: {
-    gap: 12,
+    gap: s(12),
   },
   lbItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 16,
+    padding: s(12),
+    borderRadius: s(16),
   },
   lbItemActive: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
-    borderRadius: 16,
+    padding: s(12),
+    borderRadius: s(16),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -358,53 +390,53 @@ const styles = StyleSheet.create({
   lbItemLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: s(12),
   },
   lbRankTertiary: {
-    width: 16,
+    width: s(16),
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: s(16),
     fontWeight: 'bold',
   },
   lbRankActive: {
-    width: 16,
+    width: s(16),
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: s(16),
     fontWeight: 'bold',
   },
   lbRankOutline: {
-    width: 16,
+    width: s(16),
     textAlign: 'center',
-    fontSize: 16,
+    fontSize: s(16),
     fontWeight: 'bold',
   },
   lbAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: s(40),
+    height: s(40),
+    borderRadius: s(20),
     borderWidth: 2,
   },
   lbName: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: 'bold',
   },
   lbNameActive: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: 'bold',
   },
   lbRole: {
-    fontSize: 10,
+    fontSize: s(10),
   },
   lbRoleActive: {
-    fontSize: 10,
+    fontSize: s(10),
     opacity: 0.8,
   },
   lbScorePrimary: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: '900',
   },
   lbScoreActive: {
-    fontSize: 14,
+    fontSize: s(14),
     fontWeight: '900',
   },
   navContainer: {
@@ -413,5 +445,34 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 50,
+  },
+  scaleSection: {
+    marginTop: s(24),
+    marginBottom: s(40),
+  },
+  scaleCard: {
+    borderRadius: s(24),
+    padding: s(24),
+  },
+  scaleOptions: {
+    flexDirection: 'row',
+    gap: s(12),
+    marginTop: s(8),
+  },
+  scaleBtn: {
+    flex: 1,
+    paddingVertical: s(12),
+    borderRadius: s(16),
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  scaleBtnText: {
+    fontSize: s(14),
+    fontWeight: '700',
   },
 });

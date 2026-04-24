@@ -55,7 +55,7 @@ export function useChallenges() {
         finalMap[c.city_id] = {
           ...c,
           is_published: c.is_published === 1,
-          learning_outcomes: c.learning_outcomes ? JSON.parse(c.learning_outcomes) : null
+          learning_outcomes: c.learning_outcomes
         };
       });
 

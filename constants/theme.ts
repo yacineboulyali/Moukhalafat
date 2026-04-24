@@ -1,47 +1,51 @@
 export const THEME = {
   dark: {
-    primary: '#064E3B',      // Vert Zellige Profond
-    primaryLight: '#0D6B52', // Plus vibrant pour les interactions
-    background: '#0B120F',   // Onyx profond
-    surface: '#141B17',      // Surface avec une légère teinte émeraude
-    surfaceVariant: '#1E2621', 
-    onSurface: '#FDFBF7',    // Texte crème (Parchment)
-    onSurfaceVariant: '#A0AFA6',
-    gold: '#F59E0B',         // Or Solaire vibrant
-    goldMuted: '#B47B08',    // Or patiné
-    zellige: '#0D9488',      // Sarcelle Zellige pour les accents
-    locked: '#1B2420',       // Couleur des éléments verrouillés
-    accent: '#2563EB',       // Bleu Majorelle pour le voyage
+    primary: '#10B981',      // Vert Zellige vibrant (Duolingo style)
+    primaryLight: '#34D399', // Émeraude clair pour le dark mode
+    background: '#131F24',   // Fond Duolingo Dark (Deep Navy)
+    surface: '#1B2A32',      // Surface bleutée Duolingo
+    surfaceVariant: '#21323C', 
+    onSurface: '#FFFFFF',    // Blanc pur
+    onSurfaceVariant: '#AFAFAF',
+    gold: '#FFC800',         // Or Duolingo
+    goldMuted: '#E5B700',
+    zellige: '#2DD4BF',      // Sarcelle vibrante
+    locked: '#3C4D57',       // Gris-bleu pour le verrouillé
+    accent: '#4B90FF',       // Bleu vif
     white: '#FFFFFF',
-    glass: 'rgba(20, 27, 23, 0.85)',
-    border: '#232E28',
-    shadow: 'rgba(0, 0, 0, 0.6)',
-    outline: '#707973',
+    glass: 'rgba(27, 42, 50, 0.85)',
+    border: '#37464F',
+    shadow: 'rgba(0, 0, 0, 0.4)',
+    outline: '#52656D',
     onPrimary: '#FFFFFF',
-    surfaceContainerLow: '#0D1410',
-    secondaryContainer: '#F59E0B',
+    surfaceContainerLow: '#18242A',
+    secondaryContainer: '#FFC800',
+    error: '#FF4B4B',        // Rouge erreur Duolingo
+    success: '#58CC02',      // Vert succès Duolingo
   },
   light: {
-    primary: '#064E3B',
-    primaryLight: '#0D6B52',
-    background: '#FDFBF7',   // Sable de Nacre
+    primary: '#10B981',      // Vert Zellige vibrant
+    primaryLight: '#34D399', 
+    background: '#FFFFFF',   // Blanc pur Duolingo
     surface: '#FFFFFF',
-    surfaceVariant: '#F3F0EA',
-    onSurface: '#0B120F',
-    onSurfaceVariant: '#404943',
-    gold: '#D97706',         // Ambre plus chaud pour le mode clair
-    goldMuted: '#B45309',
+    surfaceVariant: '#F7F7F7',
+    onSurface: '#4B4B4B',    // Texte gris foncé Duolingo
+    onSurfaceVariant: '#777777',
+    gold: '#FFC800',         // Or Duolingo
+    goldMuted: '#E5B700',
     zellige: '#0D9488',
-    locked: '#E5E7EB',
-    accent: '#2563EB',
+    locked: '#E5E5E5',       // Gris clair verrouillé
+    accent: '#1899D6',       // Bleu Duolingo
     white: '#FFFFFF',
     glass: 'rgba(255, 255, 255, 0.8)',
-    border: '#E5E7EB',
-    shadow: 'rgba(28, 28, 24, 0.08)',
-    outline: '#707973',
+    border: '#E5E5E5',
+    shadow: 'rgba(0, 0, 0, 0.05)',
+    outline: '#777777',
     onPrimary: '#FFFFFF',
-    surfaceContainerLow: '#F9F7F2',
-    secondaryContainer: '#F59E0B',
+    surfaceContainerLow: '#FAFAFA',
+    secondaryContainer: '#FFC800',
+    error: '#FF4B4B',
+    success: '#58CC02',
   }
 };
 

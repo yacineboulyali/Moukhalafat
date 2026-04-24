@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Dimensions, ActivityIndicator, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { 
   FadeIn, 
@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
 import { useChallenges } from '../hooks/useChallenges';
 import { useMissions } from '../hooks/useMissions';
 import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
@@ -49,7 +49,7 @@ const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/p
 export default function IntroDefiScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, s } = useTheme();
   const { city } = useLocalSearchParams();
   const cityName = (city as string) || 'rabat';
 
@@ -136,8 +136,13 @@ export default function IntroDefiScreen() {
     if (loadingQuestions) return;
 
     if (!primaryMissionId || !firstQuestion) {
-      console.log('Aucune mission ou question trouvée pour', cityName);
-      // Au lieu de faire un back(), on peut rester ici et proposer de synchroniser
+      console.log('Aucune mission ou question trouvée, tentative de sync...');
+      // On déclenche la sync et on rafraîchit la page
+      (async () => {
+        const { syncCurriculum } = await import('../services/sync');
+        await syncCurriculum();
+        router.replace({ pathname: '/intro-defi' as any, params: { city: cityName } });
+      })();
       return;
     }
 
@@ -200,18 +205,22 @@ export default function IntroDefiScreen() {
       </Animated.View>
 
       {/* ── Fixed Bottom Block ("Rideau") ────────────────────────── */}
-      <GestureDetector gesture={gesture}>
-        <Animated.View 
-          style={[styles.bottomSheet, rBottomSheetStyle]} 
-        >
-          <BlurView intensity={95} tint="light" style={[styles.blurContainer, { paddingBottom: Math.max(insets.bottom, 20) }]}>
-            
-            {/* Drag Handle */}
+      <Animated.View 
+        style={[styles.bottomSheet, rBottomSheetStyle]} 
+      >
+        <SafeBlurView intensity={95} tint="light" style={StyleSheet.absoluteFillObject}>
+          {/* Gesture area - ONLY for the handle and top part */}
+          <GestureDetector gesture={gesture}>
             <View style={styles.dragHandleContainer}>
               <View style={styles.dragHandle} />
             </View>
+          </GestureDetector>
 
-
+          <ScrollView 
+            style={{ flex: 1, marginTop: 40 }} 
+            contentContainerStyle={[styles.blurContainer, { paddingBottom: Math.max(insets.bottom, 160) }]}
+            showsVerticalScrollIndicator={true}
+          >
             {/* City badge */}
             <Animated.View entering={FadeInUp.delay(400)} style={styles.badgeContainer}>
               <View style={[styles.cityBadge, { backgroundColor: `${cityColor}15`, borderColor: `${cityColor}30` }]}>
@@ -219,6 +228,7 @@ export default function IntroDefiScreen() {
                 <Text style={[styles.cityBadgeText, { color: cityColor }]}>{cityTitle}</Text>
               </View>
             </Animated.View>
+            
             {/* Acte Title from DB */}
             {dbData?.acte_title && (
               <Animated.Text entering={FadeInUp.delay(450)} style={[styles.acteTitle, { color: cityColor }]}>
@@ -236,18 +246,6 @@ export default function IntroDefiScreen() {
               {desc}
             </Animated.Text>
 
-            {/* Learning Outcomes Section */}
-            {dbData?.learning_outcomes && dbData.learning_outcomes.length > 0 && (
-              <Animated.View entering={FadeInUp.delay(650)} style={styles.outcomesContainer}>
-                <Text style={styles.outcomesTitle}>🎯 CE QUE VOUS ALLEZ APPRENDRE :</Text>
-                {dbData.learning_outcomes.map((outcome, idx) => (
-                  <View key={idx} style={styles.outcomeRow}>
-                    <MaterialIcons name="check" size={14} color={cityColor} />
-                    <Text style={styles.outcomeText}>{outcome}</Text>
-                  </View>
-                ))}
-              </Animated.View>
-            )}
 
             {/* Missions list — Refined Grid */}
             {missions.length > 0 && (
@@ -291,62 +289,68 @@ export default function IntroDefiScreen() {
                 </View>
               </Animated.View>
             )}
+          </ScrollView>
 
-
-
-
-            {/* CTA Button */}
-            <Animated.View entering={FadeInUp.delay(800)} style={{ width: '100%', marginTop: 16 }}>
-                <TouchableOpacity
-                  style={[
-                    styles.primaryBtn, 
-                    { backgroundColor: cityColor },
-                    (loadingQuestions || !firstQuestion) && { opacity: 0.5 }
-                  ]}
-                  onPress={handleStart}
-                  disabled={loadingQuestions || !firstQuestion}
-                >
-                  {loadingQuestions ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <>
-                      <Text style={styles.primaryBtnText}>POURSUIVRE LE DÉFI</Text>
-                      <MaterialIcons name="play-arrow" size={24} color="#fff" />
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                {(!firstQuestion && !loadingQuestions) && (
-                  <TouchableOpacity 
-                    style={[styles.primaryBtn, { backgroundColor: '#444', marginTop: 12 }]}
-                    onPress={async () => {
-                      const { syncCurriculum } = await import('../services/sync');
-                      await syncCurriculum();
-                      // On pourrait forcer un re-mount ou refresh ici
-                      router.replace({ pathname: '/intro-defi' as any, params: { city: cityName } });
-                    }}
-                  >
-                    <Text style={styles.primaryBtnText}>SYNCHRONISER LES DONNÉES</Text>
-                    <MaterialIcons name="sync" size={24} color="#fff" />
-                  </TouchableOpacity>
+          {/* Fixed CTA Button at the bottom */}
+          <Animated.View 
+            entering={FadeInUp.delay(800)} 
+            style={[
+              styles.fixedCtaContainer, 
+              { paddingBottom: Math.max(insets.bottom, 20) }
+            ]}
+          >
+              <TouchableOpacity
+                style={[
+                  styles.primaryBtn, 
+                  { backgroundColor: cityColor },
+                  loadingQuestions && { opacity: 0.5 }
+                ]}
+                onPress={handleStart}
+                disabled={loadingQuestions}
+              >
+                {loadingQuestions ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Text style={[styles.primaryBtnText, { fontSize: s(15) }]}>
+                      {!firstQuestion ? 'CHARGER LE DÉFI' : 'POURSUIVRE LE DÉFI'}
+                    </Text>
+                    <MaterialIcons 
+                      name={!firstQuestion ? 'refresh' : 'play-arrow'} 
+                      size={24} 
+                      color="#fff" 
+                    />
+                  </>
                 )}
+              </TouchableOpacity>
 
-              <View style={styles.socialProof}>
-                <View style={styles.avatarsRow}>
-                  <Image source={{ uri: `${ASSETS_URL}/avatar-1.jpg` }} style={styles.avatarMini} />
-                  <Image source={{ uri: `${ASSETS_URL}/avatar-2.jpg` }} style={[styles.avatarMini, { marginLeft: -10 }]} />
-                  <View style={[styles.avatarMiniNum, { marginLeft: -10, backgroundColor: `${cityColor}20` }]}>
-                    <Text style={[styles.avatarNumText, { color: cityColor }]}>+12</Text>
-                  </View>
+            {(!firstQuestion && !loadingQuestions) && (
+              <TouchableOpacity 
+                style={[styles.primaryBtn, { backgroundColor: '#444', marginTop: 12 }]}
+                onPress={async () => {
+                  const { syncCurriculum } = await import('../services/sync');
+                  await syncCurriculum();
+                  router.replace({ pathname: '/intro-defi' as any, params: { city: cityName } });
+                }}
+              >
+                <Text style={styles.primaryBtnText}>SYNCHRONISER LES DONNÉES</Text>
+                <MaterialIcons name="sync" size={24} color="#fff" />
+              </TouchableOpacity>
+            )}
+
+            <View style={styles.socialProof}>
+              <View style={styles.avatarsRow}>
+                <Image source={{ uri: `${ASSETS_URL}/avatar-1.jpg` }} style={styles.avatarMini} />
+                <Image source={{ uri: `${ASSETS_URL}/avatar-2.jpg` }} style={[styles.avatarMini, { marginLeft: -10 }]} />
+                <View style={[styles.avatarMiniNum, { marginLeft: -10, backgroundColor: `${cityColor}20` }]}>
+                  <Text style={[styles.avatarNumText, { color: cityColor }]}>+12</Text>
                 </View>
-                <Text style={styles.socialText}>12 autres voyageurs</Text>
               </View>
-            </Animated.View>
-
-
-          </BlurView>
-        </Animated.View>
-      </GestureDetector>
+              <Text style={styles.socialText}>12 autres voyageurs</Text>
+            </View>
+          </Animated.View>
+        </SafeBlurView>
+      </Animated.View>
     </View>
   );
 }
@@ -394,7 +398,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: height,
+    height: height * 0.8, // Match the visible area (1 - expandedY/height)
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     overflow: 'hidden',
@@ -402,12 +406,12 @@ const styles = StyleSheet.create({
   },
   dragHandleContainer: {
     width: '100%',
-    height: 30,
+    height: 60,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'absolute',
     top: 0,
-    zIndex: 10,
+    zIndex: 100,
   },
   dragHandle: {
     width: 50,
@@ -461,30 +465,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 4,
   },
-  outcomesContainer: {
-    width: '100%',
-    paddingHorizontal: 20,
-    marginBottom: 16,
-    alignItems: 'flex-start',
-  },
-  outcomesTitle: {
-    fontSize: 10,
-    fontWeight: 'bold',
-    color: '#1A1A2E',
-    marginBottom: 8,
-    opacity: 0.6,
-  },
-  outcomeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  outcomeText: {
-    fontSize: 11,
-    color: '#424242',
-    fontWeight: '500',
-  },
   softSkillText: {
     fontSize: 8,
     fontWeight: 'bold',
@@ -508,12 +488,18 @@ const styles = StyleSheet.create({
   socialProof: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
     gap: 12,
+    marginTop: 40,
+    marginBottom: 20,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    padding: 12,
+    borderRadius: 16,
+    width: '100%',
+    justifyContent: 'center',
   },
   avatarsRow: {
     flexDirection: 'row',
+    alignItems: 'center',
   },
   avatarMini: {
     width: 28,
@@ -535,6 +521,13 @@ const styles = StyleSheet.create({
   avatarNumText: {
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  fixedCtaContainer: {
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.02)', // Subtle background to separate from scrollable content
   },
   socialText: {
     fontSize: 12,

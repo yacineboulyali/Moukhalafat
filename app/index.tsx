@@ -19,6 +19,8 @@ import { preloadAllMissions } from '../hooks/useMissions';
 import { preloadAllQuestions } from '../hooks/useQuestions';
 import { useAuthStore } from '../stores/authStore';
 import { SoundService } from '../services/sounds';
+import { dbService } from '../services/database';
+import { syncCurriculum } from '../services/sync';
 
 const { width, height } = Dimensions.get('window');
 const COLORS = THEME.light;
@@ -112,7 +114,7 @@ export default function SplashScreen() {
     if (!authLoading && loadPercentage === 100) {
       const t = setTimeout(() => {
         router.replace('/map');
-      }, 400);
+      }, 100); // Reduced from 400ms for snappier feel
       return () => clearTimeout(t);
     }
   }, [authLoading, loadPercentage]);

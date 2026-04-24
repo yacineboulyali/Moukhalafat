@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuthStore } from '../stores/authStore';
+import { dbService } from '../services/database';
+import { syncPlayerProgress } from '../services/sync';
 
 export type CityStatus = 'locked' | 'current' | 'done';
 
@@ -25,6 +27,23 @@ export function usePlayerCityProgress() {
     }
 
     try {
+      // 1. Try local data first (Fast)
+      const localData = await dbService.getCitiesProgression();
+      if (localData.length > 0) {
+        const progressMap: Record<string, PlayerCityProgress> = {};
+        localData.forEach((p: any) => {
+          progressMap[p.id] = {
+            city_id: p.id,
+            status: p.status as CityStatus,
+            missions_completed: p.missions_completed || 0,
+            missions_total: p.missions_total || 5,
+            xp_earned: p.score || 0,
+          };
+        });
+        setProgress(progressMap);
+      }
+
+      // 2. Fetch from Supabase (Source of truth)
       const { data, error: err } = await supabase
         .from('player_city_progress')
         .select('*')
@@ -32,19 +51,23 @@ export function usePlayerCityProgress() {
 
       if (err) throw err;
 
-      const progressMap: Record<string, PlayerCityProgress> = {};
-      (data || []).forEach((p: any) => {
-        progressMap[p.city_id] = {
-          city_id: p.city_id,
-          status: p.status,
-          missions_completed: p.missions_completed,
-          missions_total: p.missions_total,
-          xp_earned: p.xp_earned,
-        };
-      });
-
-      setProgress(progressMap);
+      if (data) {
+        const progressMap: Record<string, PlayerCityProgress> = {};
+        data.forEach((p: any) => {
+          progressMap[p.city_id] = {
+            city_id: p.city_id,
+            status: p.status,
+            missions_completed: p.missions_completed,
+            missions_total: p.missions_total,
+            xp_earned: p.xp_earned,
+          };
+        });
+        setProgress(progressMap);
+        // Persist to local for offline use
+        await dbService.savePlayerProgress(data);
+      }
     } catch (err: any) {
+      console.error('Failed to fetch player progress:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -53,6 +76,13 @@ export function usePlayerCityProgress() {
 
   const checkAndInitializeProgress = async () => {
     if (!user) return;
+    
+    // Only proceed if user.id is a valid UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    if (!isUuid) {
+      console.warn('⚠️ Skipping progress initialization: User ID is not a valid UUID');
+      return;
+    }
     
     try {
       const { data, error: err } = await supabase
@@ -63,11 +93,36 @@ export function usePlayerCityProgress() {
       if (err) throw err;
       
       if (!data || data.length === 0) {
+        // Ensure profile exists first to satisfy FK constraint
+        const { error: profileErr } = await supabase.from('profiles').upsert({
+          id: user.id,
+          full_name: user.full_name || 'Voyageur',
+          xp: user.xp || 0,
+          level: user.level || 1,
+        });
+
+        if (profileErr) {
+          console.error('Failed to ensure profile exists:', profileErr.message);
+          // If it's a constraint error here, it means we can't even create the profile
+          // But usually upsert handles existence.
+        }
+
         // Initialize all cities
-        const CITY_SEQUENCE = ['rabat', 'chefchaouen', 'fes', 'marrakech', 'laayoune', 'dakhla'];
+        const CITY_DATA: Record<string, { fr: string, ar: string }> = {
+          'rabat': { fr: 'Rabat', ar: 'الرباط' },
+          'chefchaouen': { fr: 'Chefchaouen', ar: 'شفشاون' },
+          'fes': { fr: 'Fès', ar: 'فاس' },
+          'marrakech': { fr: 'Marrakech', ar: 'مراكش' },
+          'laayoune': { fr: 'Laâyoune', ar: 'العيون' },
+          'dakhla': { fr: 'Dakhla', ar: 'الداخلة' }
+        };
+
+        const CITY_SEQUENCE = Object.keys(CITY_DATA);
         const initialProgress = CITY_SEQUENCE.map((cityId, index) => ({
           player_id: user.id,
           city_id: cityId,
+          city_name_fr: CITY_DATA[cityId].fr,
+          city_name_ar: CITY_DATA[cityId].ar,
           status: index === 0 ? 'current' : 'locked',
           missions_completed: 0,
           missions_total: 5 
@@ -91,9 +146,17 @@ export function usePlayerCityProgress() {
     fetchProgress();
     checkAndInitializeProgress();
 
-    // Real-time subscription
+    // Real-time subscription - Only if user.id is a valid UUID
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id);
+    
+    if (!isUuid) {
+      console.warn('⚠️ Skipping realtime subscription: User ID is not a valid UUID');
+      return;
+    }
+
+    const channelId = Math.random().toString(36).substring(7);
     const channel = supabase
-      .channel('player_progress_changes')
+      .channel(`player_progress_${user.id}_${channelId}`)
       .on(
         'postgres_changes',
         {
@@ -106,7 +169,14 @@ export function usePlayerCityProgress() {
           fetchProgress();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('📡 Subscribed to player progress changes');
+        }
+        if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Realtime subscription error');
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -127,6 +197,9 @@ export function usePlayerCityProgress() {
       const isDone = nextCount >= total;
       
       // 3. Update current city
+      // Optimistic local update
+      await dbService.updateLocalCityProgress(cityId, nextCount, isDone ? 'done' : 'current');
+
       const { error: err } = await supabase
         .from('player_city_progress')
         .update({ 
@@ -147,6 +220,9 @@ export function usePlayerCityProgress() {
           
           // Only unlock if it's currently locked
           if (!nextProgress || nextProgress.status === 'locked') {
+            // Optimistic local update
+            await dbService.updateLocalCityProgress(nextCityId, 0, 'current');
+
             await supabase
               .from('player_city_progress')
               .update({ status: 'current' })
@@ -156,6 +232,8 @@ export function usePlayerCityProgress() {
         }
       }
 
+      // Background sync to ensure local is up to date with server
+      await syncPlayerProgress(user.id);
       await fetchProgress();
     } catch (err: any) {
       console.error('Failed to increment mission progress:', err.message);

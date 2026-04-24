@@ -22,6 +22,7 @@ import { ImmediateFeedback } from '../../components/ImmediateFeedback';
 import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 import { useBadges } from '../../hooks/useBadges';
 import { useMissions } from '../../hooks/useMissions';
 import { useQuestions } from '../../hooks/useQuestions';
@@ -39,8 +40,8 @@ export default function ErrorDetectionScreen() {
   const cityId = cityParam as string;
   const currentIdx = parseInt(questionIndex as string) || 0;
 
-  const { loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
   const questions = dbQuestions || [];
   const qData = questions[currentIdx];
 
@@ -122,14 +123,16 @@ export default function ErrorDetectionScreen() {
         cityId,
         isMissionComplete: currentIdx + 1 === questions.length,
       });
-    }, 2800);
+    }, 3000);
   };
 
   if (loadingMissions || loadingQuestions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
     );
   }
 
@@ -252,7 +255,11 @@ export default function ErrorDetectionScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect ?? false} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect ?? false} 
+        onClose={() => setShowFeedback(false)}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
       <MissionSplash

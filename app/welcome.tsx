@@ -19,6 +19,8 @@ import Animated, {
 import { LinearGradient } from 'expo-linear-gradient';
 import { THEME } from '../constants/theme';
 
+import { useTheme } from '../hooks/useTheme';
+
 const { width, height } = Dimensions.get('window');
 
 const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
@@ -60,8 +62,6 @@ const ONBOARDING_STEPS = [
     color: '#2563EB' // Bleu Majorelle
   }
 ];
-
-import { useTheme } from '../hooks/useTheme';
 
 export default function WelcomeScreen() {
   const [currentStep, setCurrentStep] = useState(0);

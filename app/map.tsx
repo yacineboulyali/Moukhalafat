@@ -16,15 +16,16 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SoundService } from '../services/sounds';
 import { useTheme } from '../hooks/useTheme';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
+import { FullScreenLoader } from '../components/FullScreenLoader';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { useChallenges, Challenge } from '../hooks/useChallenges';
 import { usePlayerCityProgress } from '../hooks/usePlayerCityProgress';
+import { useGameStore } from '../stores/gameStore';
 import { AVATARS } from '../constants/Avatars';
-import { MainBottomNav } from '../components/MainBottomNav';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const ASSETS_URL = 'https://rydmefudpczpxrresflx.supabase.co/storage/v1/object/public/app-assets';
 
@@ -147,16 +148,25 @@ const lanternStyles = StyleSheet.create({
 export default function MapScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
-  const dynamics = styles(colors, isDark);
+  const { colors, isDark, s } = useTheme();
+  const uiScale = useGameStore(state => state.uiScale);
+  const dynamics = getStyles(colors, s, isDark);
 
-  const { challenges, loading: loadingChallenges } = useChallenges();
-  const { progress, loading: loadingProgress } = usePlayerCityProgress();
+  const { challenges, loading: loadingChallenges, error: errorChallenges, refresh } = useChallenges();
+  const { progress, loading: loadingProgress, error: errorProgress, refresh: refreshProgress } = usePlayerCityProgress();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // Convert challenges map to sorted array
+  // Constants for the map layout
+  const NODE_SIZE = 90;
+  const VERTICAL_GAP = 160;
+  const HORIZONTAL_OFFSET = width * 0.15; // Zig-zag offset
+  
+  // Convert challenges map to sorted array (Rabat is index 0)
   const sortedCities = Object.values(challenges).sort((a, b) => a.sort_order - b.sort_order);
   
+  // Total height calculation
+  const mapHeight = (sortedCities.length * VERTICAL_GAP) + 400;
+
   const activeCityProgress = Object.values(progress).find(p => p.status === 'current');
   const ACTIVE_CITY_ID = activeCityProgress?.city_id ?? 
     (sortedCities.find(c => !progress[c.city_id] || progress[c.city_id].status === 'locked')?.city_id || sortedCities[0]?.city_id || 'rabat');
@@ -164,23 +174,67 @@ export default function MapScreen() {
   const [selectedCityId, setSelectedCityId] = React.useState<string | null>(null);
   const [showBottomCard, setShowBottomCard] = React.useState(false);
 
-  // Auto-select the active city and show its card after data loads
+  // Auto-select the active city and show its card
   useEffect(() => {
     if (!loadingChallenges && sortedCities.length > 0 && !selectedCityId) {
       const t = setTimeout(() => {
         setSelectedCityId(ACTIVE_CITY_ID);
         setShowBottomCard(true);
       }, 600);
-      return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
+      return () => clearTimeout(t);
     }
   }, [loadingChallenges, sortedCities.length]);
 
+  // Helper to get node position
+  const getNodePos = (index: number) => {
+    // index 0 (Rabat) is at the bottom in the visual layout, but first in array
+    // We want Rabat (index 0) at the bottom, so index length-1 is at the top.
+    const reverseIndex = (sortedCities.length - 1) - index;
+    const isRight = index % 2 === 1;
+    return {
+      x: width / 2 + (isRight ? HORIZONTAL_OFFSET : -HORIZONTAL_OFFSET),
+      y: 200 + (reverseIndex * VERTICAL_GAP)
+    };
+  };
+
   const activeChallenge = selectedCityId ? challenges[selectedCityId] : null;
   const activeColor = activeChallenge?.city_color ?? colors.gold;
-  const activeTitle = activeChallenge?.city_name_fr ?? '';
-  const activeTitleAr = activeChallenge?.city_name_ar ?? '';
-  const activeDesc  = activeChallenge?.description_fr ?? '';
-  const activeStep  = activeChallenge?.step_label ?? 'DÉCOUVRIR LA VILLE';
+
+  // Animations
+  const pulseScale = useSharedValue(1);
+  const pulseOpacity = useSharedValue(0.2);
+  const wave1Scale = useSharedValue(1);
+  const wave1Opacity = useSharedValue(0.5);
+  const wave2Scale = useSharedValue(1);
+  const wave2Opacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    pulseScale.value = withRepeat(withTiming(1.3, { duration: 2000, easing: Easing.out(Easing.ease) }), -1, false);
+    pulseOpacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.ease) }), -1, false);
+    
+    wave1Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    wave1Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    
+    const t = setTimeout(() => {
+      wave2Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+      wave2Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
+    }, 1000);
+    return () => clearTimeout(t);
+  }, []);
+
+  const pulseStyle = useAnimatedStyle(() => ({ transform: [{ scale: pulseScale.value }], opacity: pulseOpacity.value }));
+  const wave1Style = useAnimatedStyle(() => ({ transform: [{ scale: wave1Scale.value }], opacity: wave1Opacity.value }));
+  const wave2Style = useAnimatedStyle(() => ({ transform: [{ scale: wave2Scale.value }], opacity: wave2Opacity.value }));
+
+  // Auto-scroll to Rabat (bottom)
+  useEffect(() => {
+    if (!loadingChallenges && !loadingProgress && sortedCities.length > 0) {
+      const t = setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [loadingChallenges, loadingProgress]);
 
   const handleCityPress = (cityId: string) => {
     setSelectedCityId(cityId);
@@ -189,84 +243,16 @@ export default function MapScreen() {
     SoundService.getInstance().triggerHaptic('medium');
   };
 
-  const pulseScale = useSharedValue(1);
-  const pulseOpacity = useSharedValue(0.2);
-
-  useEffect(() => {
-    pulseScale.value = withRepeat(
-      withTiming(1.3, { duration: 2000, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-    pulseOpacity.value = withRepeat(
-      withTiming(0, { duration: 2000, easing: Easing.out(Easing.ease) }),
-      -1,
-      false
-    );
-  }, []);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
-
-  // Wave effect for the first active city
-  const wave1Scale = useSharedValue(1);
-  const wave1Opacity = useSharedValue(0.5);
-  const wave2Scale = useSharedValue(1);
-  const wave2Opacity = useSharedValue(0.5);
-
-  useEffect(() => {
-    wave1Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
-    wave1Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
-    
-    const t = setTimeout(() => {
-      wave2Scale.value = withRepeat(withTiming(1.8, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
-      wave2Opacity.value = withRepeat(withTiming(0, { duration: 2000, easing: Easing.out(Easing.quad) }), -1, false);
-    }, 1000);
-    return () => clearTimeout(t); // ✅ FIX: clearTimeout corrigé
-  }, []);
-
-  const wave1Style = useAnimatedStyle(() => ({
-    transform: [{ scale: wave1Scale.value }],
-    opacity: wave1Opacity.value,
-  }));
-  const wave2Style = useAnimatedStyle(() => ({
-    transform: [{ scale: wave2Scale.value }],
-    opacity: wave2Opacity.value,
-  }));
-
-  // Auto-scroll to bottom (Rabat) on load - Smooth and slow
-  useEffect(() => {
-    if (!loadingChallenges && !loadingProgress) {
-      const targetY = sortedCities.length * 150 + 200; // Approximate bottom
-      const t = setTimeout(() => {
-        // Slow scroll logic
-        scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-      }, 1500);
-      return () => clearTimeout(t);
-    }
-  }, [loadingChallenges, loadingProgress]);
-
   return (
     <View style={dynamics.mainContainer}>
-      {/* Top App Bar avec Blur dynamique */}
-      <BlurView 
+      <SafeBlurView 
         intensity={80} 
         tint={isDark ? "dark" : "light"} 
         style={[dynamics.header, { paddingTop: Math.max(insets.top, 16) }]}
       >
         <View style={dynamics.headerLeft}>
-          <TouchableOpacity 
-            onPress={() => {
-              SoundService.getInstance().triggerHaptic('light');
-              router.push('/profil');
-            }}
-          >
-            <Image
-              source={AVATARS.explorer}
-              style={dynamics.avatar}
-            />
+          <TouchableOpacity onPress={() => router.push('/profil')}>
+            <Image source={AVATARS.explorer} style={dynamics.avatar} />
           </TouchableOpacity>
           <View>
             <Text style={dynamics.headerTitle}>Le Voyage</Text>
@@ -282,53 +268,49 @@ export default function MapScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={dynamics.menuBtn}
-          onPress={() => router.push('/settings')}
-        >
-          <MaterialIcons name="settings" size={24} color={colors.onSurface} />
+        <TouchableOpacity style={dynamics.menuBtn} onPress={() => router.push('/settings')}>
+          <MaterialIcons name="settings" size={s(24)} color={colors.onSurface} />
         </TouchableOpacity>
-      </BlurView>
+      </SafeBlurView>
 
       <ScrollView 
         ref={scrollViewRef}
-        contentContainerStyle={dynamics.scrollContent} 
+        contentContainerStyle={[dynamics.scrollContent, { height: mapHeight }]} 
         showsVerticalScrollIndicator={false}
       >
-        {/* Floating Lanterns animées — composant mémoïsé, couleur passée en prop */}
         <Lantern delay={0}    style={{ top: 200, left: 60 }}  color={colors.gold} />
         <Lantern delay={1000} style={{ top: 400, right: 80 }} color={colors.gold} />
         <Lantern delay={2000} style={{ top: 600, left: 100 }} color={colors.gold} />
-        <Lantern delay={500}  style={{ top: 800, right: 60 }} color={colors.gold} />
 
         {loadingChallenges || loadingProgress ? (
-          <View style={{ marginTop: 200 }}>
-            <ActivityIndicator size="large" color={colors.gold} />
-          </View>
+          <FullScreenLoader 
+            message="Chargement du voyage..." 
+            error={errorChallenges || errorProgress} 
+            onRetry={() => { refresh(); refreshProgress(); }} 
+          />
         ) : (
           <>
-            {/* Path connector layer */}
+            {/* SVG Path Layer */}
             <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-              <Svg width={width} height={sortedCities.length * 150 + 400}>
+              <Svg width={width} height={mapHeight}>
                 {sortedCities.map((city, index) => {
-                  if (index === 0) return null;
-                  const startY = 1050 - (index - 1) * 160;
-                  const endY = 1050 - index * 160;
-                  const isRight = index % 2 === 1;
-                  const controlX = width / 2 + (isRight ? 60 : -60);
+                  if (index === sortedCities.length - 1) return null;
+                  const start = getNodePos(index);
+                  const end = getNodePos(index + 1);
+                  const midY = (start.y + end.y) / 2;
                   
-                  const cityProgress = progress[city.city_id];
+                  const cityProgress = progress[sortedCities[index+1].city_id];
                   const isLocked = !cityProgress || cityProgress.status === 'locked';
                   
                   return (
                     <Path 
                       key={`path-${city.city_id}`}
-                      d={`M ${width/2} ${startY} Q ${controlX} ${(startY + endY)/2} ${width/2} ${endY}`} 
+                      d={`M ${start.x} ${start.y} C ${start.x} ${midY} ${end.x} ${midY} ${end.x} ${end.y}`} 
                       fill="none" 
                       stroke={colors.gold} 
-                      strokeWidth={isLocked ? "4" : "8"} 
-                      strokeDasharray={cityProgress?.status === 'current' ? "12 12" : "0"}
-                      opacity={isLocked ? 0.15 : 1} 
+                      strokeWidth={isLocked ? 4 : 8} 
+                      strokeDasharray={progress[city.city_id]?.status === 'current' ? "12 12" : "0"}
+                      opacity={isLocked ? 0.15 : 0.6} 
                       strokeLinecap="round" 
                     />
                   );
@@ -336,87 +318,106 @@ export default function MapScreen() {
               </Svg>
             </View>
 
-            {/* Nodes - rendered bottom to top (reversed array) */}
-            {[...sortedCities].reverse().map((city, index) => {
-              const cityProgress = progress[city.city_id];
-              let status = cityProgress?.status ?? 'locked';
-              
-              if (city.city_id === 'rabat' && status === 'locked') {
-                status = 'current';
-              }
-
-              const isLocked = status === 'locked';
-              const isFirstActive = city.city_id === ACTIVE_CITY_ID;
-              
-              return (
+            {/* Nodes Layer */}
+            {sortedCities.length === 0 ? (
+              <View style={{ flex: 1, height: height * 0.7, justifyContent: 'center', alignItems: 'center', padding: 40 }}>
+                <MaterialIcons name="cloud-off" size={64} color={colors.outline} />
+                <Text style={{ color: colors.onSurface, fontSize: 18, fontWeight: 'bold', marginTop: 16, textAlign: 'center' }}>
+                  Oups ! Le voyage n&apos;a pas pu charger.
+                </Text>
+                <Text style={{ color: colors.onSurfaceVariant, fontSize: 14, marginTop: 8, textAlign: 'center', marginBottom: 24 }}>
+                  Vérifie ta connexion et réessaie de synchroniser les données.
+                </Text>
                 <TouchableOpacity 
-                  key={city.city_id}
-                  style={[dynamics.nodeContainer, { marginTop: index === 0 ? 40 : 80, marginBottom: index === sortedCities.length - 1 ? 120 : 0 }]} 
-                  onPress={() => handleCityPress(city.city_id)} 
-                  activeOpacity={0.8}
+                  style={{ backgroundColor: colors.gold, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 }}
+                  onPress={() => {
+                    SoundService.getInstance().playSound('click');
+                    refresh();
+                  }}
                 >
-                  {isFirstActive && (
-                    <>
-                      <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave1Style]} />
-                      <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave2Style]} />
-                    </>
-                  )}
-
-                  {status === 'current' && <Animated.View style={[dynamics.pulseRing, pulseStyle]} />}
-                  
-                  <View style={[
-                    dynamics.nodeBase, 
-                    isLocked ? dynamics.nodeLocked : 
-                    status === 'current' ? [dynamics.nodeActive, { borderColor: city.city_color || colors.gold }] : 
-                    dynamics.nodeCompletedB
-                  ]}>
-                    <View style={isLocked ? { opacity : 0.5 } : {}}>
-                      {status === 'done' ? (
-                        <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-                           <CityIcon 
-                             iconName={city.icon_name} 
-                             cityId={city.city_id} 
-                             size={40} 
-                             color={city.city_color || colors.gold} 
-                           />
-                           <View style={dynamics.checkBadge}>
-                             <MaterialIcons name="verified" size={16} color={city.city_color || colors.gold} />
-                           </View>
-                        </View>
-                      ) : (
-                        <CityIcon 
-                          iconName={city.icon_name} 
-                          cityId={city.city_id} 
-                          size={40} 
-                          color={isLocked ? colors.onSurfaceVariant : (city.city_color || colors.gold)} 
-                        />
-                      )}
-                    </View>
-                    
-                    {isLocked && (
-                      <View style={dynamics.lockIconContainer}>
-                         <MaterialIcons name="lock" size={14} color="#fff" />
-                      </View>
-                    )}
-
-                    {status === 'current' && (
-                      <View style={[dynamics.activePill, { backgroundColor: city.city_color || colors.gold }]}>
-                        <Text style={dynamics.activePillText}>ACTUEL</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <View style={dynamics.nodeTextContainer}>
-                    <Text style={isLocked ? dynamics.nodeTitleLocked : dynamics.nodeTitle}>
-                      {city.city_name_fr}
-                    </Text>
-                    <Text style={[isLocked ? dynamics.nodeSubtitleLocked : dynamics.nodeSubtitle, { color: isLocked ? colors.onSurfaceVariant + '40' : (city.city_color || colors.gold) }]}>
-                      {city.city_name_ar}
-                    </Text>
-                  </View>
+                  <Text style={{ color: colors.white, fontWeight: 'bold' }}>SYNCHRONISER</Text>
                 </TouchableOpacity>
-              );
-            })}
+              </View>
+            ) : (
+              sortedCities.map((city, index) => {
+                const pos = getNodePos(index);
+                const cityProgress = progress[city.city_id];
+                let status = cityProgress?.status ?? 'locked';
+                if (city.city_id === 'rabat' && status === 'locked') status = 'current';
+
+                const isLocked = status === 'locked';
+                const isFirstActive = city.city_id === ACTIVE_CITY_ID;
+                
+                return (
+                  <View 
+                    key={city.city_id}
+                    style={{ 
+                      position: 'absolute', 
+                      left: pos.x - 45, 
+                      top: pos.y - 45,
+                      zIndex: 10
+                    }}
+                  >
+                    <TouchableOpacity 
+                      onPress={() => handleCityPress(city.city_id)} 
+                      activeOpacity={0.8}
+                      style={dynamics.nodeContainer}
+                    >
+                      {isFirstActive && (
+                        <>
+                          <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave1Style]} />
+                          <Animated.View style={[dynamics.waveRing, { borderColor: city.city_color || colors.gold }, wave2Style]} />
+                        </>
+                      )}
+
+                      {status === 'current' && <Animated.View style={[dynamics.pulseRing, pulseStyle]} />}
+                      
+                      <View style={[
+                        dynamics.nodeBase, 
+                        isLocked ? dynamics.nodeLocked : 
+                        status === 'current' ? [dynamics.nodeActive, { borderColor: city.city_color || colors.gold }] : 
+                        dynamics.nodeCompletedB
+                      ]}>
+                        <View style={isLocked ? { opacity : 0.5 } : {}}>
+                          <CityIcon 
+                            iconName={city.icon_name} 
+                            cityId={city.city_id} 
+                            size={40} 
+                            color={isLocked ? colors.onSurfaceVariant : (city.city_color || colors.gold)} 
+                          />
+                          {status === 'done' && (
+                            <View style={dynamics.checkBadge}>
+                              <MaterialIcons name="verified" size={16} color={city.city_color || colors.gold} />
+                            </View>
+                          )}
+                        </View>
+                        
+                        {isLocked && (
+                          <View style={dynamics.lockIconContainer}>
+                             <MaterialIcons name="lock" size={14} color="#fff" />
+                          </View>
+                        )}
+
+                        {status === 'current' && (
+                          <View style={[dynamics.activePill, { backgroundColor: city.city_color || colors.gold }]}>
+                            <Text style={dynamics.activePillText}>ACTUEL</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <View style={dynamics.nodeTextContainer}>
+                        <Text style={isLocked ? dynamics.nodeTitleLocked : dynamics.nodeTitle} numberOfLines={1}>
+                          {city.city_name_fr}
+                        </Text>
+                        <Text style={[isLocked ? dynamics.nodeSubtitleLocked : dynamics.nodeSubtitle, { color: isLocked ? colors.onSurfaceVariant + '40' : (city.city_color || colors.gold) }]}>
+                          {city.city_name_ar}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })
+            )}
           </>
         )}
       </ScrollView>
@@ -427,27 +428,27 @@ export default function MapScreen() {
           entering={FadeInDown.springify()}
           style={dynamics.bottomCard}
         >
-          <BlurView intensity={90} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
+          <SafeBlurView intensity={90} tint={isDark ? "dark" : "light"} style={StyleSheet.absoluteFillObject} />
           
           <TouchableOpacity 
             style={dynamics.closeBtn}
             onPress={() => setShowBottomCard(false)}
           >
-            <MaterialIcons name="close" size={20} color={colors.onSurfaceVariant} />
+            <MaterialIcons name="close" size={s(20)} color={colors.onSurfaceVariant} />
           </TouchableOpacity>
 
           <View style={dynamics.cardHeader}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <View style={[dynamics.cardTag, { borderColor: activeColor }]}>
                 <Text style={[dynamics.cardTagText, { color: activeColor }]}>
-                  {activeChallenge.acte_title ? activeChallenge.acte_title.toUpperCase() : activeStep.toUpperCase()}
+                  {activeChallenge.acte_title ? activeChallenge.acte_title.toUpperCase() : (activeChallenge.step_label || 'DÉCOUVRIR LA VILLE').toUpperCase()}
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <CityIcon iconName={activeChallenge.icon_name} cityId={selectedCityId!} size={24} color={activeColor} />
+                <CityIcon iconName={activeChallenge.icon_name} cityId={selectedCityId!} size={s(24)} color={activeColor} />
                 <View>
-                  <Text style={dynamics.cardTitle}>{activeTitle}</Text>
-                  <Text style={[dynamics.cardSubtitle, { color: activeColor }]}>{activeTitleAr}</Text>
+                  <Text style={dynamics.cardTitle}>{activeChallenge.city_name_fr}</Text>
+                  <Text style={[dynamics.cardSubtitle, { color: activeColor }]}>{activeChallenge.city_name_ar}</Text>
                 </View>
               </View>
             </View>
@@ -457,14 +458,12 @@ export default function MapScreen() {
             </View>
           </View>
           <Text style={dynamics.cardDesc} numberOfLines={2}>
-            {activeDesc}
+            {activeChallenge.description_fr}
           </Text>
           <TouchableOpacity 
             style={[dynamics.primaryButton, { backgroundColor: activeColor }]}
             onPress={async () => {
               SoundService.getInstance().triggerHaptic('medium');
-              
-              // AsyncStorage est importé en tête de fichier (plus d'import dynamique)
               try {
                 const hasSeen = await AsyncStorage.getItem(`pedago_seen_${selectedCityId}`);
                 if (!hasSeen) {
@@ -474,21 +473,19 @@ export default function MapScreen() {
               } catch (e) {
                 console.error('Error checking pedago status', e);
               }
-
               router.push({ pathname: '/intro-defi' as any, params: { city: selectedCityId } });
             }}
           >
             <Text style={dynamics.btnText}>POURSUIVRE LE DÉFI</Text>
-            <MaterialIcons name="stars" size={22} color={colors.white} />
+            <MaterialIcons name="stars" size={s(22)} color={colors.white} />
           </TouchableOpacity>
         </Animated.View>
       )}
-      <MainBottomNav />
     </View>
   );
 }
 
-const styles = (colors: any, isDark: boolean) => StyleSheet.create({
+const getStyles = (colors: any, s: (v: number) => number, isDark: boolean) => StyleSheet.create({
   mainContainer: {
     flex: 1,
     backgroundColor: colors.background,
@@ -497,42 +494,42 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingBottom: 16,
+    paddingHorizontal: s(24),
+    paddingBottom: s(16),
     zIndex: 10,
     overflow: 'hidden',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: s(12),
   },
   avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: s(40),
+    height: s(40),
+    borderRadius: s(20),
     borderWidth: 2,
     borderColor: colors.gold,
   },
   headerTitle: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: s(18),
     color: colors.onSurface,
   },
   headerSubtitle: {
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: s(12),
     color: colors.gold,
   },
   progressHeader: {
     flex: 1,
-    marginHorizontal: 16,
-    maxWidth: 120,
+    marginHorizontal: s(16),
+    maxWidth: s(120),
   },
   progressTrack: {
-    height: 10,
+    height: s(10),
     backgroundColor: colors.surfaceVariant,
-    borderRadius: 5,
+    borderRadius: s(5),
     overflow: 'hidden',
   },
   progressFill: {
@@ -540,21 +537,21 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     backgroundColor: colors.gold,
   },
   menuBtn: {
-    padding: 8,
+    padding: s(8),
   },
   scrollContent: {
     alignItems: 'center',
-    paddingTop: 100,
-    paddingBottom: 240,
+    paddingTop: s(100),
+    paddingBottom: s(240),
   },
   nodeContainer: {
     alignItems: 'center',
     zIndex: 10,
   },
   nodeBase: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: s(90),
+    height: s(90),
+    borderRadius: s(45),
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
@@ -578,28 +575,28 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   pulseRing: {
     position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: s(120),
+    height: s(120),
+    borderRadius: s(60),
     backgroundColor: isDark ? 'rgba(212,168,67,0.1)' : 'rgba(212,168,67,0.15)',
-    top: -15,
+    top: s(-15),
   },
   nodeLandmarkIcon: {
-    width: 54,
-    height: 54,
+    width: s(54),
+    height: s(54),
     resizeMode: 'contain',
   },
   activePill: {
     position: 'absolute',
-    top: -10,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
+    top: s(-10),
+    paddingHorizontal: s(10),
+    paddingVertical: s(4),
+    borderRadius: s(12),
     elevation: 4,
   },
   activePillText: {
     color: colors.white,
-    fontSize: 9,
+    fontSize: s(9),
     fontWeight: '900',
     letterSpacing: 0.5,
   },
@@ -607,9 +604,9 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
     position: 'absolute',
     bottom: -6,
     backgroundColor: colors.locked,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: s(26),
+    height: s(26),
+    borderRadius: s(13),
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
@@ -617,42 +614,42 @@ const styles = (colors: any, isDark: boolean) => StyleSheet.create({
   },
   waveRing: {
     position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
+    width: s(130),
+    height: s(130),
+    borderRadius: s(65),
     borderWidth: 3,
-    top: -20,
+    top: s(-20),
   },
   checkBadge: {
     position: 'absolute',
-    bottom: 4,
+    bottom: s(4),
     backgroundColor: colors.surface,
-    borderRadius: 12,
-    padding: 2,
+    borderRadius: s(12),
+    padding: s(2),
   },
   nodeTextContainer: {
-    marginTop: 12,
+    marginTop: s(12),
     alignItems: 'center',
   },
   nodeTitleLocked: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: s(14),
     color: colors.onSurface,
     opacity: 0.3,
   },
   nodeSubtitleLocked: {
-    fontSize: 12,
+    fontSize: s(12),
     color: colors.onSurface,
     opacity: 0.3,
   },
   nodeTitle: {
     fontWeight: 'bold',
-    fontSize: 18,
+    fontSize: s(18),
     color: colors.onSurface,
   },
   nodeSubtitle: {
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: s(14),
   },
   bottomCard: {
     position: 'absolute',

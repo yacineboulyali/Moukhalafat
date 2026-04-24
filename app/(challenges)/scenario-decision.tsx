@@ -12,6 +12,7 @@ import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useQuestions } from '../../hooks/useQuestions';
 import { ChallengeIntroModal } from '../../components/ChallengeIntroModal';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 import { useAuthStore } from '../../stores/authStore';
 import { ProgressService } from '../../services/progress';
@@ -29,7 +30,8 @@ const SCENARIO = {
 };
 
 export default function ScenarioDecisionScreen() {
-  const { colors } = useTheme();
+  const { colors, s } = useTheme();
+  const dynamics = getStyles(colors, s);
   const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const router = useRouter();
@@ -43,7 +45,7 @@ export default function ScenarioDecisionScreen() {
   const [runtimeError, setRuntimeError] = useState<any>(null);
   const [isFatimaPowerActive, setIsFatimaPowerActive] = useState(false); // Placeholder for power-up logic
 
-  const { questions, loading: loadingQuestions } = useQuestions(params.missionId as string);
+  const { questions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(params.missionId as string);
 
   React.useEffect(() => {
     try {
@@ -58,10 +60,11 @@ export default function ScenarioDecisionScreen() {
 
   if (loadingQuestions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement du scénario...</Text>
-      </View>
+      <FullScreenLoader 
+        message="Chargement du scénario..." 
+        error={errorQuestions} 
+        onRetry={() => { refreshQuestions(); }} 
+      />
     );
   }
 
@@ -142,68 +145,70 @@ export default function ScenarioDecisionScreen() {
         onClose={() => goToIntro(cityId)}
       />
 
-      <View style={styles.topSection}>
-        <Animated.View entering={FadeIn} style={styles.characterBox}>
-          <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
-             <MaterialIcons name="account-circle" size={80} color={colors.primary} />
-          </View>
-          <View style={styles.bubble}>
-            <Text style={[styles.bubbleText, { color: colors.primary }]}>{currentQ.question_fr}</Text>
-          </View>
-        </Animated.View>
-      </View>
-
-      <View style={styles.choicesSection}>
-        {options.map((choice, idx) => (
-          <Animated.View key={choice.id} entering={SlideInRight.delay(400 + idx * 200)}>
-            <TouchableOpacity
-              style={[
-                styles.choiceCard,
-                selected === choice.id && { borderColor: choice.color || colors.primary, backgroundColor: `${choice.color || colors.primary}10` },
-                { backgroundColor: colors.surface }
-              ]}
-              onPress={() => handleChoice(choice.id)}
-              disabled={!!selected}
-            >
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.choiceTitle, { color: colors.primary }]}>{choice.titre || choice.text_fr || choice.text || choice.texte}</Text>
-                <Text style={[styles.choiceDesc, { color: colors.onSurfaceVariant }]}>{choice.description}</Text>
-              </View>
-              {selected === choice.id && (
-                <View style={[styles.impactBadge, { backgroundColor: choice.score > 70 ? '#4CAF50' : '#FF5252' }]}>
-                  <Text style={styles.impactText}>{choice.score}/100</Text>
-                </View>
-              )}
-            </TouchableOpacity>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <View style={styles.topSection}>
+          <Animated.View entering={FadeIn} style={styles.characterBox}>
+            <View style={[styles.avatarCircle, { borderColor: colors.primary }]}>
+               <MaterialIcons name="account-circle" size={80} color={colors.primary} />
+            </View>
+            <View style={styles.bubble}>
+              <Text style={[styles.bubbleText, { color: colors.primary }]}>{currentQ.question_fr}</Text>
+            </View>
           </Animated.View>
-        ))}
-      </View>
+        </View>
 
-      <View style={[styles.footer, { paddingBottom: (insets.bottom || 24) + 10, backgroundColor: colors.surface }]}>
-        <View style={styles.footerRow}>
-          <View style={styles.sideActions}>
-            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+        <View style={dynamics.choicesSection}>
+          {options.map((choice, idx) => (
+            <Animated.View key={choice.id} entering={SlideInRight.delay(400 + idx * 200)}>
+              <TouchableOpacity
+                style={[
+                  dynamics.choiceCard,
+                  selected === choice.id && { borderColor: choice.color || colors.primary, backgroundColor: `${choice.color || colors.primary}10` },
+                  { backgroundColor: colors.surface }
+                ]}
+                onPress={() => handleChoice(choice.id)}
+                disabled={!!selected}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[dynamics.choiceTitle, { color: colors.primary }]}>{choice.titre || choice.text_fr || choice.text || choice.texte}</Text>
+                  <Text style={[dynamics.choiceDesc, { color: colors.onSurfaceVariant }]}>{choice.description}</Text>
+                </View>
+                {selected === choice.id && (
+                  <View style={[dynamics.impactBadge, { backgroundColor: choice.score > 70 ? '#4CAF50' : '#FF5252' }]}>
+                    <Text style={dynamics.impactText}>{choice.score}/100</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            </Animated.View>
+          ))}
+        </View>
+      </ScrollView>
+
+      <View style={[dynamics.footer, { paddingBottom: (insets.bottom || 24) + s(10), backgroundColor: colors.surface }]}>
+        <View style={dynamics.footerRow}>
+          <View style={dynamics.sideActions}>
+            <TouchableOpacity style={dynamics.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelected(null); SoundService.getInstance().playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            <TouchableOpacity style={dynamics.iconBtn} onPress={() => { setSelected(null); SoundService.getInstance().playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+            <TouchableOpacity style={dynamics.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity 
-            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]}
+            style={[dynamics.skipIconBtn, { borderColor: colors.primary + '40' }]}
             onPress={() => skipQuestion({ missionId, cityId })}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+            <MaterialIcons name="fast-forward" size={s(24)} color={colors.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
-              styles.primaryActionBtn, 
+              dynamics.primaryActionBtn, 
               { backgroundColor: colors.primary }, 
               !selected && { backgroundColor: '#ccc', opacity: 0.6 }
             ]}
@@ -211,7 +216,7 @@ export default function ScenarioDecisionScreen() {
             disabled={!selected || showFeedback}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="done-all" size={28} color="#fff" />
+            <MaterialIcons name="done-all" size={s(28)} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -230,15 +235,17 @@ export default function ScenarioDecisionScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, s: (v: number) => number) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
   },
+  scroll: {
+    paddingBottom: s(40),
+  },
   topSection: {
-    padding: 24,
+    padding: s(24),
     alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
   },
   characterBox: {

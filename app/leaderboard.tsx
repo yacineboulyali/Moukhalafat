@@ -13,14 +13,13 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons, Ionicons, FontAwesome5, FontAwesome } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
 import Animated, { 
   FadeInDown, 
   FadeInUp,
 } from 'react-native-reanimated';
 import { useTheme } from '../hooks/useTheme';
 import { AVATARS, getAvatarById } from '../constants/Avatars';
-import { MainBottomNav } from '../components/MainBottomNav';
 
 const { width } = Dimensions.get('window');
 
@@ -139,7 +138,7 @@ export default function LeaderboardScreen() {
       </LinearGradient>
 
       <View style={styles.listContainer}>
-        <BlurView intensity={100} tint="light" style={styles.listBlur}>
+        <SafeBlurView intensity={100} tint="light" style={styles.listBlur}>
           <ScrollView 
             contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 100 }]}
             showsVerticalScrollIndicator={false}
@@ -178,9 +177,8 @@ export default function LeaderboardScreen() {
               </TouchableOpacity>
             </Animated.View>
           </ScrollView>
-        </BlurView>
+        </SafeBlurView>
       </View>
-      <MainBottomNav />
     </View>
   );
 }

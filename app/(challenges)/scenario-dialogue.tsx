@@ -25,6 +25,7 @@ import { useMissions } from '../../hooks/useMissions';
 import { BadgeRewardModal } from '../../components/BadgeRewardModal';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { useBadges } from '../../hooks/useBadges';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -47,8 +48,8 @@ export default function ScenarioDialogueScreen() {
   const questionIndex = params.questionIndex || '0';
   const currentIdx  = parseInt(questionIndex as string) || 0;
 
-  const { loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId);
   const questions = dbQuestions || [];
   const qData = questions[currentIdx];
 
@@ -103,15 +104,16 @@ export default function ScenarioDialogueScreen() {
         cityId,
         isMissionComplete: getQueue(missionId).length === 0,
       });
-    }, 2500);
+    }, 3000);
   };
 
   if (loadingMissions || loadingQuestions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement...</Text>
-      </View>
+      <FullScreenLoader 
+        message="Chargement..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
     );
   }
 
@@ -277,7 +279,11 @@ export default function ScenarioDialogueScreen() {
         </View>
       </View>
 
-      <ImmediateFeedback isVisible={showFeedback} isCorrect={isCorrect} />
+      <ImmediateFeedback 
+        isVisible={showFeedback} 
+        isCorrect={isCorrect} 
+        onClose={() => setShowFeedback(false)}
+      />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
     </View>

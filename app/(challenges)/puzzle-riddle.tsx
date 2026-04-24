@@ -17,6 +17,7 @@ import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
 import { useMissionStore } from '../../stores/missionStore';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -29,8 +30,8 @@ export default function V1PuzzleRiddleScreen() {
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
 
-  const { loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
 
   const questions = dbQuestions || [];
   const currentIdx = parseInt(questionIndex as string) || 0;
@@ -119,12 +120,15 @@ export default function V1PuzzleRiddleScreen() {
 
   const hasAnswer = isQCMMode ? !!selectedId : !!answer.trim();
 
-  if (loadingMissions || loadingQuestions)
+  if (loadingMissions || loadingQuestions) {
     return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
     );
+  }
   if (!qData) return null;
 
   return (

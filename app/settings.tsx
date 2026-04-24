@@ -14,7 +14,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
-import { MainBottomNav } from '../components/MainBottomNav';
+import { useGameStore } from '../stores/gameStore';
 
 const { width } = Dimensions.get('window');
 
@@ -40,11 +40,12 @@ const SettingSection = ({ title, arabicTitle, color, children, styles }: Setting
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { themeMode, setTheme, colors: COLORS } = useTheme();
+  const { themeMode, setTheme, colors: COLORS, s } = useTheme();
+  const { uiScale, setUiScale } = useGameStore();
   const [username, setUsername] = useState('Ahmed_AlMaghribi');
   const [language, setLanguage] = useState('fr');
   
-  const styles = getStyles(COLORS);
+  const styles = getStyles(COLORS, s);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: COLORS.background }]} edges={['left', 'right', 'bottom']}>
@@ -101,6 +102,70 @@ export default function SettingsScreen() {
             />
           </View>
         </View>
+
+        {/* UI Scaling Settings */}
+        <SettingSection 
+          title="Taille de l'interface" 
+          arabicTitle="حجم الواجهة" 
+          color={COLORS.primary || '#2E5A31'}
+          styles={styles}
+        >
+          <View style={styles.modeGrid}>
+            <TouchableOpacity 
+              style={[
+                styles.modeBtn, 
+                { backgroundColor: uiScale === 0.85 ? COLORS.primary : COLORS.surfaceVariant }
+              ]}
+              onPress={() => setUiScale(0.85)}
+            >
+              <MaterialIcons 
+                name="format-size" 
+                size={18} 
+                color={uiScale === 0.85 ? COLORS.white : COLORS.onSurfaceVariant} 
+              />
+              <View style={styles.modeTextContainer}>
+                <Text style={[styles.modeText, { color: uiScale === 0.85 ? COLORS.white : COLORS.onSurfaceVariant }]}>Petit</Text>
+                <Text style={[styles.modeTextArabic, { color: uiScale === 0.85 ? COLORS.white : COLORS.onSurfaceVariant }]}>صغير</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
+                styles.modeBtn,
+                { backgroundColor: uiScale === 1.0 ? COLORS.primary : COLORS.surfaceVariant }
+              ]}
+              onPress={() => setUiScale(1.0)}
+            >
+              <MaterialIcons 
+                name="format-size" 
+                size={24} 
+                color={uiScale === 1.0 ? COLORS.white : COLORS.onSurfaceVariant} 
+              />
+              <View style={styles.modeTextContainer}>
+                <Text style={[styles.modeText, { color: uiScale === 1.0 ? COLORS.white : COLORS.onSurfaceVariant }]}>Moyen</Text>
+                <Text style={[styles.modeTextArabic, { color: uiScale === 1.0 ? COLORS.white : COLORS.onSurfaceVariant }]}>متوسط</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[
+                styles.modeBtn,
+                { backgroundColor: uiScale === 1.15 ? COLORS.primary : COLORS.surfaceVariant }
+              ]}
+              onPress={() => setUiScale(1.15)}
+            >
+              <MaterialIcons 
+                name="format-size" 
+                size={30} 
+                color={uiScale === 1.15 ? COLORS.white : COLORS.onSurfaceVariant} 
+              />
+              <View style={styles.modeTextContainer}>
+                <Text style={[styles.modeText, { color: uiScale === 1.15 ? COLORS.white : COLORS.onSurfaceVariant }]}>Grand</Text>
+                <Text style={[styles.modeTextArabic, { color: uiScale === 1.15 ? COLORS.white : COLORS.onSurfaceVariant }]}>كبير</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </SettingSection>
 
         {/* Display Settings */}
         <SettingSection 
@@ -207,12 +272,11 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
-      <MainBottomNav />
     </SafeAreaView>
   );
 }
 
-const getStyles = (COLORS: any) => StyleSheet.create({
+const getStyles = (COLORS: any, s: (v: number) => number) => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -228,7 +292,7 @@ const getStyles = (COLORS: any) => StyleSheet.create({
     paddingHorizontal: 24,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: s(18),
     fontWeight: '900',
     color: COLORS.primary,
     fontFamily: 'Plus Jakarta Sans',
@@ -295,19 +359,19 @@ const getStyles = (COLORS: any) => StyleSheet.create({
     elevation: 10,
   },
   pageTitle: {
-    fontSize: 24,
+    fontSize: s(24),
     fontWeight: '700',
     color: COLORS.primary,
     fontFamily: 'Plus Jakarta Sans',
     textAlign: 'center',
   },
   pageSubtitle: {
-    fontSize: 16,
+    fontSize: s(16),
     fontWeight: '500',
     color: COLORS.onSurfaceVariant,
     textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 24,
+    marginTop: s(4),
+    marginBottom: s(24),
   },
   inputCard: {
     width: '100%',

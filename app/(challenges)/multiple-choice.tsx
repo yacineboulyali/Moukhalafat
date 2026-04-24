@@ -12,6 +12,7 @@ import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
 import { ChallengeIntroModal } from '../../components/ChallengeIntroModal';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 import { useBadges } from '../../hooks/useBadges';
 import { useChallenges } from '../../hooks/useChallenges';
 import { useMissions } from '../../hooks/useMissions';
@@ -26,14 +27,15 @@ const { width } = Dimensions.get('window');
 export default function V1MultipleChoiceScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, s } = useTheme();
+  const dynamics = getStyles(colors, s);
   const { navigateToNext, skipQuestion, goBack, goToIntro, restartMission } = useChallengeNavigation();
   const { initQueue, markComplete, getQueue } = useMissionStore();
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
 
-  const { missions, loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
   
   const questions = dbQuestions || [];
 
@@ -91,36 +93,44 @@ export default function V1MultipleChoiceScreen() {
       } else {
         setIsCorrect(null);
       }
-    }, 2000);
+    }, 3000);
   };
 
-  if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+  if (loadingMissions || loadingQuestions) {
+    return (
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
+    );
+  }
   if (!qData) return null;
 
   const options = Array.isArray(qData.options) ? qData.options : [];
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+    <View style={[dynamics.container, { paddingTop: insets.top, backgroundColor: colors.background }]}>
       <ChallengeHeader 
         cityId={cityId} 
         onClose={() => goToIntro(cityId)}
       />
       <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
-      <ScrollView contentContainerStyle={styles.scroll}>
+      <ScrollView contentContainerStyle={dynamics.scroll}>
         {!!qData.presentation_fr && (
-          <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
-            <MaterialIcons name="person" size={18} color={colors.primary} style={{ marginBottom: 6 }} />
-            <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+          <Animated.View entering={FadeInDown.delay(100)} style={dynamics.presentationCard}>
+            <MaterialIcons name="person" size={s(18)} color={colors.primary} style={{ marginBottom: s(6) }} />
+            <Text style={[dynamics.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
           </Animated.View>
         )}
-        <Animated.View entering={FadeInDown.delay(200)} style={styles.header}>
-          <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>CHOIX MULTIPLE</Text>
-          <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
-          {!!qData.question_ar && <Text style={styles.arabicHeader}>{qData.question_ar}</Text>}
+        <Animated.View entering={FadeInDown.delay(200)} style={dynamics.header}>
+          <Text style={[dynamics.instruction, { color: colors.onSurfaceVariant }]}>CHOIX MULTIPLE</Text>
+          <Text style={[dynamics.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
+          {!!qData.question_ar && <Text style={dynamics.arabicHeader}>{qData.question_ar}</Text>}
         </Animated.View>
 
-        <View style={styles.optionsContainer}>
+        <View style={dynamics.optionsContainer}>
           {options.map((option: any, index: number) => {
             const optKey = option.value ?? option.id ?? String(index);
             const optLabel = option.label ?? option.label_fr ?? option.text_fr ?? option.text ?? option.texte ?? '';
@@ -130,7 +140,7 @@ export default function V1MultipleChoiceScreen() {
               <Animated.View key={optKey} entering={FadeInUp.delay(400 + index * 100)}>
                 <TouchableOpacity
                   style={[
-                    styles.optionCard,
+                    dynamics.optionCard,
                     { backgroundColor: colors.surface, borderColor: isSelected ? colors.primary : 'transparent' },
                     isCorrect !== null && isCorrectOpt && { borderColor: '#4CAF50', backgroundColor: 'rgba(76,175,80,0.08)' },
                     isCorrect === false && isSelected && !isCorrectOpt && { borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,0.08)' }
@@ -140,11 +150,11 @@ export default function V1MultipleChoiceScreen() {
                   hitSlop={{ top: 10, bottom: 10, left: 20, right: 20 }}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.optionText, { color: colors.onSurface }]}>{optLabel}</Text>
+                    <Text style={[dynamics.optionText, { color: colors.onSurface }]}>{optLabel}</Text>
                   </View>
                   <MaterialIcons 
                     name={isSelected ? "radio-button-checked" : "radio-button-unchecked"} 
-                    size={24} 
+                    size={s(24)} 
                     color={isSelected ? colors.primary : colors.border} 
                   />
                 </TouchableOpacity>
@@ -154,35 +164,35 @@ export default function V1MultipleChoiceScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 10, backgroundColor: colors.surface }]}>
-        <View style={styles.footerRow}>
-          <View style={styles.sideActions}>
-            <TouchableOpacity style={styles.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.primary} />
+      <View style={[dynamics.footer, { paddingBottom: insets.bottom + 10, backgroundColor: colors.surface }]}>
+        <View style={dynamics.footerRow}>
+          <View style={dynamics.sideActions}>
+            <TouchableOpacity style={dynamics.iconBtn} onPress={goBack} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="arrow-back" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => { setSelectedId(null); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="refresh" size={24} color={colors.primary} />
+            <TouchableOpacity style={dynamics.iconBtn} onPress={() => { setSelectedId(null); playSound('click'); }} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="refresh" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <MaterialIcons name="info-outline" size={24} color={colors.primary} />
+            <TouchableOpacity style={dynamics.iconBtn} onPress={() => router.push({ pathname: '/pedago' as any, params: { cityId, fromChallenge: 'true' } })} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+              <MaterialIcons name="info-outline" size={s(24)} color={colors.primary} />
             </TouchableOpacity>
           </View>
 
           <TouchableOpacity 
-            style={[styles.skipIconBtn, { borderColor: colors.primary + '40' }]} 
+            style={[dynamics.skipIconBtn, { borderColor: colors.primary + '40' }]} 
             onPress={() => skipQuestion({ missionId: missionId as string, cityId })}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="fast-forward" size={24} color={colors.primary} />
+            <MaterialIcons name="fast-forward" size={s(24)} color={colors.primary} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.primaryActionBtn, { backgroundColor: colors.primary }, (!selectedId || isCorrect !== null) && { opacity: 0.5 }]}
+            style={[dynamics.primaryActionBtn, { backgroundColor: colors.primary }, (!selectedId || isCorrect !== null) && { opacity: 0.5 }]}
             onPress={handleValidation}
             disabled={!selectedId || isCorrect !== null}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <MaterialIcons name="done-all" size={28} color="#fff" />
+            <MaterialIcons name="done-all" size={s(28)} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
@@ -191,6 +201,7 @@ export default function V1MultipleChoiceScreen() {
         isVisible={showFeedback} 
         isCorrect={isCorrect ?? false} 
         message={isCorrect ? qData.feedback_positive_fr || undefined : qData.feedback_negative_fr || undefined}
+        onClose={() => setShowFeedback(false)}
       />
       {showConfetti && <ConfettiEffect />}
       <BadgeRewardModal badge={lastAwardedBadge} isVisible={showReward} onClose={dismissReward} />
@@ -210,35 +221,35 @@ export default function V1MultipleChoiceScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (colors: any, s: (v: number) => number) => StyleSheet.create({
   container: { flex: 1 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  scroll: { padding: 24, paddingBottom: 40 },
-  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: 16, padding: 16, marginBottom: 20, borderLeftWidth: 4, borderLeftColor: '#cca72f', alignItems: 'flex-start' },
-  presentationText: { fontSize: 14, lineHeight: 20, fontStyle: 'italic' },
-  header: { marginBottom: 24, alignItems: 'center' },
-  instruction: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 10, opacity: 0.6 },
-  questionText: { fontSize: 20, fontWeight: '800', textAlign: 'center', lineHeight: 28 },
-  arabicHeader: { fontSize: 18, textAlign: 'center', marginTop: 8, color: '#B8860B', fontWeight: '700' },
-  optionsContainer: { gap: 14 },
-  optionCard: { padding: 18, borderRadius: 18, borderWidth: 2.5, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
-  optionText: { fontSize: 15, fontWeight: '600', lineHeight: 22, flex: 1 },
-  optionTextAr: { fontSize: 14, marginTop: 4, opacity: 0.8 },
-  footer: { padding: 24, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
-  footerRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  sideActions: { flexDirection: 'row', gap: 6 },
+  scroll: { padding: s(24), paddingBottom: s(40) },
+  presentationCard: { backgroundColor: 'rgba(0,0,0,0.04)', borderRadius: s(16), padding: s(16), marginBottom: s(20), borderLeftWidth: 4, borderLeftColor: '#cca72f', alignItems: 'flex-start' },
+  presentationText: { fontSize: s(14), lineHeight: s(20), fontStyle: 'italic' },
+  header: { marginBottom: s(24), alignItems: 'center' },
+  instruction: { fontSize: s(11), fontWeight: '900', letterSpacing: 2, marginBottom: s(10), opacity: 0.6 },
+  questionText: { fontSize: s(20), fontWeight: '800', textAlign: 'center', lineHeight: s(28) },
+  arabicHeader: { fontSize: s(18), textAlign: 'center', marginTop: s(8), color: '#B8860B', fontWeight: '700' },
+  optionsContainer: { gap: s(14) },
+  optionCard: { padding: s(18), borderRadius: s(18), borderWidth: 2.5, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6 },
+  optionText: { fontSize: s(15), fontWeight: '600', lineHeight: s(22), flex: 1 },
+  optionTextAr: { fontSize: s(14), marginTop: s(4), opacity: 0.8 },
+  footer: { padding: s(24), borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)' },
+  footerRow: { flexDirection: 'row', gap: s(10), alignItems: 'center' },
+  sideActions: { flexDirection: 'row', gap: s(6) },
   iconBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: s(40),
+    height: s(40),
+    borderRadius: s(20),
     backgroundColor: 'rgba(0,0,0,0.03)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryActionBtn: {
-    paddingHorizontal: 32,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: s(32),
+    height: s(60),
+    borderRadius: s(30),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
@@ -248,9 +259,9 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   skipIconBtn: {
-    paddingHorizontal: 24,
-    height: 60,
-    borderRadius: 30,
+    paddingHorizontal: s(24),
+    height: s(60),
+    borderRadius: s(30),
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',

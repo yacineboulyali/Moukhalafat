@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useColorScheme } from 'react-native';
 import { THEME } from '../constants/theme';
 import { settingsService } from '../services/SettingsService';
+import { useGameStore } from '../stores/gameStore';
 
 export function useTheme() {
   const systemColorScheme = useColorScheme();
@@ -26,16 +27,19 @@ export function useTheme() {
     };
   }, []);
 
-  const isDark = 
-    themeMode === 'dark' || 
-    (themeMode === 'system' && systemColorScheme === 'dark');
+  const isDark = false;
+  const uiScale = useGameStore((state) => state.uiScale);
+  const colors = THEME.light;
 
-  const colors = isDark ? THEME.dark : THEME.light;
+  // Helper function to scale values
+  const s = (val: number) => val * uiScale;
 
   return { 
     isDark, 
     colors, 
     themeMode, 
+    uiScale,
+    s,
     setTheme: (mode: 'light' | 'dark' | 'system') => settingsService.setTheme(mode) 
   };
 }

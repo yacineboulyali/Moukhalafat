@@ -10,6 +10,7 @@ import { ImmediateFeedback } from '../../components/ImmediateFeedback';
 import { ChallengeHeader } from '../../components/ChallengeHeader';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 import { useBadges } from '../../hooks/useBadges';
 import { useChallenges } from '../../hooks/useChallenges';
 import { useMissions } from '../../hooks/useMissions';
@@ -30,8 +31,8 @@ export default function ShortAnswerScreen() {
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
 
-  const { missions, loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
   
   const questions = dbQuestions || [];
 
@@ -129,9 +130,11 @@ export default function ShortAnswerScreen() {
 
   if (loadingMissions || loadingQuestions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
     );
   }
 

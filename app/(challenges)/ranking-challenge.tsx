@@ -20,6 +20,7 @@ import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
 import { useMissionStore } from '../../stores/missionStore';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -32,8 +33,8 @@ export default function V1RankingScreen() {
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
 
-  const { missions, loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
   
   const questions = dbQuestions || [];
 
@@ -131,7 +132,15 @@ export default function V1RankingScreen() {
     );
   }, [colors, isCorrect]);
 
-  if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+  if (loadingMissions || loadingQuestions) {
+    return (
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
+    );
+  }
   if (!qData) return null;
 
   return (
@@ -143,19 +152,6 @@ export default function V1RankingScreen() {
         />
         <ChallengeProgressBar progress={currentIdx / questions.length} color={colors.primary} />
 
-        <View style={styles.header}>
-          {!!qData.presentation_fr && (
-            <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
-              <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
-            </Animated.View>
-          )}
-          <Animated.View entering={FadeInDown.delay(200)} style={{ alignItems: 'center' }}>
-            <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>CLASSEMENT / ORDRE</Text>
-            <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
-            {!!qData.question_ar && <Text style={styles.arabicHeader}>{qData.question_ar}</Text>}
-          </Animated.View>
-        </View>
-
         <DraggableFlatList
           data={data}
           onDragBegin={() => playSound('click')}
@@ -163,6 +159,20 @@ export default function V1RankingScreen() {
           keyExtractor={(item) => String(item.value ?? item.id ?? Math.random())}
           renderItem={renderItem}
           containerStyle={styles.listContainer}
+          ListHeaderComponent={
+            <View style={styles.header}>
+              {!!qData.presentation_fr && (
+                <Animated.View entering={FadeInDown.delay(100)} style={styles.presentationCard}>
+                  <Text style={[styles.presentationText, { color: colors.onSurfaceVariant }]}>{qData.presentation_fr}</Text>
+                </Animated.View>
+              )}
+              <Animated.View entering={FadeInDown.delay(200)} style={{ alignItems: 'center', marginBottom: 20 }}>
+                <Text style={[styles.instruction, { color: colors.onSurfaceVariant }]}>CLASSEMENT / ORDRE</Text>
+                <Text style={[styles.questionText, { color: colors.primary }]}>{qData.question_fr}</Text>
+                {!!qData.question_ar && <Text style={styles.arabicHeader}>{qData.question_ar}</Text>}
+              </Animated.View>
+            </View>
+          }
         />
 
         <View style={[styles.footer, { paddingBottom: insets.bottom + 10, backgroundColor: colors.surface }]}>

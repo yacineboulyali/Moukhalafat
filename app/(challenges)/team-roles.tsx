@@ -17,6 +17,7 @@ import { useMissionStore } from '../../stores/missionStore';
 
 import { useMissions } from '../../hooks/useMissions';
 import { useQuestions } from '../../hooks/useQuestions';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -38,8 +39,8 @@ export default function TeamRolesScreen() {
   const questionIndex = parseInt(params.questionIndex as string || '0');
   const insets = useSafeAreaInsets();
 
-  const { questions, loading: loadingQuestions } = useQuestions(missionId);
-  const { missions, loading: loadingMissions } = useMissions(cityId);
+  const { questions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
 
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [matches, setMatches] = useState<Record<string, string>>({});
@@ -66,10 +67,11 @@ export default function TeamRolesScreen() {
 
   if (loadingQuestions || loadingMissions) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={{ marginTop: 12, color: colors.primary, fontWeight: '600' }}>Chargement de l&apos;équipe...</Text>
-      </View>
+      <FullScreenLoader 
+        message="Chargement de l'équipe..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
     );
   }
 

@@ -27,7 +27,7 @@ import Animated, {
   Easing
 } from 'react-native-reanimated';
 import { ConfettiEffect } from '../components/ConfettiEffect';
-import { BlurView } from 'expo-blur';
+import { SafeBlurView } from '../components/SafeBlurView';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { BadgeRewardModal } from '../components/BadgeRewardModal';
 import { BADGES } from '../constants/Badges';
@@ -118,6 +118,10 @@ export default function DefiResultatScreen() {
   const nextCityIndex = CITY_SEQUENCE.indexOf(currentCity) + 1;
   const nextCityId = nextCityIndex < CITY_SEQUENCE.length ? CITY_SEQUENCE[nextCityIndex] : null;
   const nextCityName = nextCityId ? challenges[nextCityId]?.city_name_fr : null;
+
+  const currentCityData = challenges[currentCity];
+  const cityTitle = currentCityData?.city_name_fr?.toUpperCase() || currentCity.toUpperCase();
+  const cityTitleAr = currentCityData?.city_name_ar;
 
   const [showBadge, setShowBadge] = React.useState(false);
   const earnedBadge = BADGES.find(b => b.id === 'explorateur_curieux') || BADGES[0];
@@ -224,32 +228,32 @@ export default function DefiResultatScreen() {
         <Animated.View entering={FadeInUp.delay(1000)} style={styles.section}>
           <Text style={styles.sectionTitle}>Tes Récompenses <Text style={styles.sectionArabic}>جوائزك</Text></Text>
           <View style={styles.rewardsRow}>
-            <BlurView intensity={60} tint="light" style={styles.rewardCard}>
+            <SafeBlurView intensity={60} tint="light" style={styles.rewardCard}>
               <View style={[styles.iconBox, { backgroundColor: COLORS.tertiaryContainer }]}>
                 <MaterialIcons name="bolt" size={24} color="#fff" />
               </View>
               <Text style={styles.rewardVal}>+450 XP</Text>
               <Text style={styles.rewardLabel}>Progrès total</Text>
-            </BlurView>
+            </SafeBlurView>
 
-            <BlurView intensity={60} tint="light" style={styles.rewardCard}>
+            <SafeBlurView intensity={60} tint="light" style={styles.rewardCard}>
               <View style={[styles.iconBox, { backgroundColor: COLORS.secondaryContainer }]}>
                 <MaterialIcons name="military-tech" size={24} color="#fff" />
               </View>
               <Text style={styles.rewardVal}>{earnedBadge.name}</Text>
               <Text style={styles.rewardLabel}>Nouveau Badge Débloqué</Text>
-            </BlurView>
+            </SafeBlurView>
           </View>
         </Animated.View>
 
         {/* Skill Analysis Section */}
         <Animated.View entering={FadeInUp.delay(1200)} style={styles.section}>
           <Text style={styles.sectionTitle}>Analyse des compétences <Text style={styles.sectionArabic}>تحليل المهارات</Text></Text>
-          <BlurView intensity={80} tint="light" style={styles.skillsCard}>
+          <SafeBlurView intensity={80} tint="light" style={styles.skillsCard}>
             {SKILLS.map((skill, index) => (
               <AnimatedSkillBar key={index} skill={skill} index={index} />
             ))}
-          </BlurView>
+          </SafeBlurView>
         </Animated.View>
 
         {/* Results Summary Section */}

@@ -18,6 +18,7 @@ import { useChallengeNavigation } from '../../hooks/useChallengeNavigation';
 import { useMissionStore } from '../../stores/missionStore';
 import { ConfettiEffect } from '../../components/ConfettiEffect';
 import { MissionSplash } from '../../components/MissionSplash';
+import { FullScreenLoader } from '../../components/FullScreenLoader';
 
 const { width } = Dimensions.get('window');
 
@@ -30,8 +31,8 @@ export default function V1ScenarioCascadeScreen() {
   const { missionId, questionIndex = '0', cityId: cityParam } = useLocalSearchParams();
   const cityId = cityParam as string;
 
-  const { missions, loading: loadingMissions } = useMissions(cityId);
-  const { questions: dbQuestions, loading: loadingQuestions } = useQuestions(missionId as string);
+  const { missions, loading: loadingMissions, error: errorMissions, refresh: refreshMissions } = useMissions(cityId);
+  const { questions: dbQuestions, loading: loadingQuestions, error: errorQuestions, refresh: refreshQuestions } = useQuestions(missionId as string);
   
   const questions = dbQuestions || [];
 
@@ -107,7 +108,15 @@ export default function V1ScenarioCascadeScreen() {
     }
   };
 
-  if (loadingMissions || loadingQuestions) return <View style={styles.center}><ActivityIndicator size="large" /></View>;
+  if (loadingMissions || loadingQuestions) {
+    return (
+      <FullScreenLoader 
+        message="Chargement de la mission..." 
+        error={errorMissions || errorQuestions} 
+        onRetry={() => { refreshMissions(); refreshQuestions(); }} 
+      />
+    );
+  }
   if (!qData) return null;
 
   return (

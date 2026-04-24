@@ -7,7 +7,8 @@ import {
   Modal, 
   TouchableOpacity 
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { SafeBlurView } from './SafeBlurView';
 import Svg, { Polygon, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, { 
   FadeInUp, 
@@ -18,7 +19,6 @@ import Animated, {
   withSequence,
   withTiming
 } from 'react-native-reanimated';
-import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { THEME } from '../constants/theme';
 import { Badge } from '../constants/Badges';
@@ -67,7 +67,7 @@ export const BadgeRewardModal: React.FC<BadgeRewardModalProps> = ({ badge, isVis
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <BlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
+        <SafeBlurView intensity={40} tint="dark" style={StyleSheet.absoluteFill} />
         <ConfettiEffect />
         
         <Animated.View 
