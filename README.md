@@ -1,6 +1,8 @@
-# Welcome to your Expo app 👋
+# مخالفات المغرب - Moukhalafat
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Application mobile pour consulter les infractions routières du code de la route marocain.
+
+This is an [Expo](https://expo.dev) project built with [React Native](https://reactnative.dev).
 
 ## Get started
 

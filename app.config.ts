@@ -2,8 +2,8 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
-  name: 'Le Voyage des Compétences',
-  slug: 'voyage-competences',
+  name: 'Moukhalafat',
+  slug: 'moukhalafat',
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/images/icon.png',
